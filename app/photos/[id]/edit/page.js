@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "../../../contexts/AuthContext";
-import { deleteMedia, getMediaById, updateMedia } from "../../../lib/database";
+import { deleteMedia, getMediaById, updateMedia, syncTopics } from "../../../lib/database";
 import { ArrowLeft, Save, MapPin, Camera, Tag, Loader2, CheckCircle2, AlertCircle, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 
@@ -17,7 +17,6 @@ export default function EditPhotoPage() {
     const [deleting, setDeleting] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [status, setStatus] = useState({ type: "", message: "" });
-    // ... existing state ...
     const [formData, setFormData] = useState({
         title: "",
         description: "",
@@ -28,7 +27,76 @@ export default function EditPhotoPage() {
     const [newTag, setNewTag] = useState("");
     const [photoUrl, setPhotoUrl] = useState("");
 
-    // ... fetchPhoto and other handlers ...
+    useEffect(() => {
+        if (!authLoading) {
+            if (!user) {
+                router.push(`/login?redirect=/photos/${id}/edit`);
+                return;
+            }
+            fetchPhoto();
+        }
+    }, [id, user, authLoading]);
+
+    const fetchPhoto = async () => {
+        try {
+            setLoading(true);
+            const data = await getMediaById(id);
+            if (data) {
+                // Ensure it's the owner
+                if (data.user_id !== user.id) {
+                    router.push(`/photos/${id}`);
+                    return;
+                }
+                setFormData({
+                    title: data.title || "",
+                    description: data.description || "",
+                    location: data.location || "",
+                    camera: data.camera || "",
+                    tags: data.tags || []
+                });
+                setPhotoUrl(data.url);
+            } else {
+                router.push('/');
+            }
+        } catch (error) {
+            console.error("Error fetching photo for edit:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleAddTag = (e) => {
+        if (e.key === 'Enter' && newTag.trim()) {
+            e.preventDefault();
+            if (!formData.tags.includes(newTag.trim())) {
+                setFormData({ ...formData, tags: [...formData.tags, newTag.trim()] });
+            }
+            setNewTag("");
+        }
+    };
+
+    const removeTag = (tagToRemove) => {
+        setFormData({ ...formData, tags: formData.tags.filter(t => t !== tagToRemove) });
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+        setStatus({ type: "", message: "" });
+
+        const result = await updateMedia(id, formData);
+
+        if (result.success) {
+            // Synchroniser les mots-clés avec la table topics
+            await syncTopics(id, formData.tags);
+
+            setStatus({ type: "success", message: "Photo mise à jour avec succès !" });
+            setTimeout(() => router.push(`/photos/${id}`), 1500);
+        } else {
+            setStatus({ type: "error", message: "Erreur lors de la mise à jour." });
+            setSaving(false);
+        }
+    };
 
     const handleDelete = async () => {
         setDeleting(true);

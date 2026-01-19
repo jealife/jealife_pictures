@@ -7,6 +7,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
 import ExifReader from 'exifreader';
 import { upsertProfile } from "../lib/auth";
+import { syncTopics } from "../lib/database";
 
 export default function SubmitPage() {
     const router = useRouter();
@@ -219,11 +220,18 @@ export default function SubmitPage() {
             };
 
             // 3. Insert into Media Table
-            const { error: dbError } = await supabase
+            const { data: mediaRecord, error: dbError } = await supabase
                 .from('media')
-                .insert(insertData);
+                .insert(insertData)
+                .select()
+                .single();
 
             if (dbError) throw dbError;
+
+            // 4. Synchroniser avec la table topics
+            if (mediaRecord) {
+                await syncTopics(mediaRecord.id, tags);
+            }
 
             // Redirect on success
             router.push('/');

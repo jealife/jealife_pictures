@@ -432,3 +432,88 @@ export async function deleteMedia(mediaId) {
         return { success: false, error: error.message };
     }
 }
+// Synchroniser les mots-clés avec la table topics
+export async function syncTopics(mediaId, tags) {
+    if (!tags || tags.length === 0) return { success: true };
+
+    try {
+        // 1. Préparer les slugs
+        const tagSlugs = tags.map(tag => {
+            return tag.trim().toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .replace(/\s+/g, '-')
+                .replace(/[^\w-]+/g, '');
+        }).filter(slug => slug.length > 0);
+
+        if (tagSlugs.length === 0) return { success: true };
+
+        // 2. Récupérer les topics existants
+        const { data: existingTopics, error: fetchError } = await supabase
+            .from('topics')
+            .select('id, slug')
+            .in('slug', tagSlugs);
+
+        if (fetchError) throw fetchError;
+
+        const existingSlugs = existingTopics?.map(t => t.slug) || [];
+        const missingTags = tags.filter(tag => {
+            const slug = tag.trim().toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .replace(/\s+/g, '-')
+                .replace(/[^\w-]+/g, '');
+            return !existingSlugs.includes(slug);
+        });
+
+        // 3. Insérer les topics manquants
+        let allTopics = [...(existingTopics || [])];
+
+        if (missingTags.length > 0) {
+            const newTopicsData = missingTags.map(tag => ({
+                name: tag.trim(),
+                slug: tag.trim().toLowerCase()
+                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                    .replace(/\s+/g, '-')
+                    .replace(/[^\w-]+/g, '')
+            }));
+
+            const { data: insertedTopics, error: insertError } = await supabase
+                .from('topics')
+                .insert(newTopicsData)
+                .select();
+
+            if (insertError) {
+                console.error('Error inserting new topics:', insertError);
+                // On continue quand même avec les topics existants si l'insertion échoue
+            } else if (insertedTopics) {
+                allTopics = [...allTopics, ...insertedTopics];
+            }
+        }
+
+        // 4. Créer les liens dans media_topics
+        if (allTopics.length > 0 && mediaId) {
+            const mediaTopicLinks = allTopics.map(topic => ({
+                media_id: mediaId,
+                topic_id: topic.id
+            }));
+
+            // Supprimer les anciens liens pour ce média
+            await supabase
+                .from('media_topics')
+                .delete()
+                .eq('media_id', mediaId);
+
+            // Insérer les nouveaux liens
+            const { error: linkError } = await supabase
+                .from('media_topics')
+                .insert(mediaTopicLinks);
+
+            if (linkError) throw linkError;
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error('Full Error syncing topics:', JSON.stringify(error, null, 2));
+        console.error('Error message:', error.message || error.details || 'Unknown error');
+        return { success: false, error: error.message };
+    }
+}

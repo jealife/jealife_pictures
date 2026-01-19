@@ -155,10 +155,12 @@ export default function Navbar() {
             {/* Desktop Navigation Rail (Unsplash Style) */}
             <div className="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-[64px] z-[60] bg-white border-r border-gray-100 items-center py-4 bg-white">
                 {/* Logo */}
-                <Link href="/" className="mb-8 group">
-                    <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white font-bold text-lg group-hover:rotate-3 transition-transform">
-                        J
-                    </div>
+                <Link href="/" className="mb-10 px-1">
+                    <img
+                        src="/JEaLiFe-Pictures-logo-black.png"
+                        alt="Logo"
+                        className="w-14 h-auto object-contain hover:scale-105 transition-transform"
+                    />
                 </Link>
 
                 {/* Main Nav Icons */}
@@ -234,135 +236,103 @@ export default function Navbar() {
             </div>
 
             {/* Floating Navbar Container */}
-            <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100' : 'bg-white border-b border-transparent'}`}>
-                <div className="max-w-[1800px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+            <nav className={`sticky top-0 z-50 transition-all duration-300 md:ml-[64px] ${scrolled ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100' : 'bg-white border-b border-transparent'}`}>
+                <div className="max-w-[1800px] mx-auto px-4 sm:px-6">
+                    <div className="h-16 flex items-center justify-between gap-4">
 
-                    {/* Left: Brand (Mobile Only) */}
-                    <div className="flex flex-1 md:flex-none items-center gap-4 shrink-0 z-50 md:hidden">
-                        <Link href="/" className="flex items-center gap-2 group">
-                            <div className="w-9 h-9 bg-black rounded-lg flex items-center justify-center text-white font-bold text-xl group-hover:rotate-3 transition-transform">
-                                J
+                        {/* Left: Brand (Mobile Only) */}
+                        <div className="flex items-center gap-4 shrink-0 z-50 md:hidden">
+                            <Link href="/" className="flex items-center group">
+                                <img
+                                    src="/JEaLiFe-Pictures-logo-black.png"
+                                    alt="JEaLiFe Pictures"
+                                    className="h-12 w-auto object-contain"
+                                />
+                            </Link>
+                        </div>
+
+                        {/* Search Bar - Desktop Only (Hidden on mobile top bar) */}
+                        <div className={`hidden md:block flex-1 max-w-2xl transition-all duration-300 ${isSearchFocused ? 'scale-[1.01]' : ''}`}>
+                            <div className={`relative flex items-center bg-gray-100 rounded-full transition-all duration-300 ${isSearchFocused ? 'ring-2 ring-black/5 bg-white shadow-lg' : 'hover:bg-gray-200/70'}`}>
+                                <SearchDropdown currentType={currentType} setTypeMenuOpen={setTypeMenuOpen} typeMenuOpen={typeMenuOpen} ImageIconSizeIcon={ImageIconSizeIcon} PaletteSizeIcon={PaletteSizeIcon} VideoSizeIcon={VideoSizeIcon} />
+                                <input
+                                    type="text"
+                                    placeholder={`Rechercher des ${currentType.label.toLowerCase()}...`}
+                                    className="w-full h-10 pl-3 pr-4 bg-transparent border-none outline-none text-sm font-medium text-gray-800 placeholder-gray-500"
+                                    onFocus={() => setIsSearchFocused(true)}
+                                    onBlur={() => setIsSearchFocused(false)}
+                                    onKeyDown={handleSearch}
+                                />
+                                <div className="flex items-center pr-4 text-gray-400">
+                                    <Search className="w-5 h-5" />
+                                </div>
                             </div>
-                            <span className="font-bold text-lg tracking-tight text-gray-900 hidden sm:block">JEaLiFe</span>
-                        </Link>
+                        </div>
+
+                        {/* Desktop Actions */}
+                        <div className="hidden md:flex items-center gap-1 shrink-0">
+                            <Link href="/" className="text-sm font-medium text-gray-500 hover:text-black px-4 py-2 rounded-full hover:bg-gray-100 transition-all">
+                                Explorer
+                            </Link>
+                            {user ? (
+                                <Link href="/submit" className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-gray-800 active:scale-95 transition-all shadow-md hover:shadow-lg ml-2">
+                                    Soumettre
+                                </Link>
+                            ) : (
+                                <>
+                                    <Link href="/login" className="text-sm font-medium text-gray-500 hover:text-black px-4 py-2 rounded-full hover:bg-gray-100 transition-all">
+                                        Connexion
+                                    </Link>
+                                    <Link href="/submit" className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-gray-800 active:scale-95 transition-all shadow-md hover:shadow-lg ml-2">
+                                        Soumettre
+                                    </Link>
+                                </>
+                            )}
+                        </div>
+
+                        {/* Mobile Right - Profile Avatar/Icon + Menu Toggle */}
+                        <div className="md:hidden flex items-center gap-2">
+                            {user ? (
+                                <div className="relative" ref={mobileUserMenuRef}>
+                                    <button onClick={() => setUserMenuOpen(!userMenuOpen)} className="p-1 hover:opacity-80 transition-opacity">
+                                        <img
+                                            src={profile?.avatar_url || user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`}
+                                            alt="Profile"
+                                            className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
+                                        />
+                                    </button>
+                                    {userMenuOpen && (
+                                        <div className="absolute right-0 top-12 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-70 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                                            <UserMenu user={user} onSignOut={handleSignOut} onClose={() => setUserMenuOpen(false)} />
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <Link href="/login" className="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+                                    <UserIcon className="w-6 h-6" />
+                                </Link>
+                            )}
+                            <button className="relative z-[60] p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors active:scale-90" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                            </button>
+                        </div>
                     </div>
 
-                    {/* Search Bar - Rounded & Floating Style */}
-                    <div className={`flex-1 max-w-2xl transition-all duration-300 ${isSearchFocused ? 'scale-[1.01]' : ''}`}>
-                        <div className={`relative flex items-center bg-gray-100 rounded-full transition-all duration-300 ${isSearchFocused ? 'ring-2 ring-black/5 bg-white shadow-lg' : 'hover:bg-gray-200/70'}`}>
-
-                            {/* Mobile/Desktop Type Dropdown */}
-                            <div className="relative z-20">
-                                <button
-                                    onClick={() => setTypeMenuOpen(!typeMenuOpen)}
-                                    className="flex items-center gap-1.5 pl-4 pr-3 h-11 border-r border-gray-300/50 text-gray-600 hover:text-black transition-colors"
-                                >
-                                    {currentType.icon}
-                                    <ChevronDown size={14} className={`opacity-50 transition-transform ${typeMenuOpen ? 'rotate-180' : ''}`} />
-                                </button>
-
-                                {/* Dropdown Menu */}
-                                {typeMenuOpen && (
-                                    <div className="absolute top-12 left-0 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
-                                        {/* Overlay to close when clicking outside (simple version) */}
-                                        <div className="fixed inset-0 z-40" onClick={() => setTypeMenuOpen(false)}></div>
-                                        <div className="relative z-50">
-                                            <Link href="/" onClick={() => setTypeMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-sm font-medium text-gray-700">
-                                                <ImageIconSizeIcon /> Photos
-                                            </Link>
-                                            <Link href="/illustrations" onClick={() => setTypeMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-sm font-medium text-gray-700">
-                                                <PaletteSizeIcon /> Illustrations
-                                            </Link>
-                                            <Link href="/videos" onClick={() => setTypeMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-sm font-medium text-gray-700">
-                                                <VideoSizeIcon /> Vidéos
-                                            </Link>
-                                        </div>
-                                    </div>
-                                )}
+                    {/* Mobile Only: Secondary row for Search Bar */}
+                    <div className="md:hidden pb-4">
+                        <div className={`relative flex items-center bg-gray-100 rounded-full transition-all duration-300 ${isSearchFocused ? 'ring-2 ring-black/5 bg-white shadow-md' : ''}`}>
+                            <div className="pl-4 text-gray-400">
+                                <Search className="w-4 h-4" />
                             </div>
-
                             <input
                                 type="text"
-                                placeholder={`Rechercher des ${currentType.label.toLowerCase()}...`}
-                                className="w-full h-11 pl-3 pr-4 bg-transparent border-none outline-none text-sm font-medium text-gray-800 placeholder-gray-500"
+                                placeholder={`Explorer des ${currentType.label.toLowerCase()}...`}
+                                className="w-full h-10 pl-3 pr-4 bg-transparent border-none outline-none text-sm font-medium text-gray-800 placeholder-gray-500"
                                 onFocus={() => setIsSearchFocused(true)}
                                 onBlur={() => setIsSearchFocused(false)}
                                 onKeyDown={handleSearch}
                             />
-
-                            {/* Search Icon (Right) */}
-                            <div className="hidden sm:flex items-center pr-4 text-gray-400">
-                                <Search className="w-5 h-5" />
-                            </div>
                         </div>
-                    </div>
-
-                    {/* Desktop Actions */}
-                    <div className="hidden md:flex items-center gap-1 shrink-0">
-                        <Link href="/" className="text-sm font-medium text-gray-500 hover:text-black px-4 py-2 rounded-full hover:bg-gray-100 transition-all">
-                            Explorer
-                        </Link>
-                        {user ? (
-                            <>
-                                <Link href="/submit" className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-gray-800 active:scale-95 transition-all shadow-md hover:shadow-lg ml-2">
-                                    Soumettre
-                                </Link>
-                            </>
-                        ) : (
-                            <>
-                                <Link href="/login" className="text-sm font-medium text-gray-500 hover:text-black px-4 py-2 rounded-full hover:bg-gray-100 transition-all">
-                                    Connexion
-                                </Link>
-                                <Link href="/submit" className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-gray-800 active:scale-95 transition-all shadow-md hover:shadow-lg ml-2">
-                                    Soumettre
-                                </Link>
-                            </>
-                        )}
-                    </div>
-
-                    {/* Mobile Right - Profile Avatar/Icon + Menu Toggle */}
-                    <div className="md:hidden flex items-center gap-2">
-                        {/* Profile Avatar/Login Icon */}
-                        {user ? (
-                            <div className="relative" ref={mobileUserMenuRef}>
-                                <button
-                                    onClick={() => setUserMenuOpen(!userMenuOpen)}
-                                    className="p-1 hover:opacity-80 transition-opacity"
-                                >
-                                    <img
-                                        src={profile?.avatar_url || user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`}
-                                        alt="Profile"
-                                        className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
-                                    />
-                                </button>
-
-                                {/* User Dropdown Menu */}
-                                {userMenuOpen && (
-                                    <div className="absolute right-0 top-12 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-70 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-                                        <UserMenu
-                                            user={user}
-                                            onSignOut={handleSignOut}
-                                            onClose={() => setUserMenuOpen(false)}
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <Link
-                                href="/login"
-                                className="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
-                            >
-                                <UserIcon className="w-6 h-6" />
-                            </Link>
-                        )}
-
-                        {/* Hamburger Menu Toggle */}
-                        <button
-                            className="relative z-[60] p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors active:scale-90"
-                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        >
-                            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                        </button>
                     </div>
                 </div>
 
@@ -489,5 +459,37 @@ export default function Navbar() {
                 </>
             )}
         </>
+    );
+}
+
+// Sub-component for Search Dropdown to keep code clean
+function SearchDropdown({ currentType, setTypeMenuOpen, typeMenuOpen, ImageIconSizeIcon, PaletteSizeIcon, VideoSizeIcon }) {
+    return (
+        <div className="relative z-20">
+            <button
+                onClick={() => setTypeMenuOpen(!typeMenuOpen)}
+                className="flex items-center gap-1.5 pl-4 pr-3 h-10 border-r border-gray-300/50 text-gray-600 hover:text-black transition-colors"
+            >
+                {currentType.icon}
+                <ChevronDown size={14} className={`opacity-50 transition-transform ${typeMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {typeMenuOpen && (
+                <div className="absolute top-11 left-0 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="fixed inset-0 z-40" onClick={() => setTypeMenuOpen(false)}></div>
+                    <div className="relative z-50">
+                        <Link href="/" onClick={() => setTypeMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-sm font-medium text-gray-700">
+                            <ImageIconSizeIcon /> Photos
+                        </Link>
+                        <Link href="/illustrations" onClick={() => setTypeMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-sm font-medium text-gray-700">
+                            <PaletteSizeIcon /> Illustrations
+                        </Link>
+                        <Link href="/videos" onClick={() => setTypeMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-sm font-medium text-gray-700">
+                            <VideoSizeIcon /> Vidéos
+                        </Link>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 }

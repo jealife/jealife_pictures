@@ -38,9 +38,16 @@ export default function Hero() {
             {/* Main Content */}
             <div className="relative z-10 w-full max-w-4xl px-6 text-center space-y-8 animate-in slide-in-from-bottom-5 fade-in duration-700">
 
-                <h1 className="text-4xl md:text-6xl font-bold tracking-tight drop-shadow-lg">
-                    JEaLiFe Pictures
-                </h1>
+                <div className="flex flex-col items-center gap-4 mb-6">
+                    <img
+                        src="/JEaLiFe-Pictures-logo-white.png"
+                        alt="Logo"
+                        className="h-12 md:h-16 w-auto object-contain drop-shadow-lg"
+                    />
+                    <h1 className="text-4xl md:text-6xl font-bold tracking-tight drop-shadow-2xl">
+                        JEaLiFe Pictures
+                    </h1>
+                </div>
                 <p className="text-lg md:text-2xl text-white/90 max-w-2xl mx-auto font-medium drop-shadow-md">
                     La source d’images internet. Propulsée par des créateurs du Gabon .
                 </p>

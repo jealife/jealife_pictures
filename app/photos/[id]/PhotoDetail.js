@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Heart, Plus, Download, Share2, MapPin, Calendar, Camera, Eye, ArrowLeft, Loader2, Edit2, Check, Copy, ChevronDown } from "lucide-react";
 import Link from "next/link";
-import { getMediaById, incrementDownloads } from "../../lib/database";
+import { getMediaById, incrementDownloads, incrementViews } from "../../lib/database";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function PhotoDetail() {
@@ -32,6 +32,9 @@ export default function PhotoDetail() {
                             avatar: data.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.profiles?.id}`
                         }
                     });
+
+                    // Increment views count dynamically
+                    incrementViews(id);
                 }
             } catch (err) {
                 console.error("Error fetching photo:", err);
@@ -294,78 +297,109 @@ export default function PhotoDetail() {
                 </div>
             </div>
 
-            <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-8 items-start">
+            <div className="max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
+                <div className="flex flex-col gap-12">
 
-                    <div className="flex flex-col gap-6">
-                        <div className="relative w-full bg-gray-50 rounded-lg flex items-center justify-center min-h-[400px] max-h-[85vh] p-2 sm:p-4">
-                            <img
-                                src={photo.url}
-                                alt={photo.title || "Photo"}
-                                className="max-h-[80vh] w-auto h-auto object-contain shadow-sm rounded-sm"
-                            />
-                        </div>
+                    {/* Image Area - Full Width */}
+                    <div className="w-full flex items-center justify-center min-h-[400px] max-h-[90vh]">
+                        <img
+                            src={photo.url}
+                            alt={photo.title || "Photo"}
+                            className="max-h-[85vh] w-auto h-auto object-contain shadow-2xl rounded-sm"
+                        />
                     </div>
 
-                    <div className="space-y-8">
-                        <div>
-                            <h1 className="text-2xl font-bold text-gray-900 leading-tight mb-4">{photo.title || "Titre de la photo"}</h1>
+                    {/* Information Area - Below Image */}
+                    <div className="max-w-4xl mx-auto w-full space-y-12">
+
+                        {/* Title & Description */}
+                        <div className="text-center sm:text-left">
+                            <h1 className="text-3xl md:text-4xl font-black text-gray-900 leading-tight mb-4">
+                                {photo.title || "Image sans titre"}
+                            </h1>
                             {photo.description && (
-                                <p className="text-gray-500 leading-relaxed font-sans">{photo.description}</p>
+                                <p className="text-lg text-gray-500 leading-relaxed font-normal max-w-2xl">
+                                    {photo.description}
+                                </p>
                             )}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="p-4 rounded-2xl bg-gray-50 border border-transparent hover:border-gray-200 transition-colors">
-                                <div className="flex items-center gap-2 text-gray-500 mb-1">
-                                    <Eye className="w-4 h-4" />
-                                    <span className="text-[10px] font-bold uppercase tracking-wider">Vues</span>
+                        {/* Stats & Detailed Info Row */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 border-t border-gray-100">
+
+                            {/* Left Side: Stats */}
+                            <div className="space-y-8">
+                                <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400">Statistiques</h3>
+                                <div className="grid grid-cols-2 gap-8">
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2 text-gray-400">
+                                            <Eye className="w-4 h-4" />
+                                            <span className="text-[10px] font-bold uppercase tracking-wider">Vues</span>
+                                        </div>
+                                        <p className="text-3xl font-black text-gray-900">{photo.views_count?.toLocaleString() || 0}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2 text-gray-400">
+                                            <Download className="w-4 h-4" />
+                                            <span className="text-[10px] font-bold uppercase tracking-wider">Téléchargements</span>
+                                        </div>
+                                        <p className="text-3xl font-black text-gray-900">{photo.downloads_count?.toLocaleString() || 0}</p>
+                                    </div>
                                 </div>
-                                <p className="text-2xl font-black text-gray-900">{photo.views_count?.toLocaleString() || 0}</p>
                             </div>
-                            <div className="p-4 rounded-2xl bg-gray-50 border border-transparent hover:border-gray-200 transition-colors">
-                                <div className="flex items-center gap-2 text-gray-500 mb-1">
-                                    <Download className="w-4 h-4" />
-                                    <span className="text-[10px] font-bold uppercase tracking-wider">Downloads</span>
+
+                            {/* Right Side: Metadata */}
+                            <div className="space-y-8">
+                                <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400">Détails de l'image</h3>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+                                    {photo.location && (
+                                        <div className="flex items-start gap-3 text-gray-600">
+                                            <MapPin className="w-5 h-5 text-gray-300 mt-0.5" />
+                                            <div className="space-y-0.5">
+                                                <p className="text-[10px] font-bold uppercase text-gray-400">Lieu</p>
+                                                <p className="text-sm font-medium">{photo.location}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div className="flex items-start gap-3 text-gray-600">
+                                        <Calendar className="w-5 h-5 text-gray-300 mt-0.5" />
+                                        <div className="space-y-0.5">
+                                            <p className="text-[10px] font-bold uppercase text-gray-400">Publication</p>
+                                            <p className="text-sm font-medium">{formattedDate}</p>
+                                        </div>
+                                    </div>
+                                    {photo.camera && (
+                                        <div className="flex items-start gap-3 text-gray-600">
+                                            <Camera className="w-5 h-5 text-gray-300 mt-0.5" />
+                                            <div className="space-y-0.5">
+                                                <p className="text-[10px] font-bold uppercase text-gray-400">Appareil</p>
+                                                <p className="text-sm font-medium">{photo.camera}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    <div className="flex items-start gap-3 text-gray-600">
+                                        <div className="w-5 h-5 flex items-center justify-center mt-0.5">
+                                            <Check className="w-4 h-4 text-green-500" />
+                                        </div>
+                                        <div className="space-y-0.5">
+                                            <p className="text-[10px] font-bold uppercase text-gray-400">Licence</p>
+                                            <p className="text-sm font-medium">Libre Usage</p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <p className="text-2xl font-black text-gray-900">{photo.downloads_count?.toLocaleString() || 0}</p>
                             </div>
                         </div>
 
-                        <div className="space-y-4 pt-4 border-t border-gray-100">
-                            {photo.location && (
-                                <div className="flex items-center gap-3 text-gray-600">
-                                    <MapPin className="w-5 h-5 text-gray-400" />
-                                    <span className="text-sm font-medium">{photo.location}</span>
-                                </div>
-                            )}
-                            <div className="flex items-center gap-3 text-gray-600">
-                                <Calendar className="w-5 h-5 text-gray-400" />
-                                <span className="text-sm font-medium">Publiée le {formattedDate}</span>
-                            </div>
-                            {photo.camera && (
-                                <div className="flex items-center gap-3 text-gray-600">
-                                    <Camera className="w-5 h-5 text-gray-400" />
-                                    <span className="text-sm font-medium font-sans">{photo.camera}</span>
-                                </div>
-                            )}
-                            <div className="flex items-center gap-3 text-gray-600">
-                                <div className="w-5 h-5 flex items-center justify-center">
-                                    <Check className="w-4 h-4 text-green-500" />
-                                </div>
-                                <span className="text-sm font-medium">Licence JEaLiFe Libre Usage</span>
-                            </div>
-                        </div>
-
+                        {/* Tags Section */}
                         {photo.tags && photo.tags.length > 0 && (
-                            <div className="space-y-3 pt-6 border-t border-gray-100">
-                                <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400">Mots-clés</h3>
-                                <div className="flex flex-wrap gap-2">
+                            <div className="space-y-4 pt-12 border-t border-gray-100">
+                                <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 text-center sm:text-left">Mots-clés associés</h3>
+                                <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
                                     {photo.tags.map(tag => (
                                         <Link
                                             key={tag}
-                                            href={`/search?q=${tag}`}
-                                            className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-md hover:bg-gray-200 hover:text-black transition-all text-xs font-medium"
+                                            href={`/?q=${tag.toLowerCase()}`}
+                                            className="px-4 py-2 bg-gray-50 text-gray-500 rounded-full hover:bg-gray-100 hover:text-black transition-all text-xs font-semibold border border-gray-100"
                                         >
                                             {tag}
                                         </Link>
