@@ -1,6 +1,7 @@
 "use client";
 
 import PhotoCard from "./PhotoCard";
+import SkeletonCard from "./SkeletonCard";
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getMedia, searchMedia } from "../lib/database";
@@ -55,9 +56,14 @@ export default function MasonryGrid() {
 
     if (loading) {
         return (
-            <div className="max-w-[1400px] mx-auto px-4 py-20">
-                <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+            <div className="max-w-[1400px] mx-auto px-4 py-8">
+                {query && (
+                    <div className="h-8 w-48 bg-gray-100 rounded-md animate-pulse mb-6"></div>
+                )}
+                <div className="columns-1 sm:columns-2 md:columns-3 gap-6 space-y-6">
+                    {[...Array(9)].map((_, i) => (
+                        <SkeletonCard key={i} index={i} />
+                    ))}
                 </div>
             </div>
         );

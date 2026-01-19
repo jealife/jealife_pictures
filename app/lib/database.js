@@ -417,3 +417,18 @@ export async function getUserStats(userId) {
         };
     }
 }
+// Supprimer un média
+export async function deleteMedia(mediaId) {
+    try {
+        const { error } = await supabase
+            .from('media')
+            .delete()
+            .eq('id', mediaId);
+
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error('Error deleting media:', error);
+        return { success: false, error: error.message };
+    }
+}

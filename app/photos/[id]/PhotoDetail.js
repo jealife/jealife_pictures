@@ -112,8 +112,51 @@ export default function PhotoDetail() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-white">
-                <Loader2 className="w-10 h-10 animate-spin text-gray-300" />
+            <div className="min-h-screen bg-white">
+                {/* Header Skeleton */}
+                <div className="sticky top-0 sm:top-16 z-30 bg-white border-b border-gray-100 px-4 h-16 flex items-center justify-between animate-pulse">
+                    <div className="flex items-center gap-4">
+                        <div className="w-8 h-8 bg-gray-100 rounded-full"></div>
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-gray-100 rounded-full"></div>
+                            <div className="space-y-1">
+                                <div className="w-24 h-3 bg-gray-100 rounded"></div>
+                                <div className="w-16 h-2 bg-gray-50 rounded"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex gap-2">
+                        <div className="w-20 h-9 bg-gray-100 rounded-lg"></div>
+                        <div className="w-32 h-9 bg-gray-100 rounded-lg"></div>
+                    </div>
+                </div>
+
+                <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-8">
+                        {/* Image Skeleton */}
+                        <div className="aspect-video bg-gray-100 rounded-2xl animate-pulse"></div>
+
+                        {/* Sidebar Skeleton */}
+                        <div className="space-y-8 animate-pulse">
+                            <div className="space-y-2">
+                                <div className="w-full h-8 bg-gray-100 rounded-lg"></div>
+                                <div className="w-3/4 h-4 bg-gray-50 rounded-lg"></div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="h-24 bg-gray-50 rounded-2xl"></div>
+                                <div className="h-24 bg-gray-50 rounded-2xl"></div>
+                            </div>
+                            <div className="space-y-4 pt-4 border-t border-gray-100">
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className="flex gap-3">
+                                        <div className="w-5 h-5 bg-gray-50 rounded"></div>
+                                        <div className="w-32 h-4 bg-gray-50 rounded"></div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         );
     }

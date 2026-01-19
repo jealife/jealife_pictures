@@ -105,32 +105,32 @@ export default function PhotoCard({ photo }) {
                             >
                                 {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
                             </button>
-
-                            {/* Floating Size Menu */}
-                            {downloadMenuOpen && (
-                                <div className="absolute bottom-12 right-0 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 py-1.5 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
-                                    <div className="px-3 py-2 border-b border-gray-50 mb-1">
-                                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Choisir la taille</p>
-                                    </div>
-                                    {sizes.map((size) => (
-                                        <button
-                                            key={size.key}
-                                            onClick={() => handleDownload(size.key)}
-                                            className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 text-left transition-colors group/item"
-                                        >
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-900 group-hover/item:text-black">{size.label}</p>
-                                                {size.width && <p className="text-[10px] text-gray-400">{size.width} px</p>}
-                                            </div>
-                                            <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover/item:text-gray-900 transition-colors" />
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Floating Size Menu - Moved outside overflow-hidden container */}
+            {downloadMenuOpen && (
+                <div className="absolute bottom-20 right-5 w-48 bg-white rounded-xl shadow-2xl border border-gray-100 py-1.5 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                    <div className="px-3 py-2 border-b border-gray-50 mb-1">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Choisir la taille</p>
+                    </div>
+                    {sizes.map((size) => (
+                        <button
+                            key={size.key}
+                            onClick={() => handleDownload(size.key)}
+                            className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 text-left transition-colors group/item"
+                        >
+                            <div>
+                                <p className="text-sm font-medium text-gray-900 group-hover/item:text-black">{size.label}</p>
+                                {size.width && <p className="text-[10px] text-gray-400">{size.width} px</p>}
+                            </div>
+                            <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover/item:text-gray-900 transition-colors" />
+                        </button>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

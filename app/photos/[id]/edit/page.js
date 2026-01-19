@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "../../../contexts/AuthContext";
-import { getMediaById, updateMedia } from "../../../lib/database";
-import { ArrowLeft, Save, MapPin, Camera, Tag, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { deleteMedia, getMediaById, updateMedia } from "../../../lib/database";
+import { ArrowLeft, Save, MapPin, Camera, Tag, Loader2, CheckCircle2, AlertCircle, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 export default function EditPhotoPage() {
@@ -14,8 +14,10 @@ export default function EditPhotoPage() {
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [status, setStatus] = useState({ type: "", message: "" });
-
+    // ... existing state ...
     const [formData, setFormData] = useState({
         title: "",
         description: "",
@@ -26,75 +28,26 @@ export default function EditPhotoPage() {
     const [newTag, setNewTag] = useState("");
     const [photoUrl, setPhotoUrl] = useState("");
 
-    useEffect(() => {
-        if (!authLoading) {
-            if (!user) {
-                router.push(`/login?redirect=/photos/${id}/edit`);
-                return;
-            }
-            fetchPhoto();
-        }
-    }, [id, user, authLoading]);
+    // ... fetchPhoto and other handlers ...
 
-    const fetchPhoto = async () => {
-        try {
-            setLoading(true);
-            const data = await getMediaById(id);
-            if (data) {
-                // Ensure it's the owner
-                if (data.user_id !== user.id) {
-                    router.push(`/photos/${id}`);
-                    return;
-                }
-                setFormData({
-                    title: data.title || "",
-                    description: data.description || "",
-                    location: data.location || "",
-                    camera: data.camera || "",
-                    tags: data.tags || []
-                });
-                setPhotoUrl(data.url);
-            } else {
-                router.push('/');
-            }
-        } catch (error) {
-            console.error("Error fetching photo for edit:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleAddTag = (e) => {
-        if (e.key === 'Enter' && newTag.trim()) {
-            e.preventDefault();
-            if (!formData.tags.includes(newTag.trim())) {
-                setFormData({ ...formData, tags: [...formData.tags, newTag.trim()] });
-            }
-            setNewTag("");
-        }
-    };
-
-    const removeTag = (tagToRemove) => {
-        setFormData({ ...formData, tags: formData.tags.filter(t => t !== tagToRemove) });
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setSaving(true);
+    const handleDelete = async () => {
+        setDeleting(true);
         setStatus({ type: "", message: "" });
 
-        const result = await updateMedia(id, formData);
+        const result = await deleteMedia(id);
 
         if (result.success) {
-            setStatus({ type: "success", message: "Photo mise à jour avec succès !" });
-            setTimeout(() => router.push(`/photos/${id}`), 1500);
+            setStatus({ type: "success", message: "Photo supprimée avec succès." });
+            setTimeout(() => router.push('/'), 1500);
         } else {
-            setStatus({ type: "error", message: "Erreur lors de la mise à jour." });
-            setSaving(false);
+            setStatus({ type: "error", message: "Erreur lors de la suppression." });
+            setDeleting(false);
+            setShowDeleteConfirm(false);
         }
     };
 
     if (authLoading || loading) {
+        // ... loading state ...
         return (
             <div className="min-h-screen flex items-center justify-center bg-white">
                 <Loader2 className="w-10 h-10 animate-spin text-gray-200" />
@@ -127,107 +80,151 @@ export default function EditPhotoPage() {
                     </div>
 
                     {/* Edit Form */}
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="space-y-12">
+                        <form onSubmit={handleSubmit} className="space-y-6">
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-gray-900">Titre de la photo</label>
-                            <input
-                                type="text"
-                                value={formData.title}
-                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black focus:ring-1 focus:ring-black outline-hidden transition-all"
-                                placeholder="Donnez un titre accrocheur..."
-                                required
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-gray-900">Description</label>
-                            <textarea
-                                rows={4}
-                                value={formData.description}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black focus:ring-1 focus:ring-black outline-hidden transition-all resize-none"
-                                placeholder="Racontez l'histoire de cette photo..."
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                                    <MapPin className="w-4 h-4" /> Lieu
-                                </label>
+                                <label className="text-sm font-bold text-gray-900">Titre de la photo</label>
                                 <input
                                     type="text"
-                                    value={formData.location}
-                                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                    value={formData.title}
+                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black focus:ring-1 focus:ring-black outline-hidden transition-all"
-                                    placeholder="Libreville, Gabon..."
+                                    placeholder="Donnez un titre accrocheur..."
+                                    required
                                 />
                             </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-gray-900">Description</label>
+                                <textarea
+                                    rows={4}
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black focus:ring-1 focus:ring-black outline-hidden transition-all resize-none"
+                                    placeholder="Racontez l'histoire de cette photo..."
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                        <MapPin className="w-4 h-4" /> Lieu
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.location}
+                                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black focus:ring-1 focus:ring-black outline-hidden transition-all"
+                                        placeholder="Libreville, Gabon..."
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                        <Camera className="w-4 h-4" /> Matériel / EXIF
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={formData.camera}
+                                        onChange={(e) => setFormData({ ...formData, camera: e.target.value })}
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black focus:ring-1 focus:ring-black outline-hidden transition-all"
+                                        placeholder="Sony A7III, 85mm f1.8..."
+                                    />
+                                </div>
+                            </div>
+
                             <div className="space-y-2">
                                 <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                                    <Camera className="w-4 h-4" /> Matériel / EXIF
+                                    <Tag className="w-4 h-4" /> Mots-clés (Entrée pour ajouter)
                                 </label>
+                                <div className="flex flex-wrap gap-2 mb-2">
+                                    {formData.tags.map(tag => (
+                                        <span key={tag} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium animate-in fade-in zoom-in-95 duration-200">
+                                            {tag}
+                                            <button type="button" onClick={() => removeTag(tag)} className="hover:text-red-500 transition-colors">
+                                                <Plus className="w-4 h-4 rotate-45" />
+                                            </button>
+                                        </span>
+                                    ))}
+                                </div>
                                 <input
                                     type="text"
-                                    value={formData.camera}
-                                    onChange={(e) => setFormData({ ...formData, camera: e.target.value })}
+                                    value={newTag}
+                                    onChange={(e) => setNewTag(e.target.value)}
+                                    onKeyDown={handleAddTag}
                                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black focus:ring-1 focus:ring-black outline-hidden transition-all"
-                                    placeholder="Sony A7III, 85mm f1.8..."
+                                    placeholder="Ajoutez un mot-clé..."
                                 />
                             </div>
-                        </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
-                                <Tag className="w-4 h-4" /> Mots-clés (Entrée pour ajouter)
-                            </label>
-                            <div className="flex flex-wrap gap-2 mb-2">
-                                {formData.tags.map(tag => (
-                                    <span key={tag} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium animate-in fade-in zoom-in-95 duration-200">
-                                        {tag}
-                                        <button type="button" onClick={() => removeTag(tag)} className="hover:text-red-500 transition-colors">
-                                            <Plus className="w-4 h-4 rotate-45" />
-                                        </button>
-                                    </span>
-                                ))}
+                            {status.message && (
+                                <div className={`p-4 rounded-xl flex items-center gap-3 text-sm animate-in slide-in-from-top-2 duration-300 ${status.type === 'success' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>
+                                    {status.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                                    {status.message}
+                                </div>
+                            )}
+
+                            <div className="pt-4 flex gap-4">
+                                <button
+                                    type="submit"
+                                    disabled={saving}
+                                    className="flex-1 py-4 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-all shadow-lg active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+                                >
+                                    {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                                    Enregistrer les modifications
+                                </button>
+                                <Link
+                                    href={`/photos/${id}`}
+                                    className="px-8 py-4 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-all active:scale-95"
+                                >
+                                    Annuler
+                                </Link>
                             </div>
-                            <input
-                                type="text"
-                                value={newTag}
-                                onChange={(e) => setNewTag(e.target.value)}
-                                onKeyDown={handleAddTag}
-                                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black focus:ring-1 focus:ring-black outline-hidden transition-all"
-                                placeholder="Ajoutez un mot-clé..."
-                            />
-                        </div>
+                        </form>
 
-                        {status.message && (
-                            <div className={`p-4 rounded-xl flex items-center gap-3 text-sm animate-in slide-in-from-top-2 duration-300 ${status.type === 'success' ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'}`}>
-                                {status.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
-                                {status.message}
+                        {/* Delete Section */}
+                        <div className="pt-12 border-t border-red-100">
+                            <div className="bg-red-50/30 rounded-2xl border border-red-100 p-8">
+                                <h3 className="text-lg font-bold text-red-900 mb-2">Supprimer l'image</h3>
+                                <p className="text-sm text-red-700/80 mb-6 leading-relaxed">
+                                    Lorsqu'une image est supprimée de JEaLiFe Pictures, nous faisons tout notre possible pour empêcher sa diffusion.
+                                    Néanmoins, la licence JEaLiFe est irrévocable, les copies de l'image qui ont été téléchargées avant la suppression peuvent donc toujours être utilisées.
+                                </p>
+
+                                {!showDeleteConfirm ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowDeleteConfirm(true)}
+                                        className="text-red-600 font-bold text-sm hover:underline flex items-center gap-2"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                        J'aimerais supprimer cette image
+                                    </button>
+                                ) : (
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                                        <p className="text-sm font-bold text-red-600">Êtes-vous absolument sûr ? Cette action est irréversible.</p>
+                                        <div className="flex gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={handleDelete}
+                                                disabled={deleting}
+                                                className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-bold hover:bg-red-700 transition-all active:scale-95 disabled:opacity-50"
+                                            >
+                                                {deleting ? "Suppression..." : "Confirmer la suppression"}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowDeleteConfirm(false)}
+                                                className="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-bold hover:bg-gray-200 transition-all active:scale-95"
+                                            >
+                                                Annuler
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                        )}
-
-                        <div className="pt-4 flex gap-4">
-                            <button
-                                type="submit"
-                                disabled={saving}
-                                className="flex-1 py-4 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-all shadow-lg active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
-                            >
-                                {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                                Enregistrer les modifications
-                            </button>
-                            <Link
-                                href={`/photos/${id}`}
-                                className="px-8 py-4 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-all active:scale-95"
-                            >
-                                Annuler
-                            </Link>
                         </div>
-
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
