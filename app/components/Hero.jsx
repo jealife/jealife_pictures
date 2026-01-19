@@ -3,9 +3,18 @@
 
 import { Search, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { AUTH_IMAGES } from "../lib/auth-images";
 
 export default function Hero() {
     const router = useRouter();
+    const [backgroundImage, setBackgroundImage] = useState(AUTH_IMAGES[0]);
+
+    useEffect(() => {
+        // Sélectionner une image aléatoire au montage pour varier l'expérience
+        const randomIndex = Math.floor(Math.random() * AUTH_IMAGES.length);
+        setBackgroundImage(AUTH_IMAGES[randomIndex]);
+    }, []);
 
     const handleSearch = (e) => {
         if (e.key === 'Enter') {
@@ -14,15 +23,15 @@ export default function Hero() {
     };
 
     return (
-        <div className="relative h-[60vh] min-h-[500px] w-full flex flex-col items-center justify-center text-white mb-8 overflow-hidden">
+        <div className="relative h-[65vh] min-h-[500px] w-full flex flex-col items-center justify-center text-white mb-8 overflow-hidden">
             {/* Immersive Background */}
             <div className="absolute inset-0 z-0">
                 <img
-                    src="https://images.unsplash.com/photo-1496317556649-f930d733eea3?q=80&w=2400"
+                    src={backgroundImage.url}
                     alt="Hero Background"
                     className="w-full h-full object-cover animate-in fade-in zoom-in duration-1000 scale-105"
                 />
-                <div className="absolute inset-0 bg-black/40"></div>
+                <div className="absolute inset-0 bg-black/30"></div>
                 <div className="absolute inset-0 bg-linear-to-b from-black/50 via-transparent to-black/60"></div>
             </div>
 
@@ -67,9 +76,14 @@ export default function Hero() {
             {/* Footer Credit */}
             <div className="absolute bottom-6 left-6 text-xs text-white/70 z-10 hidden md:flex items-center gap-2">
                 <span>Photo par</span>
-                <a href="#" className="text-white hover:underline font-medium">Jean N.</a>
-                <span className="opacity-50">•</span>
-                <span>Libreville, Gabon</span>
+                <a
+                    href={backgroundImage.photographer_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white hover:underline font-medium"
+                >
+                    {backgroundImage.photographer}
+                </a>
             </div>
         </div>
     );
