@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 import { incrementDownloads } from "../lib/database";
 
-export default function PhotoCard({ photo }) {
+export default function PhotoCard({ photo, hideActions = false }) {
     const [downloadMenuOpen, setDownloadMenuOpen] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
     const menuRef = useRef(null);
@@ -68,49 +68,55 @@ export default function PhotoCard({ photo }) {
                 </Link>
 
                 {/* Gradient Overlay */}
-                <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/0 to-black/30 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                {!hideActions && (
+                    <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/0 to-black/30 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                )}
 
                 {/* Top Actions */}
-                <div className="absolute top-4 right-4 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 translate-y-0 md:translate-y-2 md:group-hover:translate-y-0 z-20">
-                    <button className="bg-white/20 backdrop-blur-md hover:bg-white text-white hover:text-red-500 p-2.5 rounded-full transition-all active:scale-95 border border-white/10" title="J'aime">
-                        <Heart className="w-5 h-5 transition-transform active:scale-125" />
-                    </button>
-                    <button className="bg-white/20 backdrop-blur-md hover:bg-white text-white hover:text-black p-2.5 rounded-full transition-all active:scale-95 border border-white/10" title="Ajouter">
-                        <Plus className="w-5 h-5" />
-                    </button>
-                </div>
+                {!hideActions && (
+                    <div className="absolute top-4 right-4 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 translate-y-0 md:translate-y-2 md:group-hover:translate-y-0 z-20">
+                        <button className="bg-white/20 backdrop-blur-md hover:bg-white text-white hover:text-red-500 p-2.5 rounded-full transition-all active:scale-95 border border-white/10" title="J'aime">
+                            <Heart className="w-5 h-5 transition-transform active:scale-125" />
+                        </button>
+                        <button className="bg-white/20 backdrop-blur-md hover:bg-white text-white hover:text-black p-2.5 rounded-full transition-all active:scale-95 border border-white/10" title="Ajouter">
+                            <Plus className="w-5 h-5" />
+                        </button>
+                    </div>
+                )}
 
                 {/* Bottom Info */}
-                <div className="absolute bottom-0 left-0 right-0 p-5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 translate-y-0 md:translate-y-2 md:group-hover:translate-y-0 z-20">
-                    <div className="flex items-center justify-between">
-                        <Link href={`/users/${photo.author.username}`} className="flex items-center gap-3 group/author">
-                            <Image
-                                src={photo.author.avatar}
-                                alt={photo.author.name}
-                                width={36}
-                                height={36}
-                                className="w-9 h-9 rounded-full border-2 border-white/20 object-cover shadow-sm group-hover/author:border-white transition-colors"
-                            />
-                            <div className="drop-shadow-md">
-                                <p className="text-white font-medium text-sm leading-tight">{photo.author.name}</p>
-                                {photo.location && (
-                                    <p className="text-[10px] text-white/80 mt-0.5 font-light truncate max-w-[120px]">{photo.location}</p>
-                                )}
-                            </div>
-                        </Link>
+                {!hideActions && (
+                    <div className="absolute bottom-0 left-0 right-0 p-5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 translate-y-0 md:translate-y-2 md:group-hover:translate-y-0 z-20">
+                        <div className="flex items-center justify-between">
+                            <Link href={`/users/${photo.author.username}`} className="flex items-center gap-3 group/author">
+                                <Image
+                                    src={photo.author.avatar}
+                                    alt={photo.author.name}
+                                    width={36}
+                                    height={36}
+                                    className="w-9 h-9 rounded-full border-2 border-white/20 object-cover shadow-sm group-hover/author:border-white transition-colors"
+                                />
+                                <div className="drop-shadow-md">
+                                    <p className="text-white font-medium text-sm leading-tight">{photo.author.name}</p>
+                                    {photo.location && (
+                                        <p className="text-[10px] text-white/80 mt-0.5 font-light truncate max-w-[120px]">{photo.location}</p>
+                                    )}
+                                </div>
+                            </Link>
 
-                        <div className="relative">
-                            <button
-                                onClick={() => setDownloadMenuOpen(!downloadMenuOpen)}
-                                disabled={isDownloading}
-                                className={`bg-white hover:bg-gray-100 text-gray-900 p-2.5 rounded-full transition-all shadow-lg active:scale-95 flex items-center justify-center ${downloadMenuOpen ? 'ring-4 ring-black/10' : ''}`}
-                                title="Télécharger"
-                            >
-                                {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                            </button>
+                            <div className="relative">
+                                <button
+                                    onClick={() => setDownloadMenuOpen(!downloadMenuOpen)}
+                                    disabled={isDownloading}
+                                    className={`bg-white hover:bg-gray-100 text-gray-900 p-2.5 rounded-full transition-all shadow-lg active:scale-95 flex items-center justify-center ${downloadMenuOpen ? 'ring-4 ring-black/10' : ''}`}
+                                    title="Télécharger"
+                                >
+                                    {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
             </div>
 
             {/* Floating Size Menu - Moved outside overflow-hidden container */}

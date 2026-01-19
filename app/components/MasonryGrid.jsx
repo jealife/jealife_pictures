@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getMedia, searchMedia } from "../lib/database";
 
-export default function MasonryGrid({ searchQuery: propQuery = null }) {
+export default function MasonryGrid({ searchQuery: propQuery = null, mobileColumns = null, hideActions = false }) {
     const searchParams = useSearchParams();
     const query = (propQuery || searchParams.get("q"))?.toLowerCase();
     const [photos, setPhotos] = useState([]);
@@ -18,7 +18,7 @@ export default function MasonryGrid({ searchQuery: propQuery = null }) {
     useEffect(() => {
         const updateColumns = () => {
             const width = window.innerWidth;
-            if (width < 640) setColumnCount(1);
+            if (width < 640) setColumnCount(mobileColumns || 1);
             else if (width < 1024) setColumnCount(2);
             else if (width < 1280) setColumnCount(3);
             else setColumnCount(4);
@@ -120,7 +120,7 @@ export default function MasonryGrid({ searchQuery: propQuery = null }) {
                 {columns.map((columnPhotos, colIndex) => (
                     <div key={colIndex} className="flex-1 flex flex-col gap-6">
                         {columnPhotos.map((photo) => (
-                            <PhotoCard key={photo.id} photo={photo} />
+                            <PhotoCard key={photo.id} photo={photo} hideActions={hideActions} />
                         ))}
                     </div>
                 ))}
