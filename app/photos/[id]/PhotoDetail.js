@@ -2,9 +2,9 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Heart, Plus, Download, Share2, MapPin, Calendar, Camera, Eye, ArrowLeft, Loader2, Edit2, Check, Copy } from "lucide-react";
+import { Heart, Plus, Download, Share2, MapPin, Calendar, Camera, Eye, ArrowLeft, Loader2, Edit2, Check, Copy, ChevronDown } from "lucide-react";
 import Link from "next/link";
-import { getMediaById } from "../../lib/database";
+import { getMediaById, incrementDownloads } from "../../lib/database";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function PhotoDetail() {
@@ -15,27 +15,78 @@ export default function PhotoDetail() {
     const [loading, setLoading] = useState(true);
     const [showShareModal, setShowShareModal] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [downloadMenuOpen, setDownloadMenuOpen] = useState(false);
+    const [isDownloading, setIsDownloading] = useState(false);
 
     useEffect(() => {
         async function fetchPhoto() {
             setLoading(true);
-            const data = await getMediaById(id);
-            if (data) {
-                setPhoto({
-                    ...data,
-                    author: {
-                        name: data.profiles?.full_name || data.profiles?.username || 'Anonyme',
-                        username: data.profiles?.username || 'unknown',
-                        avatar: data.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.profiles?.id}`
-                    }
-                });
+            try {
+                const data = await getMediaById(id);
+                if (data) {
+                    setPhoto({
+                        ...data,
+                        author: {
+                            name: data.profiles?.full_name || data.profiles?.username || 'Anonyme',
+                            username: data.profiles?.username || 'unknown',
+                            avatar: data.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.profiles?.id}`
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error("Error fetching photo:", err);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         }
         fetchPhoto();
     }, [id]);
 
+    const handleDownload = async (size = 'original') => {
+        if (!photo) return;
+        setIsDownloading(true);
+        setDownloadMenuOpen(false);
+
+        try {
+            // Logique de téléchargement
+            let downloadUrl = photo.url;
+            const filename = `jealife-${photo.title?.toLowerCase().replace(/\s+/g, '-') || 'photo'}-${size}.jpg`;
+
+            // Si on avait une API de redimensionnement, on l'utiliserait ici
+            // Pour l'instant on télécharge l'original, mais on prépare la structure
+
+            const response = await fetch(downloadUrl);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            // Incrémenter les stats
+            await incrementDownloads(photo.id);
+
+            // Mettre à jour l'UI locale
+            setPhoto(prev => ({ ...prev, downloads_count: (prev.downloads_count || 0) + 1 }));
+        } catch (err) {
+            console.error("Download failed:", err);
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
+    const downloadSizes = [
+        { label: 'Petit', width: 640, key: 'small' },
+        { label: 'Moyen', width: 1920, key: 'medium' },
+        { label: 'Grand', width: 2400, key: 'large' },
+        { label: 'Format original', width: null, key: 'original' }
+    ];
+
     const handleShare = async () => {
+        // ... (share logic remains same)
         const shareData = {
             title: photo.title || 'Photo sur JEaLiFe Pictures',
             text: photo.description || 'Découvrez cette superbe photo sur JEaLiFe Pictures',
@@ -142,19 +193,61 @@ export default function PhotoDetail() {
                             <span className="hidden sm:inline">Modifier</span>
                         </Link>
                     )}
-                    <button
-                        onClick={handleShare}
-                        className="p-2 text-gray-500 hover:text-black hover:bg-gray-100 rounded-lg transition-all"
-                        title="Partager"
-                    >
-                        <Share2 className="w-5 h-5" />
-                    </button>
-                    <button className="hidden sm:flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:text-black hover:border-black transition-all">
-                        <Heart className="w-4 h-4" />
-                    </button>
-                    <button className="px-5 py-2 bg-green-600 text-white rounded-lg font-bold text-sm hover:bg-green-700 transition-all shadow-sm flex items-center gap-2">
-                        Download
-                    </button>
+                    <div className="flex items-center gap-2 mr-2">
+                        <button
+                            onClick={handleShare}
+                            className="p-2 text-gray-500 hover:text-black hover:bg-gray-100 rounded-lg transition-all"
+                            title="Partager"
+                        >
+                            <Share2 className="w-5 h-5" />
+                        </button>
+                        <button className="hidden sm:flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:text-black hover:border-black transition-all">
+                            <Heart className="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    <div className="relative flex items-center">
+                        <button
+                            onClick={() => handleDownload('original')}
+                            disabled={isDownloading}
+                            className="h-10 px-5 bg-green-600 text-white rounded-l-lg font-bold text-sm hover:bg-green-700 transition-all shadow-sm flex items-center gap-2 disabled:opacity-70"
+                        >
+                            {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Télécharger"}
+                        </button>
+                        <div className="h-10 w-[1px] bg-green-700/30"></div>
+                        <button
+                            onClick={() => setDownloadMenuOpen(!downloadMenuOpen)}
+                            className="h-10 px-2 bg-green-600 text-white rounded-r-lg hover:bg-green-700 transition-all shadow-sm flex items-center"
+                        >
+                            <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${downloadMenuOpen ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {/* Download Dropdown */}
+                        {downloadMenuOpen && (
+                            <div className="absolute right-0 top-12 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                                <div className="p-2">
+                                    {downloadSizes.map((size) => (
+                                        <button
+                                            key={size.key}
+                                            onClick={() => handleDownload(size.key)}
+                                            className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 rounded-lg transition-colors group"
+                                        >
+                                            <div className="text-left">
+                                                <p className="text-sm font-semibold text-gray-900 group-hover:text-black">{size.label}</p>
+                                                {size.width && <p className="text-[10px] text-gray-400">{size.width} px</p>}
+                                            </div>
+                                            <Download className="w-4 h-4 text-gray-300 group-hover:text-green-600 transition-colors" />
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="p-4 bg-gray-50 border-t border-gray-100">
+                                    <p className="text-[10px] text-gray-400 italic leading-tight">
+                                        Toutes les photos sur JEaLiFe Pictures sont gratuites et sous licence libre.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -265,24 +358,39 @@ export default function PhotoDetail() {
                             </div>
 
                             <div className="grid grid-cols-3 gap-2">
-                                <button className="flex flex-col items-center gap-2 p-3 hover:bg-gray-50 rounded-xl transition-colors">
+                                <a
+                                    href={`https://wa.me/?text=${encodeURIComponent(`${photo.title || 'Photo'} sur JEaLiFe Pictures: ${typeof window !== 'undefined' ? window.location.href : ''}`)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex flex-col items-center gap-2 p-3 hover:bg-gray-50 rounded-xl transition-colors text-center"
+                                >
                                     <div className="w-10 h-10 bg-[#25D366] text-white rounded-full flex items-center justify-center">
                                         <Share2 className="w-5 h-5" />
                                     </div>
                                     <span className="text-xs font-medium">WhatsApp</span>
-                                </button>
-                                <button className="flex flex-col items-center gap-2 p-3 hover:bg-gray-50 rounded-xl transition-colors">
+                                </a>
+                                <a
+                                    href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex flex-col items-center gap-2 p-3 hover:bg-gray-50 rounded-xl transition-colors text-center"
+                                >
                                     <div className="w-10 h-10 bg-[#1877F2] text-white rounded-full flex items-center justify-center">
                                         <Share2 className="w-5 h-5" />
                                     </div>
                                     <span className="text-xs font-medium">Facebook</span>
-                                </button>
-                                <button className="flex flex-col items-center gap-2 p-3 hover:bg-gray-50 rounded-xl transition-colors">
+                                </a>
+                                <a
+                                    href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}&text=${encodeURIComponent(photo.title || 'Belle photo sur JEaLiFe Pictures')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex flex-col items-center gap-2 p-3 hover:bg-gray-50 rounded-xl transition-colors text-center"
+                                >
                                     <div className="w-10 h-10 bg-gray-900 text-white rounded-full flex items-center justify-center">
                                         <Share2 className="w-5 h-5" />
                                     </div>
                                     <span className="text-xs font-medium">Twitter</span>
-                                </button>
+                                </a>
                             </div>
                         </div>
                     </div>
