@@ -31,7 +31,7 @@ export const metadata = {
     description: "Découvrez des milliers de photos haute résolution gratuites partagées par une communauté talentueuse.",
     images: [
       {
-        url: "/og-image.jpg", // Need to ensure this exists or use a placeholder
+        url: "https://images.unsplash.com/photo-1759082927410-1d1856152b50?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         width: 1200,
         height: 630,
         alt: "JEaLiFe Pictures",
@@ -42,7 +42,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "JEaLiFe Pictures",
     description: "Belles images gratuites et photos haute résolution.",
-    images: ["/og-image.jpg"],
+    images: ["https://images.unsplash.com/photo-1759082927410-1d1856152b50?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"],
   },
   robots: {
     index: true,
@@ -53,7 +53,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="fr">
-      <Analytics/>
+      <Analytics />
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
