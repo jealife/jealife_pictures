@@ -1,0 +1,46 @@
+import { getMediaById } from "../../lib/database";
+import PhotoDetail from "./PhotoDetail";
+
+export async function generateMetadata({ params }) {
+    const { id } = await params;
+    const photo = await getMediaById(id);
+
+    if (!photo) {
+        return {
+            title: "Photo non trouvée | JEaLiFe Pictures",
+        };
+    }
+
+    const title = `${photo.title || "Photo"} par ${photo.profiles?.full_name || photo.profiles?.username} | JEaLiFe Pictures`;
+    const description = photo.description || `Découvrez cette superbe photo de ${photo.profiles?.full_name} sur JEaLiFe Pictures. Téléchargement gratuit en haute résolution.`;
+    const author = photo.profiles?.full_name || photo.profiles?.username;
+
+    return {
+        title: title,
+        description: description,
+        keywords: [author, ...(photo.tags || []), "photo gratuite", "JEaLiFe", "Gabon"],
+        openGraph: {
+            title: title,
+            description: description,
+            images: [
+                {
+                    url: photo.url,
+                    width: 1200,
+                    height: 630,
+                    alt: photo.title || "Photo",
+                },
+            ],
+            type: "website",
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: title,
+            description: description,
+            images: [photo.url],
+        },
+    };
+}
+
+export default function Page() {
+    return <PhotoDetail />;
+}
