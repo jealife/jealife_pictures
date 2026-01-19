@@ -176,16 +176,6 @@ export default function Navbar() {
                     </Link>
 
                     <div className="w-8 h-px bg-gray-100"></div>
-
-                    <Link href="/" title="Explorer" className="p-2 rounded-lg text-gray-400 hover:text-black hover:bg-gray-50 transition-colors">
-                        <Compass size={24} />
-                    </Link>
-                    <Link href="#" title="Collections" className="p-2 rounded-lg text-gray-400 hover:text-black hover:bg-gray-50 transition-colors">
-                        <Building2 size={24} />
-                    </Link>
-                    <Link href="/history" title="Historique" className="p-2 rounded-lg text-gray-400 hover:text-black hover:bg-gray-50 transition-colors">
-                        <RotateCcw size={24} />
-                    </Link>
                 </div>
 
                 {/* Spacer */}

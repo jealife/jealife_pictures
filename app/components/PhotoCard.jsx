@@ -2,6 +2,7 @@
 
 import { Download, Heart, Plus, Loader2, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useRef, useEffect } from "react";
 import { incrementDownloads } from "../lib/database";
 
@@ -83,9 +84,11 @@ export default function PhotoCard({ photo }) {
                 <div className="absolute bottom-0 left-0 right-0 p-5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 translate-y-0 md:translate-y-2 md:group-hover:translate-y-0 z-20">
                     <div className="flex items-center justify-between">
                         <Link href={`/users/${photo.author.username}`} className="flex items-center gap-3 group/author">
-                            <img
+                            <Image
                                 src={photo.author.avatar}
                                 alt={photo.author.name}
+                                width={36}
+                                height={36}
                                 className="w-9 h-9 rounded-full border-2 border-white/20 object-cover shadow-sm group-hover/author:border-white transition-colors"
                             />
                             <div className="drop-shadow-md">

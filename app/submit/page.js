@@ -7,7 +7,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
 import ExifReader from 'exifreader';
 import { upsertProfile } from "../lib/auth";
-import { syncTopics } from "../lib/database";
+import { syncTopics, getTopics } from "../lib/database";
 
 export default function SubmitPage() {
     const router = useRouter();
@@ -34,6 +34,7 @@ export default function SubmitPage() {
     const [tagSuggestions, setTagSuggestions] = useState([]);
     const [showLocationDeps, setShowLocationDeps] = useState(false);
     const [showTagDeps, setShowTagDeps] = useState(false);
+    const [dbTopics, setDbTopics] = useState([]);
 
     const fileInputRef = useRef(null);
     const popularTags = ["Gabon", "Libreville", "Nature", "Voyage", "Afrique", "Portrait", "Paysage", "Forêt", "Océan Atlanique", "Culture", "Architecture", "Animaux", "Couchers de soleil", "Plage", "Street Photography"];
@@ -42,6 +43,15 @@ export default function SubmitPage() {
         if (!loading && !user) {
             router.push('/login?redirect=/submit');
         }
+
+        // Charger les topics de la DB pour les suggestions
+        async function loadTopics() {
+            const data = await getTopics();
+            if (data) {
+                setDbTopics(data.map(t => t.name));
+            }
+        }
+        loadTopics();
     }, [user, loading, router]);
 
     // Fetch Location Suggestions (Photon API)
@@ -71,14 +81,14 @@ export default function SubmitPage() {
     // Tag Suggestions Logic
     useEffect(() => {
         if (tagsInput.trim().length > 0) {
-            const filtered = popularTags.filter(t =>
-                t.toLowerCase().startsWith(tagsInput.toLowerCase()) && !tags.includes(t)
+            const filtered = dbTopics.filter(t =>
+                t.toLowerCase().includes(tagsInput.toLowerCase()) && !tags.includes(t)
             );
-            setTagSuggestions(filtered.slice(0, 5));
+            setTagSuggestions(filtered.slice(0, 8));
         } else {
             setTagSuggestions([]);
         }
-    }, [tagsInput, tags]);
+    }, [tagsInput, tags, dbTopics]);
 
     const handleFileSelect = async (files) => {
         const selectedFile = files?.[0];

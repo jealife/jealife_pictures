@@ -436,10 +436,20 @@ export async function deleteMedia(mediaId) {
 export async function syncTopics(mediaId, tags) {
     if (!tags || tags.length === 0) return { success: true };
 
+    // Helper pour mettre la première lettre en majuscule
+    const capitalize = (str) => {
+        if (!str) return "";
+        const clean = str.trim();
+        return clean.charAt(0).toUpperCase() + clean.slice(1).toLowerCase();
+    };
+
     try {
-        // 1. Préparer les slugs
-        const tagSlugs = tags.map(tag => {
-            return tag.trim().toLowerCase()
+        // 1. Nettoyer et dédoublonner les tags (Proper Case)
+        const normalizedTags = [...new Set(tags.map(tag => capitalize(tag)))].filter(t => t.length > 0);
+
+        // 2. Préparer les slugs
+        const tagSlugs = normalizedTags.map(tag => {
+            return tag.toLowerCase()
                 .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
                 .replace(/\s+/g, '-')
                 .replace(/[^\w-]+/g, '');
@@ -447,7 +457,7 @@ export async function syncTopics(mediaId, tags) {
 
         if (tagSlugs.length === 0) return { success: true };
 
-        // 2. Récupérer les topics existants
+        // 3. Récupérer les topics existants
         const { data: existingTopics, error: fetchError } = await supabase
             .from('topics')
             .select('id, slug')
@@ -456,21 +466,23 @@ export async function syncTopics(mediaId, tags) {
         if (fetchError) throw fetchError;
 
         const existingSlugs = existingTopics?.map(t => t.slug) || [];
-        const missingTags = tags.filter(tag => {
-            const slug = tag.trim().toLowerCase()
+
+        // 4. Identifier les topics manquants
+        const missingTags = normalizedTags.filter(tag => {
+            const slug = tag.toLowerCase()
                 .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
                 .replace(/\s+/g, '-')
                 .replace(/[^\w-]+/g, '');
             return !existingSlugs.includes(slug);
         });
 
-        // 3. Insérer les topics manquants
+        // 5. Insérer les topics manquants
         let allTopics = [...(existingTopics || [])];
 
         if (missingTags.length > 0) {
             const newTopicsData = missingTags.map(tag => ({
-                name: tag.trim(),
-                slug: tag.trim().toLowerCase()
+                name: tag,
+                slug: tag.toLowerCase()
                     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
                     .replace(/\s+/g, '-')
                     .replace(/[^\w-]+/g, '')
@@ -483,13 +495,12 @@ export async function syncTopics(mediaId, tags) {
 
             if (insertError) {
                 console.error('Error inserting new topics:', insertError);
-                // On continue quand même avec les topics existants si l'insertion échoue
             } else if (insertedTopics) {
                 allTopics = [...allTopics, ...insertedTopics];
             }
         }
 
-        // 4. Créer les liens dans media_topics
+        // 6. Créer les liens dans media_topics
         if (allTopics.length > 0 && mediaId) {
             const mediaTopicLinks = allTopics.map(topic => ({
                 media_id: mediaId,
@@ -513,7 +524,6 @@ export async function syncTopics(mediaId, tags) {
         return { success: true };
     } catch (error) {
         console.error('Full Error syncing topics:', JSON.stringify(error, null, 2));
-        console.error('Error message:', error.message || error.details || 'Unknown error');
         return { success: false, error: error.message };
     }
 }

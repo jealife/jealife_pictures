@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Heart, Plus, Download, Share2, MapPin, Calendar, Camera, Eye, ArrowLeft, Loader2, Edit2, Check, Copy, ChevronDown } from "lucide-react";
 import Link from "next/link";
+import MasonryGrid from "../../components/MasonryGrid";
 import { getMediaById, incrementDownloads, incrementViews } from "../../lib/database";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -19,6 +20,8 @@ export default function PhotoDetail() {
     const [isDownloading, setIsDownloading] = useState(false);
 
     useEffect(() => {
+        window.scrollTo(0, 0);
+
         async function fetchPhoto() {
             setLoading(true);
             try {
@@ -239,7 +242,7 @@ export default function PhotoDetail() {
                             <span className="hidden sm:inline">Modifier</span>
                         </Link>
                     )}
-                    <div className="flex items-center gap-2 mr-2">
+                    <div className="flex items-center gap-2">
                         <button
                             onClick={handleShare}
                             className="p-2 text-gray-500 hover:text-black hover:bg-gray-100 rounded-lg transition-all"
@@ -247,159 +250,148 @@ export default function PhotoDetail() {
                         >
                             <Share2 className="w-5 h-5" />
                         </button>
-                        <button className="hidden sm:flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:text-black hover:border-black transition-all">
+                        <button className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:text-black hover:border-black transition-all">
                             <Heart className="w-4 h-4" />
                         </button>
-                    </div>
-
-                    <div className="relative flex items-center">
-                        <button
-                            onClick={() => handleDownload('original')}
-                            disabled={isDownloading}
-                            className="h-10 px-5 bg-green-600 text-white rounded-l-lg font-bold text-sm hover:bg-green-700 transition-all shadow-sm flex items-center gap-2 disabled:opacity-70"
-                        >
-                            {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Télécharger"}
-                        </button>
-                        <div className="h-10 w-[1px] bg-green-700/30"></div>
-                        <button
-                            onClick={() => setDownloadMenuOpen(!downloadMenuOpen)}
-                            className="h-10 px-2 bg-green-600 text-white rounded-r-lg hover:bg-green-700 transition-all shadow-sm flex items-center"
-                        >
-                            <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${downloadMenuOpen ? 'rotate-180' : ''}`} />
-                        </button>
-
-                        {/* Download Dropdown */}
-                        {downloadMenuOpen && (
-                            <div className="absolute right-0 top-12 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-                                <div className="p-2">
-                                    {downloadSizes.map((size) => (
-                                        <button
-                                            key={size.key}
-                                            onClick={() => handleDownload(size.key)}
-                                            className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 rounded-lg transition-colors group"
-                                        >
-                                            <div className="text-left">
-                                                <p className="text-sm font-semibold text-gray-900 group-hover:text-black">{size.label}</p>
-                                                {size.width && <p className="text-[10px] text-gray-400">{size.width} px</p>}
-                                            </div>
-                                            <Download className="w-4 h-4 text-gray-300 group-hover:text-green-600 transition-colors" />
-                                        </button>
-                                    ))}
-                                </div>
-                                <div className="p-4 bg-gray-50 border-t border-gray-100">
-                                    <p className="text-[10px] text-gray-400 italic leading-tight">
-                                        Toutes les photos sur JEaLiFe Pictures sont gratuites et sous licence libre.
-                                    </p>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
 
-            <div className="max-w-[1300px] mx-auto px-4 sm:px-6 lg:px-10 py-8">
-                <div className="flex flex-col gap-12">
+            <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 py-6 md:py-10">
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-12 items-start">
 
-                    {/* Image Area - Full Width */}
-                    <div className="w-full flex items-center justify-center min-h-[400px] max-h-[90vh]">
-                        <img
-                            src={photo.url}
-                            alt={photo.title || "Photo"}
-                            className="max-h-[85vh] w-auto h-auto object-contain shadow-2xl rounded-sm"
-                        />
+                    {/* Left Side: The Image (Main Stage) */}
+                    <div className="lg:sticky lg:top-32">
+                        <div className="bg-gray-50/50 rounded-3xl p-4 md:p-8 flex items-center justify-center min-h-[500px] max-h-[85vh] group relative overflow-hidden ring-1 ring-gray-100">
+                            <img
+                                src={photo.url}
+                                alt={photo.title || "Photo"}
+                                className="max-h-[75vh] w-auto h-auto object-contain shadow-2xl rounded-sm z-10"
+                            />
+                            {/* Decorative background blur */}
+                            <div className="absolute inset-0 blur-3xl opacity-10 pointer-events-none scale-150">
+                                <img src={photo.url} alt="" className="w-full h-full object-cover" />
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Information Area - Below Image */}
-                    <div className="max-w-4xl mx-auto w-full space-y-12">
-
-                        {/* Title & Description */}
-                        <div className="text-center sm:text-left">
-                            <h1 className="text-3xl md:text-4xl font-black text-gray-900 leading-tight mb-4">
-                                {photo.title || "Image sans titre"}
-                            </h1>
-                            {photo.description && (
-                                <p className="text-lg text-gray-500 leading-relaxed font-normal max-w-2xl">
-                                    {photo.description}
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Stats & Detailed Info Row */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 border-t border-gray-100">
-
-                            {/* Left Side: Stats */}
-                            <div className="space-y-8">
-                                <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400">Statistiques</h3>
-                                <div className="grid grid-cols-2 gap-8">
-                                    <div className="space-y-1">
-                                        <div className="flex items-center gap-2 text-gray-400">
-                                            <Eye className="w-4 h-4" />
-                                            <span className="text-[10px] font-bold uppercase tracking-wider">Vues</span>
-                                        </div>
-                                        <p className="text-3xl font-black text-gray-900">{photo.views_count?.toLocaleString() || 0}</p>
+                    {/* Right Side: Control Center (Info & Actions) */}
+                    <div className="space-y-10">
+                        {/* 1. Author & Primary Actions */}
+                        <div className="space-y-6">
+                            <div className="flex items-start justify-between">
+                                <Link href={`/users/${photo.author.username}`} className="flex items-center gap-4 group">
+                                    <img
+                                        src={photo.author.avatar}
+                                        alt={photo.author.name}
+                                        className="w-14 h-14 rounded-full object-cover ring-2 ring-gray-100 group-hover:ring-black transition-all"
+                                    />
+                                    <div className="text-left">
+                                        <p className="font-black text-xl text-gray-900 leading-tight">{photo.author.name}</p>
+                                        <p className="text-sm text-gray-500">@{photo.author.username}</p>
                                     </div>
-                                    <div className="space-y-1">
-                                        <div className="flex items-center gap-2 text-gray-400">
-                                            <Download className="w-4 h-4" />
-                                            <span className="text-[10px] font-bold uppercase tracking-wider">Téléchargements</span>
-                                        </div>
-                                        <p className="text-3xl font-black text-gray-900">{photo.downloads_count?.toLocaleString() || 0}</p>
-                                    </div>
-                                </div>
+                                </Link>
+                                <button className="p-3 bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-500 rounded-2xl transition-all border border-gray-100 active:scale-90">
+                                    <Heart className="w-6 h-6" />
+                                </button>
                             </div>
 
-                            {/* Right Side: Metadata */}
-                            <div className="space-y-8">
-                                <h3 className="text-sm font-bold uppercase tracking-widest text-gray-400">Détails de l'image</h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-                                    {photo.location && (
-                                        <div className="flex items-start gap-3 text-gray-600">
-                                            <MapPin className="w-5 h-5 text-gray-300 mt-0.5" />
-                                            <div className="space-y-0.5">
-                                                <p className="text-[10px] font-bold uppercase text-gray-400">Lieu</p>
-                                                <p className="text-sm font-medium">{photo.location}</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                    <div className="flex items-start gap-3 text-gray-600">
-                                        <Calendar className="w-5 h-5 text-gray-300 mt-0.5" />
-                                        <div className="space-y-0.5">
-                                            <p className="text-[10px] font-bold uppercase text-gray-400">Publication</p>
-                                            <p className="text-sm font-medium">{formattedDate}</p>
-                                        </div>
-                                    </div>
-                                    {photo.camera && (
-                                        <div className="flex items-start gap-3 text-gray-600">
-                                            <Camera className="w-5 h-5 text-gray-300 mt-0.5" />
-                                            <div className="space-y-0.5">
-                                                <p className="text-[10px] font-bold uppercase text-gray-400">Appareil</p>
-                                                <p className="text-sm font-medium">{photo.camera}</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                    <div className="flex items-start gap-3 text-gray-600">
-                                        <div className="w-5 h-5 flex items-center justify-center mt-0.5">
-                                            <Check className="w-4 h-4 text-green-500" />
-                                        </div>
-                                        <div className="space-y-0.5">
-                                            <p className="text-[10px] font-bold uppercase text-gray-400">Licence</p>
-                                            <p className="text-sm font-medium">Libre Usage</p>
-                                        </div>
-                                    </div>
+                            <div className="space-y-4">
+                                <h1 className="text-3xl font-black text-gray-900 leading-tight">
+                                    {photo.title || "Image sans titre"}
+                                </h1>
+                                {photo.description && (
+                                    <p className="text-gray-500 leading-relaxed">
+                                        {photo.description}
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="flex gap-3">
+                                <div className="relative flex-1">
+                                    <button
+                                        onClick={() => handleDownload('original')}
+                                        disabled={isDownloading}
+                                        className="w-full h-14 bg-black text-white rounded-2xl font-bold hover:bg-gray-800 transition-all shadow-xl active:scale-95 disabled:opacity-70 flex items-center justify-center gap-3"
+                                    >
+                                        {isDownloading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
+                                        Télécharger Gratuitement
+                                    </button>
                                 </div>
+                                <button
+                                    onClick={() => setDownloadMenuOpen(!downloadMenuOpen)}
+                                    className="h-14 w-14 bg-gray-100 text-gray-900 rounded-2xl hover:bg-gray-200 transition-all flex items-center justify-center border border-gray-200"
+                                >
+                                    <ChevronDown className={`w-5 h-5 transition-transform ${downloadMenuOpen ? 'rotate-180' : ''}`} />
+                                </button>
                             </div>
                         </div>
 
-                        {/* Tags Section */}
+                        {/* 2. Insights Bento Grid */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="p-6 bg-gray-50 rounded-[32px] border border-gray-100 hover:bg-white hover:shadow-lg transition-all">
+                                <div className="flex items-center gap-3 text-gray-400 mb-2">
+                                    <Eye className="w-5 h-5" />
+                                    <span className="text-[11px] font-bold uppercase tracking-widest">Vues</span>
+                                </div>
+                                <p className="text-2xl font-black text-gray-900">{photo.views_count?.toLocaleString() || 0}</p>
+                            </div>
+                            <div className="p-6 bg-gray-50 rounded-[32px] border border-gray-100 hover:bg-white hover:shadow-lg transition-all">
+                                <div className="flex items-center gap-3 text-gray-400 mb-2">
+                                    <Download className="w-5 h-5" />
+                                    <span className="text-[11px] font-bold uppercase tracking-widest">Downloads</span>
+                                </div>
+                                <p className="text-2xl font-black text-gray-900">{photo.downloads_count?.toLocaleString() || 0}</p>
+                            </div>
+                        </div>
+
+                        {/* 3. Detailed Specs Section */}
+                        <div className="space-y-6 pt-8 border-t border-gray-100">
+                            <h3 className="text-sm font-bold uppercase tracking-[0.2em] text-gray-400">Information Technique</h3>
+                            <div className="grid grid-cols-1 gap-5">
+                                {photo.location && (
+                                    <div className="flex items-center gap-4 group">
+                                        <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">
+                                            <MapPin className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold uppercase text-gray-400">Localisation</p>
+                                            <p className="text-sm font-bold text-gray-900">{photo.location}</p>
+                                        </div>
+                                    </div>
+                                )}
+                                {photo.camera && (
+                                    <div className="flex items-center gap-4 group">
+                                        <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 group-hover:bg-purple-50 group-hover:text-purple-500 transition-colors">
+                                            <Camera className="w-5 h-5" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] font-bold uppercase text-gray-400">Appareil & Optique</p>
+                                            <p className="text-sm font-bold text-gray-900">{photo.camera}</p>
+                                        </div>
+                                    </div>
+                                )}
+                                <div className="flex items-center gap-4 group">
+                                    <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400 group-hover:bg-green-50 group-hover:text-green-500 transition-colors">
+                                        <Check className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-bold uppercase text-gray-400">Licence de l'image</p>
+                                        <p className="text-sm font-bold text-gray-900">Usage commercial libre</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 4. Tags Box */}
                         {photo.tags && photo.tags.length > 0 && (
-                            <div className="space-y-4 pt-12 border-t border-gray-100">
-                                <h3 className="text-xs font-bold uppercase tracking-widest text-gray-400 text-center sm:text-left">Mots-clés associés</h3>
-                                <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                            <div className="pt-8 border-t border-gray-100">
+                                <div className="flex flex-wrap gap-2">
                                     {photo.tags.map(tag => (
                                         <Link
                                             key={tag}
                                             href={`/?q=${tag.toLowerCase()}`}
-                                            className="px-4 py-2 bg-gray-50 text-gray-500 rounded-full hover:bg-gray-100 hover:text-black transition-all text-xs font-semibold border border-gray-100"
+                                            className="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl hover:bg-black hover:text-white transition-all text-xs font-bold"
                                         >
                                             {tag}
                                         </Link>
@@ -408,6 +400,16 @@ export default function PhotoDetail() {
                             </div>
                         )}
                     </div>
+                </div>
+            </div>
+
+            {/* Related Photos Section */}
+            <div className="mt-20 pt-20 border-t border-gray-100 bg-gray-50/30">
+                <div className="max-w-[1600px] mx-auto px-4 md:px-8 text-left">
+                    <h2 className="text-2xl font-black text-gray-900 mb-8">Images associées</h2>
+                    <MasonryGrid
+                        searchQuery={photo.tags?.[0] || photo.title?.split(' ')[0]}
+                    />
                 </div>
             </div>
 
@@ -472,7 +474,8 @@ export default function PhotoDetail() {
                         </div>
                     </div>
                 </div>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 }
