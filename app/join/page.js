@@ -212,7 +212,7 @@ export default function JoinPage() {
                             <input
                                 type="text"
                                 value={username}
-                                onChange={(e) => setUsername(e.target.value)}
+                                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s+/g, '_'))}
                                 required
                                 pattern="[a-zA-Z0-9_-]+"
                                 className="w-full h-10 px-3 rounded-[4px] border border-[#d1d1d1] text-[#111] focus:border-[#767676] outline-none transition-colors"
