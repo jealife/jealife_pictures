@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Heart, Plus, Download, Share2, MapPin, Calendar, Camera, Eye, ArrowLeft, Loader2, Edit2, Check, Copy, ChevronDown } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import MasonryGrid from "../../components/MasonryGrid";
 import { getMediaById, incrementDownloads, incrementViews } from "../../lib/database";
 import { useAuth } from "../../contexts/AuthContext";
@@ -219,10 +220,12 @@ export default function PhotoDetail() {
                     </button>
                     <div className="flex items-center gap-3 ml-2">
                         <Link href={`/users/${photo.author.username}`} className="flex items-center gap-3 group">
-                            <img
+                            <Image
                                 src={photo.author.avatar}
                                 alt={photo.author.name}
-                                className="w-8 h-8 rounded-full object-cover border border-gray-200"
+                                width={32}
+                                height={32}
+                                className="rounded-full object-cover border border-gray-200"
                             />
                             <div className="text-left hidden xs:block">
                                 <p className="font-bold text-sm text-gray-900 group-hover:text-black leading-tight">{photo.author.name}</p>
@@ -305,14 +308,25 @@ export default function PhotoDetail() {
 
                     {/* Image Stage - Large and Centered */}
                     <div className="w-full flex items-center justify-center bg-gray-50/50 rounded-3xl p-4 md:p-12 min-h-[400px] max-h-[85vh] relative overflow-hidden group border border-gray-100">
-                        <img
+                        <Image
                             src={photo.url}
                             alt={photo.title || "Photo"}
-                            className="max-h-[75vh] w-auto h-auto object-contain shadow-2xl rounded-sm z-10 transition-transform duration-500 group-hover:scale-[1.01]"
+                            fill
+                            className="object-contain shadow-2xl rounded-sm z-10 transition-transform duration-500 group-hover:scale-[1.01]"
+                            priority
+                            quality={80}
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px"
                         />
                         {/* Soft decorative background blur */}
                         <div className="absolute inset-0 blur-3xl opacity-5 pointer-events-none scale-150">
-                            <img src={photo.url} alt="" className="w-full h-full object-cover" />
+                            <Image
+                                src={photo.url}
+                                alt=""
+                                fill
+                                className="object-cover"
+                                quality={5}
+                                sizes="5vw"
+                            />
                         </div>
                     </div>
 
@@ -323,10 +337,12 @@ export default function PhotoDetail() {
                         <div className="flex flex-col md:flex-row md:items-start justify-between gap-8">
                             <div className="flex-1 space-y-6">
                                 <Link href={`/users/${photo.author.username}`} className="flex items-center gap-4 group w-fit">
-                                    <img
+                                    <Image
                                         src={photo.author.avatar}
                                         alt={photo.author.name}
-                                        className="w-16 h-16 rounded-full object-cover ring-2 ring-gray-100 group-hover:ring-black transition-all shadow-sm"
+                                        width={64}
+                                        height={64}
+                                        className="rounded-full object-cover ring-2 ring-gray-100 group-hover:ring-black transition-all shadow-sm"
                                     />
                                     <div className="text-left">
                                         <p className="font-black text-xl text-gray-900 leading-tight">{photo.author.name}</p>

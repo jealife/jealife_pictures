@@ -14,6 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
+  metadataBase: new URL("https://jealife-pictures.vercel.app"),
   title: {
     default: "JEaLiFe Pictures | Belles images gratuites et photos",
     template: "%s | JEaLiFe Pictures"

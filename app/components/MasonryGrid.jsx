@@ -55,7 +55,9 @@ export default function MasonryGrid({ searchQuery: propQuery = null, mobileColum
                         location: item.profiles?.location
                     },
                     likes: item.likes_count || 0,
-                    location: item.location
+                    location: item.location,
+                    width: item.width,
+                    height: item.height
                 }));
 
                 setPhotos(transformedData);

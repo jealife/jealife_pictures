@@ -58,13 +58,30 @@ export default function PhotoCard({ photo, hideActions = false }) {
         <div className="relative group mb-6 break-inside-avoid" ref={menuRef}>
             {/* Card Container */}
             <div className="relative w-full overflow-hidden rounded-2xl bg-gray-100 shadow-sm transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
-                <Link href={`/photos/${photo.id}`}>
-                    <img
-                        src={photo.url}
-                        alt={photo.alt || photo.title || "Photo"}
-                        className="w-full h-auto block object-cover transform transition-transform duration-700 group-hover:scale-105 cursor-zoom-in"
-                        loading="lazy"
-                    />
+                <Link href={`/photos/${photo.id}`} className="block">
+                    {photo.width && photo.height ? (
+                        <Image
+                            src={photo.url}
+                            alt={photo.alt || photo.title || "Photo"}
+                            width={photo.width}
+                            height={photo.height}
+                            className="w-full h-auto block object-cover transform transition-transform duration-700 group-hover:scale-105 cursor-zoom-in"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                            placeholder="blur"
+                            quality={65}
+                            blurDataURL={`data:image/svg+xml;base64,${typeof window === 'undefined'
+                                ? Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${photo.width} ${photo.height}"><rect width="100%" height="100%" fill="#f3f4f6"/></svg>`).toString('base64')
+                                : window.btoa(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${photo.width} ${photo.height}"><rect width="100%" height="100%" fill="#f3f4f6"/></svg>`)
+                                }`}
+                        />
+                    ) : (
+                        <img
+                            src={photo.url}
+                            alt={photo.alt || photo.title || "Photo"}
+                            className="w-full h-auto block object-cover transform transition-transform duration-700 group-hover:scale-105 cursor-zoom-in"
+                            loading="lazy"
+                        />
+                    )}
                 </Link>
 
                 {/* Gradient Overlay */}
