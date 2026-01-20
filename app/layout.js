@@ -20,6 +20,14 @@ export const metadata = {
     template: "%s | JEaLiFe Pictures"
   },
   description: "La source d'images internet. Propulsé par des créateurs du Gabon et d'ailleurs. Téléchargez des photos haute résolution gratuites.",
+  manifest: "/manifest.json",
+  themeColor: "#000000",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "JEaLiFe Pictures",
+  },
   keywords: ["photos gratuites", "Gabon", "images libres de droits", "JEaLiFe", "photographie", "Afrique", "Libreville"],
   authors: [{ name: "JEaLiFe Team" }],
   creator: "JEaLiFe",
@@ -48,6 +56,9 @@ export const metadata = {
   robots: {
     index: true,
     follow: true,
+  },
+  icons: {
+    apple: "/icons/icon-192x192.png",
   }
 };
 
