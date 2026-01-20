@@ -20,19 +20,23 @@ export default function UserProfileLayout({ children }) {
         const fetchProfileAndStats = async () => {
             if (!username) return;
             setLoading(true);
+            try {
+                // 1. Get basic profile (case-insensitive)
+                const profileData = await getUserProfile(username);
 
-            // 1. Get basic profile
-            const profileData = await getUserProfile(username);
-
-            if (profileData) {
-                // 2. Get live stats (counts)
-                const stats = await getUserStats(profileData.id);
-                setProfileUser({ ...profileData, ...stats });
-            } else {
+                if (profileData) {
+                    // 2. Get live stats (counts)
+                    const stats = await getUserStats(profileData.id);
+                    setProfileUser({ ...profileData, ...stats });
+                } else {
+                    setProfileUser(null);
+                }
+            } catch (err) {
+                console.error("Error in UserProfileLayout:", err);
                 setProfileUser(null);
+            } finally {
+                setLoading(false);
             }
-
-            setLoading(false);
         };
         fetchProfileAndStats();
     }, [username]);

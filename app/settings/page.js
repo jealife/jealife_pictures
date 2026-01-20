@@ -42,14 +42,16 @@ export default function SettingsPage() {
     }, [user, authLoading]);
 
     const fetchProfile = async () => {
+        if (!user?.id) return;
         try {
             setLoading(true);
-            // Get profile by ID instead of username for settings
             const { data, error } = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('id', user.id)
-                .single();
+                .maybeSingle();
+
+            if (error) throw error;
 
             if (data) {
                 setProfile({
@@ -64,6 +66,7 @@ export default function SettingsPage() {
             }
         } catch (error) {
             console.error("Error fetching profile:", error);
+            setStatus({ type: "error", message: "Impossible de charger votre profil." });
         } finally {
             setLoading(false);
         }
@@ -83,6 +86,8 @@ export default function SettingsPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (saving) return;
+
         setSaving(true);
         setStatus({ type: "", message: "" });
 
@@ -92,41 +97,54 @@ export default function SettingsPage() {
             // 1. Upload Avatar if changed
             if (avatarFile) {
                 const fileExt = avatarFile.name.split('.').pop();
-                const fileName = `${user.id}/avatar-${Date.now()}.${fileExt}`;
+                const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+                const filePath = `avatars/${fileName}`;
 
-                // Ensure avatars bucket exists or use media
+                // Upload to 'media' bucket
                 const { error: uploadError } = await supabase.storage
-                    .from('media') // Reusing media bucket for simplicity, or could be 'profiles'
-                    .upload(`avatars/${fileName}`, avatarFile);
+                    .from('media')
+                    .upload(filePath, avatarFile, {
+                        cacheControl: '3600',
+                        upsert: true
+                    });
 
                 if (uploadError) throw uploadError;
 
                 const { data: { publicUrl } } = supabase.storage
                     .from('media')
-                    .getPublicUrl(`avatars/${fileName}`);
+                    .getPublicUrl(filePath);
 
                 finalAvatarUrl = publicUrl;
             }
 
             // 2. Update Profile
-            const { success, error } = await upsertProfile(user.id, {
-                ...profile,
+            const profileToUpdate = {
+                full_name: profile.full_name,
+                username: profile.username.toLowerCase(),
+                bio: profile.bio,
+                location: profile.location,
+                website: profile.website,
                 avatar_url: finalAvatarUrl
-            });
+            };
 
-            if (!success) throw new Error(error);
+            const { success, error: updateError } = await upsertProfile(user.id, profileToUpdate);
 
-            setStatus({ type: "success", message: "Profil mis à jour avec succès !" });
-            // Refresh local state and global context
-            setProfile(prev => ({ ...prev, avatar_url: finalAvatarUrl }));
+            if (!success) throw new Error(updateError);
+
+            // Update local state and global context
+            setProfile(prev => ({ ...prev, ...profileToUpdate }));
+            setAvatarFile(null);
+
+            // This is CRITICAL for the Navbar to update
             await refreshProfile();
 
-            // Redirect slightly after success or just show message
-            setTimeout(() => setStatus({ type: "", message: "" }), 3000);
+            setStatus({ type: "success", message: "Profil mis à jour avec succès !" });
+
+            setTimeout(() => setStatus({ type: "", message: "" }), 5000);
 
         } catch (error) {
             console.error("Update error:", error);
-            setStatus({ type: "error", message: `Erreur: ${error.message}` });
+            setStatus({ type: "error", message: `Erreur: ${error.message || "Une erreur est survenue"}` });
         } finally {
             setSaving(false);
         }
