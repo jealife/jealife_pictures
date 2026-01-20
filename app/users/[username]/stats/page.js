@@ -1,8 +1,38 @@
 "use client";
 
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { getUserProfile } from "../../../lib/database";
+import { useAuth } from "../../../contexts/AuthContext";
 import { BarChart3, Download, Info, TrendingUp, Globe } from "lucide-react";
 
 export default function UserStatsPage() {
+    const { username } = useParams();
+    const router = useRouter();
+    const { user: currentUser } = useAuth();
+    const [isOwner, setIsOwner] = useState(false);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const checkOwnership = async () => {
+            if (!username || !currentUser) {
+                setIsOwner(false);
+                setLoading(false);
+                return;
+            }
+            try {
+                const profile = await getUserProfile(username);
+                if (profile && profile.id === currentUser.id) {
+                    setIsOwner(true);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+            setLoading(false);
+        };
+        checkOwnership();
+    }, [username, currentUser]);
+
     // Mock Data for the graph
     const dataPoints = [30, 45, 35, 50, 40, 60, 55, 70, 65, 80, 75, 90, 85, 100, 95, 85, 70, 75, 80, 60, 50, 45, 40, 35, 30, 25, 35, 40, 45, 50];
 
@@ -21,6 +51,20 @@ export default function UserStatsPage() {
     // Path command
     const pathD = `M ${points}`;
     const fillPathD = `M ${points} L 1000,250 L 0,250 Z`; // Close the path at bottom
+
+    if (loading) return <div className="py-20 text-center animate-pulse text-gray-400">Vérification...</div>;
+
+    if (!isOwner) {
+        return (
+            <div className="py-[100px] text-center flex flex-col items-center justify-center">
+                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                    <BarChart3 className="w-8 h-8 text-gray-300" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Accès restreint</h3>
+                <p className="text-gray-500 max-w-sm">Les statistiques sont privées. Vous ne pouvez voir que les vôtres.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-[1320px] mx-auto">

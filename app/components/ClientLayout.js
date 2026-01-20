@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
@@ -9,6 +10,10 @@ export default function ClientLayout({ children }) {
     // Liste des routes où la navbar et la sidebar ne doivent pas être affichées
     const hiddenRoutes = ["/join", "/login"];
     const shouldHideLayout = hiddenRoutes.includes(pathname);
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [pathname]);
 
     return (
         <>

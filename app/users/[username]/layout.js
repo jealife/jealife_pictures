@@ -72,7 +72,7 @@ export default function UserProfileLayout({ children }) {
         { id: 'stats', label: 'Statistiques', icon: BarChart3, count: null, path: `/users/${username}/stats` },
     ];
 
-    const tabs = currentUser ? [...publicTabs, ...privateTabs] : publicTabs;
+    const tabs = isOwnProfile ? [...publicTabs, ...privateTabs] : publicTabs;
 
     // Determine active tab
     // Exact match for root, prefix match for others?
