@@ -51,6 +51,8 @@ export default function FeaturedCollections() {
                             src={col.image}
                             alt={col.title}
                             fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                            unoptimized
                             className="object-cover transition-transform duration-700 group-hover:scale-110"
                         />
                         <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent"></div>

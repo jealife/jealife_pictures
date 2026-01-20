@@ -59,6 +59,8 @@ export default function CategorySection() {
                                 src={cat.image}
                                 alt=""
                                 fill
+                                sizes="(max-width: 768px) 50vw, 25vw"
+                                unoptimized
                                 className="object-cover mask-linear-fade"
                             />
                         </div>
