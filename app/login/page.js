@@ -5,11 +5,13 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithEmail, signInWithOAuth } from "../lib/auth";
 import { AUTH_IMAGES } from "../lib/auth-images";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [backgroundImage, setBackgroundImage] = useState(AUTH_IMAGES[0]);
@@ -143,14 +145,23 @@ export default function LoginPage() {
                                 <label className="block text-sm text-[#111]">Mot de passe</label>
                                 <Link href="/forgot-password" className="text-sm text-[#767676] hover:text-[#111] underline transition-colors">Mot de passe oublié ?</Link>
                             </div>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                minLength={6}
-                                className="w-full h-10 px-3 rounded-[4px] border border-[#d1d1d1] text-[#111] focus:border-[#767676] outline-none transition-colors"
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    minLength={6}
+                                    className="w-full h-10 px-3 pr-10 rounded-[4px] border border-[#d1d1d1] text-[#111] focus:border-[#767676] outline-none transition-colors"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                                >
+                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                            </div>
                         </div>
 
                         <button
