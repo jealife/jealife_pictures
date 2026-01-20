@@ -50,6 +50,7 @@ export default function JoinPage() {
             first_name: firstName,
             last_name: lastName,
             full_name: `${firstName} ${lastName}`.trim(),
+            username: username.toLowerCase(),
         });
 
         if (result.success) {

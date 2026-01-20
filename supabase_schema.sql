@@ -46,6 +46,30 @@ create trigger on_profiles_updated
   before update on public.profiles
   for each row execute procedure public.handle_updated_at();
 
+-- Trigger to automatically create a profile for every new user
+create or replace function public.handle_new_user() 
+returns trigger as $$
+begin
+  insert into public.profiles (id, full_name, avatar_url, username)
+  values (
+    new.id, 
+    new.raw_user_meta_data->>'full_name', 
+    new.raw_user_meta_data->>'avatar_url',
+    coalesce(
+      new.raw_user_meta_data->>'username', 
+      split_part(new.email, '@', 1) || '_' || substring(new.id::text from 1 for 5)
+    )
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+
 -- 3. MEDIA (Photos, Illustrations, Videos)
 create type media_type as enum ('photo', 'illustration', 'video');
 
