@@ -328,7 +328,7 @@ export default function SubmitPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
 
                         {/* Left: Preview */}
-                        <div className="sticky top-28">
+                        <div className="lg:sticky lg:top-28">
                             <div className="rounded-2xl overflow-hidden shadow-2xl bg-gray-100 ring-1 ring-black/5">
                                 <img src={previewUrl} alt="Preview" className="w-full h-auto object-cover max-h-[70vh]" />
                             </div>
