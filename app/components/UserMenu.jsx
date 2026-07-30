@@ -10,7 +10,7 @@ export default function UserMenu({ user, onSignOut, onClose }) {
 
     // Use profile from database if available, otherwise fallback to metadata
     const username = profile?.username || user?.user_metadata?.username || user?.email?.split('@')[0] || 'user';
-    const fullName = profile?.full_name || user?.user_metadata?.full_name || 'JEaLiFe Pictures';
+    const fullName = profile?.full_name || user?.user_metadata?.full_name || 'JEaLiFe Stock';
     const avatarUrl = profile?.avatar_url || user?.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.id}`;
 
     const menuItems = [

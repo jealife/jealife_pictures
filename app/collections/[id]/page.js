@@ -1,0 +1,116 @@
+"use client";
+
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { Layers, Loader2, Lock } from "lucide-react";
+import PhotoCard from "../../components/PhotoCard";
+import { getCollection } from "../../lib/database";
+import { normalizeMediaList, avatarFallback } from "../../lib/media";
+
+/**
+ * Page d'une collection.
+ *
+ * Plusieurs endroits du site pointaient déjà vers `/collections/<id>` — la
+ * section « collections sélectionnées » de l'accueil, l'onglet collections
+ * d'un profil — mais la route n'existait pas : tous ces liens tombaient en 404.
+ */
+export default function CollectionPage() {
+    const { id } = useParams();
+    const [collection, setCollection] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (!id) return;
+        let cancelled = false;
+
+        getCollection(id).then((data) => {
+            if (cancelled) return;
+            setCollection(data);
+            setLoading(false);
+        });
+
+        return () => { cancelled = true; };
+    }, [id]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
+            </div>
+        );
+    }
+
+    if (!collection) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center text-center px-4">
+                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                    <Layers className="w-8 h-8 text-gray-300" />
+                </div>
+                <h1 className="text-2xl font-bold text-gray-900 mb-3">Collection introuvable</h1>
+                <p className="text-gray-500 mb-8 max-w-sm">
+                    Elle a peut-être été supprimée, ou son auteur l&apos;a rendue privée.
+                </p>
+                <Link href="/" className="px-6 py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-colors">
+                    Retour à l&apos;accueil
+                </Link>
+            </div>
+        );
+    }
+
+    const items = normalizeMediaList(collection.media);
+    const author = collection.profiles;
+
+    return (
+        <main className="min-h-screen bg-white">
+            <header className="max-w-[1600px] mx-auto px-4 pt-12 pb-6">
+                <h1 className="text-4xl font-extrabold text-gray-900 flex items-center gap-3">
+                    {collection.title}
+                    {collection.is_private && (
+                        <Lock className="w-6 h-6 text-gray-400" aria-label="Collection privée" />
+                    )}
+                </h1>
+
+                {collection.description && (
+                    <p className="text-gray-500 mt-3 max-w-2xl">{collection.description}</p>
+                )}
+
+                <div className="flex items-center gap-4 mt-6">
+                    {author && (
+                        <Link href={`/users/${author.username}`} className="flex items-center gap-3 group">
+                            <Image
+                                src={author.avatar_url || avatarFallback(author.id)}
+                                alt=""
+                                width={40}
+                                height={40}
+                                unoptimized
+                                className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                            />
+                            <span>
+                                <span className="block text-sm font-bold text-gray-900 group-hover:text-black">
+                                    {author.full_name || author.username}
+                                </span>
+                                <span className="block text-xs text-gray-500">
+                                    {items.length} image{items.length > 1 ? "s" : ""}
+                                </span>
+                            </span>
+                        </Link>
+                    )}
+                </div>
+            </header>
+
+            <div className="max-w-[1600px] mx-auto px-4 pb-16">
+                {items.length === 0 ? (
+                    <p className="py-24 text-center text-gray-500">
+                        Cette collection est encore vide.
+                    </p>
+                ) : (
+                    <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6">
+                        {items.map((item) => <PhotoCard key={item.id} photo={item} />)}
+                    </div>
+                )}
+            </div>
+        </main>
+    );
+}

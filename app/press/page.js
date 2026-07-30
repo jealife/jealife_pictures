@@ -27,7 +27,7 @@ export default function PressPage() {
                         </h3>
                         <div className="space-y-4">
                             <p className="text-gray-600 text-sm">
-                                Pour les demandes d'interviews, de commentaires ou d'informations spécifiques.
+                                Pour les demandes d&apos;interviews, de commentaires ou d&apos;informations spécifiques.
                             </p>
                             <a href="mailto:press@jealife.com" className="block w-full py-3 px-4 bg-gray-50 border border-gray-200 rounded-lg text-center font-bold hover:bg-black hover:text-white transition-all text-sm">
                                 press@jealife.com
@@ -44,7 +44,7 @@ export default function PressPage() {
                             <div>
                                 <h3 className="text-2xl font-bold mb-2">Kit Média Officiel</h3>
                                 <p className="text-gray-600 mb-6 max-w-md">
-                                    Téléchargez nos logos officiels (SVG, PNG), nos directives de marque et des photos haute résolution de l'équipe et des bureaux.
+                                    Téléchargez nos logos officiels (SVG, PNG), nos directives de marque et des photos haute résolution de l&apos;équipe et des bureaux.
                                 </p>
                                 <div className="flex flex-wrap gap-3">
                                     <span className="px-3 py-1 bg-gray-100 rounded text-xs font-bold text-gray-600">JEaLiFe Logos</span>
@@ -69,8 +69,8 @@ export default function PressPage() {
                         {
                             date: "12 Janvier 2026",
                             category: "Célébration",
-                            title: "JEaLiFe Pictures dépasse les 10,000 photos gratuites",
-                            snippet: "Une étape symbolique qui marque la maturité de notre catalogue, couvrant désormais plus de 80% des régions du Gabon.",
+                            title: "JEaLiFe Stock dépasse les 10,000 photos gratuites",
+                            snippet: "Une étape symbolique qui marque la maturité de notre catalogue.",
                             link: "#"
                         },
                         {
@@ -84,7 +84,7 @@ export default function PressPage() {
                             date: "02 Septembre 2025",
                             category: "Partenariat",
                             title: "JEaLiFe s'associe au Ministère du Tourisme",
-                            snippet: "Une alliance stratégique pour promouvoir la destination Gabon à travers une imagerie authentique et moderne.",
+                            snippet: "Une alliance stratégique autour d'une imagerie authentique et moderne.",
                             link: "#"
                         }
                     ].map((news, idx) => (

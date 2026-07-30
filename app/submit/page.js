@@ -1,470 +1,706 @@
 "use client";
 
-import { UploadCloud, Image as ImageIcon, Video, Palette, CheckCircle2, MapPin, Camera, Tag, X, Info } from "lucide-react";
+import {
+    UploadCloud, CheckCircle2, MapPin, Camera, Tag, X, Info,
+    Image as ImageIcon, Video, Palette, Globe2, Loader2, Accessibility,
+} from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import ExifReader from "exifreader";
 import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
-import ExifReader from 'exifreader';
 import { upsertProfile } from "../lib/auth";
-import { syncTopics, getTopics } from "../lib/database";
+import { syncTopics, getTopics, getCountries } from "../lib/database";
+import { processImage, formatFileSize } from "../lib/images";
+
+const POPULAR_TAGS = [
+    "Nature", "Forêt", "Océan", "Portrait", "Culture", "Faune",
+    "Architecture", "Plage", "Marché", "Vie quotidienne", "Voyage",
+];
+
+const MEDIA_TYPES = [
+    { key: "photo", label: "Photo", icon: ImageIcon },
+    { key: "illustration", label: "Illustration", icon: Palette },
+    { key: "video", label: "Vidéo", icon: Video },
+];
 
 export default function SubmitPage() {
     const router = useRouter();
     const { user, loading } = useAuth();
 
-    // State for flow
-    const [step, setStep] = useState(1); // 1: Upload, 2: Details
+    const [step, setStep] = useState(1);
     const [uploading, setUploading] = useState(false);
+    const [uploadStage, setUploadStage] = useState("");
     const [dragActive, setDragActive] = useState(false);
+    const [formError, setFormError] = useState(null);
 
-    // Form data
     const [file, setFile] = useState(null);
+    const [processed, setProcessed] = useState(null);
+    const [processing, setProcessing] = useState(false);
     const [previewUrl, setPreviewUrl] = useState("");
-    const [selectedType, setSelectedType] = useState('photo');
+
+    const [selectedType, setSelectedType] = useState("photo");
     const [title, setTitle] = useState("");
+    const [altText, setAltText] = useState("");
     const [description, setDescription] = useState("");
     const [location, setLocation] = useState("");
+    const [city, setCity] = useState("");
+    const [countryCode, setCountryCode] = useState("GA"); // Gabon par défaut
     const [camera, setCamera] = useState("");
     const [tagsInput, setTagsInput] = useState("");
     const [tags, setTags] = useState([]);
 
-    // Suggestions states
+    const [countries, setCountries] = useState([]);
+    const [dbTopics, setDbTopics] = useState([]);
     const [locationSuggestions, setLocationSuggestions] = useState([]);
     const [tagSuggestions, setTagSuggestions] = useState([]);
-    const [showLocationDeps, setShowLocationDeps] = useState(false);
-    const [showTagDeps, setShowTagDeps] = useState(false);
-    const [dbTopics, setDbTopics] = useState([]);
+    const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+    const [showTagSuggestions, setShowTagSuggestions] = useState(false);
 
     const fileInputRef = useRef(null);
-    const popularTags = ["Gabon", "Libreville", "Nature", "Voyage", "Afrique", "Portrait", "Paysage", "Forêt", "Océan Atlanique", "Culture", "Architecture", "Animaux", "Couchers de soleil", "Plage", "Street Photography"];
 
     useEffect(() => {
-        if (!loading && !user) {
-            router.push('/login?redirect=/submit');
-        }
-
-        // Charger les topics de la DB pour les suggestions
-        async function loadTopics() {
-            const data = await getTopics();
-            if (data) {
-                setDbTopics(data.map(t => t.name));
-            }
-        }
-        loadTopics();
+        if (!loading && !user) router.push("/login?redirect=/submit");
     }, [user, loading, router]);
 
-    // Fetch Location Suggestions (Photon API)
     useEffect(() => {
-        const fetchLocations = async () => {
-            if (location.trim().length < 2) {
-                setLocationSuggestions([]);
-                return;
-            }
-            try {
-                const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(location)}&limit=5`);
-                const data = await res.json();
-                const formatted = data.features.map(f => {
-                    const { name, city, country } = f.properties;
-                    return [name, city, country].filter(Boolean).join(', ');
-                });
-                setLocationSuggestions([...new Set(formatted)]); // Remove duplicates
-            } catch (e) {
-                console.error("Location fetch error:", e);
-            }
-        };
+        getTopics({ limit: 200 }).then((data) => setDbTopics(data.map((t) => t.name)));
+        getCountries().then(setCountries);
+    }, []);
 
-        const timer = setTimeout(fetchLocations, 300);
+    useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
+
+    // Suggestions de lieux. On récupère aussi le code pays renvoyé par Photon,
+    // ce qui remplit le champ pays sans effort et alimente le classement
+    // géographique du site.
+    useEffect(() => {
+        if (location.trim().length < 2) {
+            setLocationSuggestions([]);
+            return;
+        }
+
+        const timer = setTimeout(async () => {
+            try {
+                const response = await fetch(
+                    `https://photon.komoot.io/api/?q=${encodeURIComponent(location)}&limit=5`
+                );
+                const data = await response.json();
+
+                const seen = new Set();
+                const results = [];
+                for (const feature of data.features || []) {
+                    const { name, city: featureCity, country, countrycode } = feature.properties;
+                    const label = [name, featureCity, country].filter(Boolean).join(", ");
+                    if (label && !seen.has(label)) {
+                        seen.add(label);
+                        results.push({ label, city: featureCity || name, countryCode: countrycode });
+                    }
+                }
+                setLocationSuggestions(results);
+            } catch {
+                setLocationSuggestions([]);
+            }
+        }, 300);
+
         return () => clearTimeout(timer);
     }, [location]);
 
-    // Tag Suggestions Logic
     useEffect(() => {
-        if (tagsInput.trim().length > 0) {
-            const filtered = dbTopics.filter(t =>
-                t.toLowerCase().includes(tagsInput.toLowerCase()) && !tags.includes(t)
-            );
-            setTagSuggestions(filtered.slice(0, 8));
-        } else {
+        if (!tagsInput.trim()) {
             setTagSuggestions([]);
+            return;
         }
+        setTagSuggestions(
+            dbTopics
+                .filter((t) => t.toLowerCase().includes(tagsInput.toLowerCase()) && !tags.includes(t))
+                .slice(0, 8)
+        );
     }, [tagsInput, tags, dbTopics]);
 
     const handleFileSelect = async (files) => {
-        const selectedFile = files?.[0];
-        if (!selectedFile) return;
+        const selected = files?.[0];
+        if (!selected) return;
 
-        setFile(selectedFile);
-        setTitle(selectedFile.name.replace(/\.[^/.]+$/, ""));
-
-        // Show preview
-        const objectUrl = URL.createObjectURL(selectedFile);
-        setPreviewUrl(objectUrl);
-
-        // --- EXIF & Metadata Extraction ---
-        try {
-            const exifData = await ExifReader.load(selectedFile);
-            console.log("Full Metadata extracted:", exifData);
-
-            // 1. Camera Info
-            const model = exifData['Model']?.description || "";
-            const lens = exifData['LensModel']?.description || exifData['Lens']?.description || "";
-            const fnumber = exifData['FNumber']?.description ? `f/${exifData['FNumber'].value}` : "";
-            const focalLength = exifData['FocalLength']?.description || "";
-
-            let exifString = model;
-            if (lens) exifString += `, ${lens}`;
-            else if (focalLength || fnumber) exifString += `, ${focalLength} ${fnumber}`.trim();
-
-            if (exifString) setCamera(exifString);
-
-            // 2. Title Extraction (IPTC ObjectName or XMP Title)
-            const extractedTitle = exifData['ObjectName']?.description || exifData['title']?.description || exifData['ImageDescription']?.description;
-            if (extractedTitle) setTitle(extractedTitle);
-
-            // 3. Description Extraction
-            const extractedDesc = exifData['Description']?.description || exifData['Caption-Abstract']?.description;
-            if (extractedDesc) setDescription(extractedDesc);
-
-            // 4. Keywords / Tags Extraction (IPTC Keywords or XMP Subject)
-            const rawKeywords = exifData['Keywords']?.value || exifData['subject']?.value || [];
-            if (rawKeywords && rawKeywords.length > 0) {
-                // Ensure it's an array of strings
-                const extractedTags = Array.isArray(rawKeywords)
-                    ? rawKeywords.map(k => typeof k === 'object' ? k.description : k)
-                    : [rawKeywords];
-
-                setTags(prev => [...new Set([...prev, ...extractedTags])]);
-            }
-
-        } catch (e) {
-            console.log("No exifData found or error parsing:", e);
+        if (!selected.type.startsWith("image/")) {
+            setFormError("Pour l'instant, seules les images sont acceptées.");
+            return;
         }
 
+        setFormError(null);
+        setFile(selected);
+        setTitle(selected.name.replace(/\.[^/.]+$/, ""));
+        setPreviewUrl(URL.createObjectURL(selected));
         setStep(2);
-    };
 
-    const handleAddTag = (e) => {
-        if (e.key === 'Enter' || e.key === ',') {
-            e.preventDefault();
-            const tag = tagsInput.trim().replace(',', '');
-            if (tag && !tags.includes(tag)) {
-                setTags([...tags, tag]);
-                setTagsInput("");
-                setTagSuggestions([]);
+        // Génération des dérivés dans le navigateur. C'est ce qui permet
+        // d'envoyer quelques centaines de kilo-octets au lieu du fichier brut,
+        // et surtout d'enregistrer enfin les dimensions de l'image.
+        setProcessing(true);
+        try {
+            setProcessed(await processImage(selected));
+        } catch (err) {
+            console.error("Image processing failed:", err);
+            setFormError("Cette image n'a pas pu être préparée. Essayez un autre fichier.");
+        } finally {
+            setProcessing(false);
+        }
+
+        try {
+            const exif = await ExifReader.load(selected);
+
+            const model = exif.Model?.description || "";
+            const lens = exif.LensModel?.description || exif.Lens?.description || "";
+            const aperture = exif.FNumber?.description ? `f/${exif.FNumber.value}` : "";
+            const focal = exif.FocalLength?.description || "";
+
+            let exifLabel = model;
+            if (lens) exifLabel += `, ${lens}`;
+            else if (focal || aperture) exifLabel += `, ${focal} ${aperture}`.trimEnd();
+            if (exifLabel) setCamera(exifLabel);
+
+            const exifTitle =
+                exif.ObjectName?.description || exif.title?.description || exif.ImageDescription?.description;
+            if (exifTitle) setTitle(exifTitle);
+
+            const exifDescription =
+                exif.Description?.description || exif["Caption-Abstract"]?.description;
+            if (exifDescription) setDescription(exifDescription);
+
+            const rawKeywords = exif.Keywords?.value || exif.subject?.value || [];
+            if (rawKeywords?.length) {
+                const extracted = (Array.isArray(rawKeywords) ? rawKeywords : [rawKeywords]).map(
+                    (k) => (typeof k === "object" ? k.description : k)
+                );
+                setTags((prev) => [...new Set([...prev, ...extracted])]);
             }
+        } catch {
+            /* Pas de métadonnées EXIF : ce n'est pas une erreur. */
         }
     };
 
-    const selectTag = (tag) => {
-        if (!tags.includes(tag)) {
+    const addTag = (event) => {
+        if (event.key !== "Enter" && event.key !== ",") return;
+        event.preventDefault();
+        const tag = tagsInput.trim().replace(",", "");
+        if (tag && !tags.includes(tag)) {
             setTags([...tags, tag]);
             setTagsInput("");
             setTagSuggestions([]);
         }
     };
 
-    const selectLocation = (loc) => {
-        setLocation(loc);
+    const selectTag = (tag) => {
+        if (!tags.includes(tag)) setTags([...tags, tag]);
+        setTagsInput("");
+        setTagSuggestions([]);
+    };
+
+    const selectLocation = (suggestion) => {
+        setLocation(suggestion.label);
+        if (suggestion.city) setCity(suggestion.city);
+        if (suggestion.countryCode) setCountryCode(suggestion.countryCode.toUpperCase());
         setLocationSuggestions([]);
-        setShowLocationDeps(false);
+        setShowLocationSuggestions(false);
     };
 
-    const removeTag = (tagToRemove) => {
-        setTags(tags.filter(t => t !== tagToRemove));
+    const resetFile = () => {
+        setStep(1);
+        setFile(null);
+        setProcessed(null);
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        setPreviewUrl("");
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (!file || !user) {
-            console.error("Missing file or user for submission");
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        setFormError(null);
+
+        if (!file || !user) return;
+        if (!processed) {
+            setFormError("L'image est encore en préparation, patientez un instant.");
+            return;
+        }
+        if (!altText.trim()) {
+            setFormError("La description pour l'accessibilité est obligatoire.");
             return;
         }
 
         setUploading(true);
         try {
-            // 0. Ensure user profile exists (fix for 'Key is not present in table profiles')
+            // Filet de sécurité : sans profil, la contrainte de clé étrangère
+            // sur `media.user_id` fait échouer la publication.
             const { data: profile } = await supabase
-                .from('profiles')
-                .select('id')
-                .eq('id', user.id)
+                .from("profiles")
+                .select("id")
+                .eq("id", user.id)
                 .maybeSingle();
 
             if (!profile) {
-                const username = user.email.split('@')[0] + Math.floor(Math.random() * 1000);
-                const { success, error: upsertErr } = await upsertProfile(user.id, {
-                    username: username,
+                setUploadStage("Création de votre profil…");
+                const username = `${user.email.split("@")[0]}-${user.id.slice(0, 4)}`;
+                const { success, error: profileError } = await upsertProfile(user.id, {
+                    username,
                     full_name: user.user_metadata?.full_name || username,
-                    avatar_url: user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`
+                    avatar_url: user.user_metadata?.avatar_url || null,
                 });
-
-                if (!success) throw new Error(`Could not create profile: ${upsertErr}`);
+                if (!success) throw new Error(profileError);
             }
 
-            // 1. Upload to Supabase Storage
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+            const folder = `${user.id}/${Date.now()}`;
+            const { extension, mimeType } = processed;
 
-            const { data: storageData, error: storageError } = await supabase.storage
-                .from('media')
-                .upload(fileName, file);
-
-            if (storageError) throw storageError;
-
-            // 2. Get Public URL
-            const { data: { publicUrl } } = supabase.storage
-                .from('media')
-                .getPublicUrl(fileName);
-
-            // 3. Insert into Media Table
-            const insertData = {
-                user_id: user.id,
-                url: publicUrl,
-                type: selectedType,
-                title: title,
-                description: description,
-                location: location,
-                camera: camera,
-                tags: tags,
-                status: 'published'
+            const upload = async (path, body, contentType) => {
+                const { error } = await supabase.storage
+                    .from("media")
+                    .upload(path, body, { contentType, cacheControl: "31536000", upsert: false });
+                if (error) throw error;
+                return supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
             };
 
-            // 3. Insert into Media Table
-            const { data: mediaRecord, error: dbError } = await supabase
-                .from('media')
-                .insert(insertData)
-                .select()
+            setUploadStage("Envoi de la vignette…");
+            const thumbnailUrl = await upload(`${folder}/thumb.${extension}`, processed.thumbnail, mimeType);
+
+            setUploadStage("Envoi de la version web…");
+            const displayUrl = await upload(`${folder}/display.${extension}`, processed.display, mimeType);
+
+            setUploadStage("Envoi du fichier original…");
+            const originalExtension = file.name.split(".").pop()?.toLowerCase() || "jpg";
+            const originalUrl = await upload(
+                `${folder}/original.${originalExtension}`,
+                file,
+                file.type || "image/jpeg"
+            );
+
+            setUploadStage("Publication…");
+            const { data: mediaRecord, error: insertError } = await supabase
+                .from("media")
+                .insert({
+                    user_id: user.id,
+                    type: selectedType,
+                    url: displayUrl,
+                    original_url: originalUrl,
+                    thumbnail_url: thumbnailUrl,
+                    blur_data_url: processed.blurDataURL,
+                    title: title.trim() || null,
+                    alt_text: altText.trim(),
+                    description: description.trim() || null,
+                    camera: camera.trim() || null,
+                    tags,
+                    location: location.trim() || null,
+                    city: city.trim() || null,
+                    country_code: countryCode || null,
+                    width: processed.width,
+                    height: processed.height,
+                    file_size: file.size,
+                    mime_type: file.type || null,
+                    status: "published",
+                })
+                .select("id")
                 .single();
 
-            if (dbError) throw dbError;
+            if (insertError) throw insertError;
 
-            // 4. Synchroniser avec la table topics
-            if (mediaRecord) {
-                await syncTopics(mediaRecord.id, tags);
-            }
+            if (mediaRecord) await syncTopics(mediaRecord.id, tags);
 
-            // Redirect on success
-            router.push('/');
-
-        } catch (error) {
-            console.error('Submission error:', error);
-            const errorMsg = error.message || error.error_description || (error.error && error.error.message) || JSON.stringify(error);
-            alert(`Erreur lors de la publication: ${errorMsg}`);
+            router.push(`/photos/${mediaRecord.id}`);
+        } catch (err) {
+            console.error("Submission error:", err);
+            setFormError(err.message || "La publication a échoué. Réessayez.");
         } finally {
             setUploading(false);
+            setUploadStage("");
         }
     };
 
-    const handleDrag = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (e.type === "dragenter" || e.type === "dragover") setDragActive(true);
-        else if (e.type === "dragleave") setDragActive(false);
+    const handleDrag = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setDragActive(event.type === "dragenter" || event.type === "dragover");
     };
 
-    const handleDrop = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+    const handleDrop = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
         setDragActive(false);
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-            handleFileSelect(e.dataTransfer.files);
-        }
+        if (event.dataTransfer.files?.[0]) handleFileSelect(event.dataTransfer.files);
     };
 
-    if (loading) return (
-        <div className="min-h-screen bg-gray-50/50 flex items-center justify-center">
-            <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4"></div>
-                <p className="text-gray-500">Vérification de votre session...</p>
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-white">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4" />
+                    <p className="text-gray-500">Vérification de votre session…</p>
+                </div>
             </div>
-        </div>
-    );
+        );
+    }
 
     if (!user) return null;
+
+    const africanCountries = countries.filter((c) => c.is_african);
+    const otherCountries = countries.filter((c) => !c.is_african);
+    const savings =
+        processed && file ? Math.round((1 - processed.display.size / file.size) * 100) : 0;
 
     return (
         <div className="min-h-screen bg-white">
             <div className="max-w-[1200px] mx-auto px-4 py-12 md:py-20">
-
                 {step === 1 ? (
                     <div className="max-w-3xl mx-auto">
                         <div className="text-center mb-12">
-                            <h1 className="text-4xl font-extrabold text-gray-900 mb-4">Contribuez à JEaLiFe</h1>
-                            <p className="text-lg text-gray-500">Partagez votre regard sur le Gabon et l'Afrique.</p>
+                            <h1 className="text-4xl font-extrabold text-gray-900 mb-4">
+                                Contribuez à JEaLiFe
+                            </h1>
+                            <p className="text-lg text-gray-500">
+                                Partagez votre regard, gardez vos droits.
+                            </p>
                         </div>
 
                         <div
-                            className={`border-3 border-dashed rounded-[32px] p-20 text-center transition-all ${dragActive ? 'border-blue-500 bg-blue-50/50 scale-[1.02]' : 'border-gray-200 hover:border-gray-300'}`}
+                            className={`border-3 border-dashed rounded-[32px] p-20 text-center transition-all ${
+                                dragActive
+                                    ? "border-green-500 bg-green-50/50 scale-[1.02]"
+                                    : "border-gray-200 hover:border-gray-300"
+                            }`}
                             onDragEnter={handleDrag}
                             onDragLeave={handleDrag}
                             onDragOver={handleDrag}
                             onDrop={handleDrop}
                         >
-                            <div
-                                className="cursor-pointer"
-                                onClick={() => fileInputRef.current?.click()}
-                            >
+                            <div className="cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                                 <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                                     <UploadCloud className="w-10 h-10 text-gray-400" />
                                 </div>
-                                <h2 className="text-2xl font-bold text-gray-900 mb-2">Glissez-déposez ou parcourez</h2>
-                                <p className="text-gray-500">Haute qualité recommandée (JPG, PNG)</p>
+                                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                                    Glissez-déposez ou parcourez
+                                </h2>
+                                <p className="text-gray-500">
+                                    JPG, PNG ou WebP. Envoyez le fichier le plus grand possible :
+                                    la compression est faite pour vous.
+                                </p>
                             </div>
                             <input
                                 ref={fileInputRef}
                                 type="file"
+                                accept="image/*"
                                 className="hidden"
                                 onChange={(e) => handleFileSelect(e.target.files)}
                             />
                         </div>
 
-                        <div className="mt-12 flex items-center justify-center gap-12 text-gray-400 text-sm font-medium">
-                            <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> 100% Gratuit</div>
-                            <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Publicité gratuite</div>
-                            <div className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-green-500" /> Vos droits conservés</div>
+                        {formError && (
+                            <p className="mt-6 text-center text-sm text-red-600">{formError}</p>
+                        )}
+
+                        <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-gray-400 text-sm font-medium">
+                            <span className="flex items-center gap-2">
+                                <CheckCircle2 className="w-4 h-4 text-green-500" /> Gratuit
+                            </span>
+                            <span className="flex items-center gap-2">
+                                <CheckCircle2 className="w-4 h-4 text-green-500" /> Vous restez propriétaire
+                            </span>
+                            <span className="flex items-center gap-2">
+                                <CheckCircle2 className="w-4 h-4 text-green-500" /> Retrait possible à tout moment
+                            </span>
                         </div>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-
-                        {/* Left: Preview */}
                         <div className="lg:sticky lg:top-28">
                             <div className="rounded-2xl overflow-hidden shadow-2xl bg-gray-100 ring-1 ring-black/5">
-                                <img src={previewUrl} alt="Preview" className="w-full h-auto object-cover max-h-[70vh]" />
+                                <img
+                                    src={previewUrl}
+                                    alt="Aperçu de l'image à publier"
+                                    className="w-full h-auto object-cover max-h-[70vh]"
+                                />
                             </div>
-                            <button
-                                onClick={() => setStep(1)}
-                                className="mt-4 text-sm font-medium text-gray-500 hover:text-black flex items-center gap-2 transition-colors"
-                            >
-                                <X className="w-4 h-4" /> Changer de fichier
-                            </button>
+
+                            <div className="mt-4 flex items-center justify-between gap-4">
+                                <button
+                                    onClick={resetFile}
+                                    className="text-sm font-medium text-gray-500 hover:text-black flex items-center gap-2 transition-colors"
+                                >
+                                    <X className="w-4 h-4" /> Changer de fichier
+                                </button>
+
+                                {processing && (
+                                    <span className="text-xs text-gray-400 flex items-center gap-2">
+                                        <Loader2 className="w-3 h-3 animate-spin" /> Préparation…
+                                    </span>
+                                )}
+                            </div>
+
+                            {processed && (
+                                <div className="mt-4 p-4 bg-green-50 border border-green-100 rounded-xl text-xs text-green-800 leading-relaxed">
+                                    <strong>{processed.width} × {processed.height} px.</strong>{" "}
+                                    Version web réduite à {formatFileSize(processed.display.size)}
+                                    {savings > 0 && ` (−${savings} % par rapport à l'original de ${formatFileSize(file.size)})`}.
+                                    L&apos;original est conservé pour le téléchargement haute définition.
+                                </div>
+                            )}
                         </div>
 
-                        {/* Right: Form Info */}
                         <form onSubmit={handleSubmit} className="space-y-8">
                             <div>
-                                <h2 className="text-3xl font-bold text-gray-900 mb-2">Détails de l'image</h2>
-                                <p className="text-gray-500">Aidez les autres à découvrir votre contenu.</p>
+                                <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                                    Détails de l&apos;image
+                                </h2>
+                                <p className="text-gray-500">
+                                    Ces informations décident de qui trouvera votre photo.
+                                </p>
                             </div>
 
                             <div className="space-y-6">
-                                {/* Title */}
+                                <fieldset>
+                                    <legend className="block text-sm font-bold text-gray-900 mb-2">
+                                        Type de contenu
+                                    </legend>
+                                    <div className="flex gap-2">
+                                        {MEDIA_TYPES.map(({ key, label, icon: Icon }) => (
+                                            <button
+                                                key={key}
+                                                type="button"
+                                                onClick={() => setSelectedType(key)}
+                                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+                                                    selectedType === key
+                                                        ? "border-black bg-black text-white"
+                                                        : "border-gray-200 text-gray-600 hover:border-gray-400"
+                                                }`}
+                                            >
+                                                <Icon className="w-4 h-4" /> {label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </fieldset>
+
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-900 mb-2">Titre / Sujet</label>
+                                    <label htmlFor="title" className="block text-sm font-bold text-gray-900 mb-2">
+                                        Titre
+                                    </label>
                                     <input
+                                        id="title"
                                         type="text"
                                         value={title}
                                         onChange={(e) => setTitle(e.target.value)}
-                                        placeholder="Ex: Éléphant dans le parc d'Ivindo"
+                                        placeholder="Ex : Éléphant de forêt dans le parc d'Ivindo"
                                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all font-medium"
                                         required
                                     />
                                 </div>
 
-                                {/* Location */}
-                                <div className="relative">
-                                    <label className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
-                                        <MapPin className="w-4 h-4 opacity-40" /> Lieu
+                                {/* Champ nouveau et obligatoire : sans texte alternatif,
+                                    une image n'existe ni pour Google Images ni pour un
+                                    lecteur d'écran. C'est le premier levier de visibilité
+                                    d'une banque d'images. */}
+                                <div>
+                                    <label htmlFor="alt" className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
+                                        <Accessibility className="w-4 h-4 opacity-40" />
+                                        Décrivez l&apos;image <span className="text-red-500">*</span>
                                     </label>
                                     <input
+                                        id="alt"
+                                        type="text"
+                                        value={altText}
+                                        onChange={(e) => setAltText(e.target.value)}
+                                        placeholder="Ex : Deux pêcheurs remontent un filet sur la plage de Mayumba au lever du jour"
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all font-medium"
+                                        required
+                                    />
+                                    <p className="text-xs text-gray-400 mt-2">
+                                        Une phrase simple qui dit ce qu&apos;on voit. C&apos;est ce que lisent
+                                        Google Images et les lecteurs d&apos;écran.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label htmlFor="description" className="block text-sm font-bold text-gray-900 mb-2">
+                                        Contexte <span className="font-normal text-gray-400">(facultatif)</span>
+                                    </label>
+                                    <textarea
+                                        id="description"
+                                        rows={3}
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        placeholder="L'histoire derrière la photo, les conditions de prise de vue…"
+                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all font-medium resize-none"
+                                    />
+                                </div>
+
+                                {/* Le pays est structuré, plus seulement du texte libre :
+                                    il alimente le classement géographique et les
+                                    pages par pays. */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label htmlFor="country" className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
+                                            <Globe2 className="w-4 h-4 opacity-40" /> Pays
+                                        </label>
+                                        <select
+                                            id="country"
+                                            value={countryCode}
+                                            onChange={(e) => setCountryCode(e.target.value)}
+                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all font-medium"
+                                        >
+                                            <option value="">Non précisé</option>
+                                            <optgroup label="Afrique">
+                                                {africanCountries.map((country) => (
+                                                    <option key={country.code} value={country.code}>
+                                                        {country.emoji} {country.name_fr}
+                                                    </option>
+                                                ))}
+                                            </optgroup>
+                                            <optgroup label="Reste du monde">
+                                                {otherCountries.map((country) => (
+                                                    <option key={country.code} value={country.code}>
+                                                        {country.emoji} {country.name_fr}
+                                                    </option>
+                                                ))}
+                                            </optgroup>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label htmlFor="city" className="block text-sm font-bold text-gray-900 mb-2">
+                                            Ville
+                                        </label>
+                                        <input
+                                            id="city"
+                                            type="text"
+                                            value={city}
+                                            onChange={(e) => setCity(e.target.value)}
+                                            placeholder="Ex : Libreville"
+                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all font-medium"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="relative">
+                                    <label htmlFor="location" className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
+                                        <MapPin className="w-4 h-4 opacity-40" /> Lieu précis
+                                    </label>
+                                    <input
+                                        id="location"
                                         type="text"
                                         value={location}
-                                        onChange={(e) => {
-                                            setLocation(e.target.value);
-                                            setShowLocationDeps(true);
-                                        }}
-                                        onFocus={() => setShowLocationDeps(true)}
-                                        placeholder="Ex: Lopé National Park, Gabon"
+                                        onChange={(e) => { setLocation(e.target.value); setShowLocationSuggestions(true); }}
+                                        onFocus={() => setShowLocationSuggestions(true)}
+                                        placeholder="Ex : Parc national de la Lopé"
                                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all font-medium"
                                     />
-                                    {showLocationDeps && locationSuggestions.length > 0 && (
+                                    {showLocationSuggestions && locationSuggestions.length > 0 && (
                                         <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                                            {locationSuggestions.map((loc, i) => (
+                                            {locationSuggestions.map((suggestion) => (
                                                 <button
-                                                    key={i}
+                                                    key={suggestion.label}
                                                     type="button"
-                                                    onClick={() => selectLocation(loc)}
+                                                    onClick={() => selectLocation(suggestion)}
                                                     className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 border-b border-gray-50 last:border-none flex items-center gap-3 transition-colors"
                                                 >
-                                                    <MapPin className="w-4 h-4 text-gray-300" />
-                                                    {loc}
+                                                    <MapPin className="w-4 h-4 text-gray-300 shrink-0" />
+                                                    {suggestion.label}
                                                 </button>
                                             ))}
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Camera Info */}
                                 <div>
-                                    <label className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
-                                        <Camera className="w-4 h-4 opacity-40" /> Matériel / EXIF
+                                    <label htmlFor="camera" className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
+                                        <Camera className="w-4 h-4 opacity-40" /> Matériel
                                     </label>
                                     <input
+                                        id="camera"
                                         type="text"
                                         value={camera}
                                         onChange={(e) => setCamera(e.target.value)}
-                                        placeholder="Ex: Sony A7III, 85mm f/1.4"
+                                        placeholder="Ex : Sony A7 III, 85 mm f/1.4"
                                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all font-medium"
                                     />
                                 </div>
 
-                                {/* Tags */}
                                 <div className="relative">
-                                    <label className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
-                                        <Tag className="w-4 h-4 opacity-40" /> Mots-clés associés
+                                    <label htmlFor="tags" className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
+                                        <Tag className="w-4 h-4 opacity-40" /> Mots-clés
                                     </label>
-                                    <div className="flex flex-wrap gap-2 mb-3">
-                                        {tags.map(tag => (
-                                            <span key={tag} className="px-3 py-1.5 bg-black text-white text-xs font-bold rounded-lg flex items-center gap-2 animate-in zoom-in-95">
-                                                {tag}
-                                                <button type="button" onClick={() => removeTag(tag)}><X className="w-3 h-3" /></button>
-                                            </span>
-                                        ))}
-                                    </div>
+
+                                    {tags.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mb-3">
+                                            {tags.map((tag) => (
+                                                <span
+                                                    key={tag}
+                                                    className="px-3 py-1.5 bg-black text-white text-xs font-bold rounded-lg flex items-center gap-2 animate-in zoom-in-95"
+                                                >
+                                                    {tag}
+                                                    <button type="button" onClick={() => setTags(tags.filter((t) => t !== tag))} aria-label={`Retirer ${tag}`}>
+                                                        <X className="w-3 h-3" />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+
                                     <input
+                                        id="tags"
                                         type="text"
                                         value={tagsInput}
-                                        onChange={(e) => {
-                                            setTagsInput(e.target.value);
-                                            setShowTagDeps(true);
-                                        }}
-                                        onFocus={() => setShowTagDeps(true)}
-                                        onKeyDown={handleAddTag}
-                                        placeholder="Ajoutez un mot-clé et appuyez sur Entrée..."
+                                        onChange={(e) => { setTagsInput(e.target.value); setShowTagSuggestions(true); }}
+                                        onFocus={() => setShowTagSuggestions(true)}
+                                        onKeyDown={addTag}
+                                        placeholder="Tapez un mot-clé puis Entrée…"
                                         className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all font-medium"
                                     />
-                                    {showTagDeps && tagSuggestions.length > 0 && (
+
+                                    {showTagSuggestions && tagSuggestions.length > 0 && (
                                         <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                                            {tagSuggestions.map((tag, i) => (
+                                            {tagSuggestions.map((tag) => (
                                                 <button
-                                                    key={i}
+                                                    key={tag}
                                                     type="button"
                                                     onClick={() => selectTag(tag)}
                                                     className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 border-b border-gray-50 last:border-none flex items-center gap-3 transition-colors"
                                                 >
-                                                    <Tag className="w-4 h-4 text-gray-300" />
-                                                    {tag}
+                                                    <Tag className="w-4 h-4 text-gray-300 shrink-0" /> {tag}
                                                 </button>
                                             ))}
                                         </div>
                                     )}
-                                    <p className="text-xs text-gray-400 mt-2">Séparez les tags par des virgules ou la touche Entrée.</p>
+
+                                    <div className="flex flex-wrap gap-2 mt-3">
+                                        {POPULAR_TAGS.filter((t) => !tags.includes(t)).slice(0, 8).map((tag) => (
+                                            <button
+                                                key={tag}
+                                                type="button"
+                                                onClick={() => selectTag(tag)}
+                                                className="px-3 py-1 text-xs font-medium text-gray-500 bg-gray-50 border border-gray-100 rounded-lg hover:border-gray-300 hover:text-black transition-colors"
+                                            >
+                                                + {tag}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
 
-                                {/* Privacy / Status Info */}
                                 <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 flex gap-3">
                                     <Info className="w-5 h-5 text-gray-400 shrink-0" />
                                     <p className="text-xs text-gray-500 leading-relaxed">
-                                        En publiant, vous acceptez la <strong>Licence JEaLiFe</strong> (Libre usage).
-                                        L'image sera immédiatement visible sur la page d'accueil sous le statut "Publié".
+                                        En publiant, vous acceptez la{" "}
+                                        <a href="/licence" target="_blank" className="underline font-semibold hover:text-black">
+                                            licence JEaLiFe
+                                        </a>
+                                        . Vous restez propriétaire de votre image et pouvez la retirer
+                                        à tout moment.
                                     </p>
                                 </div>
 
-                                {/* Action Buttons */}
+                                {formError && (
+                                    <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+                                        {formError}
+                                    </p>
+                                )}
+
                                 <div className="flex gap-4 pt-4">
                                     <button
                                         type="button"
-                                        onClick={() => setStep(1)}
+                                        onClick={resetFile}
                                         disabled={uploading}
                                         className="flex-1 py-4 px-6 border border-gray-200 text-gray-600 font-bold rounded-2xl hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-50"
                                     >
@@ -472,16 +708,16 @@ export default function SubmitPage() {
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={uploading}
+                                        disabled={uploading || processing || !processed}
                                         className="flex-1 py-4 px-6 bg-black text-white font-bold rounded-2xl hover:bg-gray-800 transition-all shadow-xl hover:shadow-2xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
                                     >
                                         {uploading ? (
                                             <>
-                                                <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
-                                                Publication...
+                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                                {uploadStage || "Publication…"}
                                             </>
                                         ) : (
-                                            <>Publier l'image</>
+                                            "Publier l'image"
                                         )}
                                     </button>
                                 </div>

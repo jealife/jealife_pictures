@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithEmail, signInWithOAuth } from "../lib/auth";
-import { AUTH_IMAGES } from "../lib/auth-images";
+import AuthBackground from "../components/AuthBackground";
 import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
@@ -14,14 +14,6 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [backgroundImage, setBackgroundImage] = useState(AUTH_IMAGES[0]);
-
-    useEffect(() => {
-        // Select a random image on client-side mount
-        const randomIndex = Math.floor(Math.random() * AUTH_IMAGES.length);
-        setBackgroundImage(AUTH_IMAGES[randomIndex]);
-    }, []);
-
     const handleEmailLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -50,32 +42,15 @@ export default function LoginPage() {
 
     return (
         <div className="min-h-screen flex bg-white font-sans text-[#111]">
-            {/* Left: Decorative Image */}
-            <div className="hidden lg:block lg:w-[40%] relative bg-black overflow-hidden">
-                {/* Background Image */}
-                <div className="absolute inset-0 bg-black/20 z-10 transition-opacity duration-700"></div>
-                <img
-                    src={backgroundImage.url}
-                    alt="Login Background"
-                    className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
+            <div className="relative hidden lg:block lg:w-[40%]">
+                <AuthBackground
+                    imageIndex={0}
+                    title="Bon retour"
+                    quote="La photographie est une histoire que je ne peux pas dire avec des mots."
                 />
-
-                {/* Gradient Overlay for Text Readability */}
-                <div className="absolute inset-0 bg-linear-to-b from-black/40 via-transparent to-black/80 z-10"></div>
-
-                <div className="absolute bottom-8 left-8 right-8 z-20 text-white">
-                    <h2 className="text-4xl font-bold mb-2">Bon retour</h2>
-                    <p className="text-lg opacity-90 max-w-md">
-                        "La photographie est une histoire que je ne peux pas dire avec des mots."
-                    </p>
-                    <p className="text-sm mt-4 opacity-70">
-                        Photo par <a href={backgroundImage.photographer_url} target="_blank" rel="noopener noreferrer" className="hover:underline text-white">{backgroundImage.photographer}</a>
-                    </p>
-                </div>
-                {/* Logo top left */}
                 <div className="absolute top-8 left-8 z-20">
                     <Link href="/" className="text-white hover:opacity-90 transition-opacity">
-                        <span className="font-bold text-xl tracking-tight">JEaLiFe Pictures</span>
+                        <span className="font-bold text-xl tracking-tight">JEaLiFe Stock</span>
                     </Link>
                 </div>
             </div>
@@ -174,7 +149,7 @@ export default function LoginPage() {
                     </form>
 
                     <p className="mt-10 text-center text-[#111] text-sm">
-                        Vous n'avez pas de compte ?{" "}
+                        Vous n&apos;avez pas de compte ?{" "}
                         <Link href="/join" className="underline text-[#767676] hover:text-[#111] transition-colors">Rejoindre JEaLiFe</Link>
                     </p>
                 </div>

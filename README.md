@@ -1,36 +1,125 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# JEaLiFe Stock
 
-## Getting Started
+La banque d'images du Gabon et de l'Afrique. Photos libres de droits, publiées
+par des photographes africains.
 
-First, run the development server:
+Next.js 16 (App Router) · Supabase (Postgres, Auth, Storage) · Tailwind CSS 4.
+
+---
+
+## Mise en route
+
+### 1. Base de données
+
+Créez un projet Supabase, puis appliquez les deux migrations **dans l'ordre**,
+depuis le SQL Editor du tableau de bord :
+
+1. `supabase/migrations/0001_init.sql` — tables, politiques RLS, fonctions,
+   recherche plein texte et bucket de stockage.
+2. `supabase/migrations/0002_seed.sql` — les pays africains et les thèmes de
+   départ.
+
+Le bucket `media` et ses politiques sont créés par la migration : il n'y a rien
+à configurer à la main dans l'interface Storage.
+
+> Les anciens fichiers SQL de la racine (`supabase_schema.sql`,
+> `supabase_setup.sql`, `update_*.sql`) sont conservés dans `supabase/legacy/`
+> à titre d'archive. Ils se contredisaient — `media.id` y était tantôt `uuid`,
+> tantôt `bigint` — et ne doivent plus être exécutés.
+
+### 2. Variables d'environnement
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.local.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Renseignez `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+(Project Settings → API). Les mêmes valeurs doivent être déclarées sur Vercel.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+### 3. Connexion Google (optionnel)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Suivez `GOOGLE_OAUTH_SETUP.md`. Dans Supabase → Authentication → URL
+Configuration, ajoutez `https://votre-domaine/auth/callback` aux *Redirect
+URLs*.
 
-## Learn More
+### 4. Lancer
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm install && npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Ce qui structure le projet
 
-## Deploy on Vercel
+### Le classement « Afrique d'abord »
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Chaque média porte un `country_code` (ISO 3166-1) relié à la table
+`countries`. Un déclencheur en calcule le `geo_priority` :
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Valeur | Portée |
+|---|---|
+| 0 | Gabon |
+| 1 | CEMAC (Cameroun, Centrafrique, Congo, Guinée équatoriale, Tchad) |
+| 2 | Reste de l'Afrique |
+| 3 | Pays non renseigné |
+| 4 | Hors Afrique |
+
+Le tri par défaut du site est `geo_priority ASC, created_at DESC` : le contenu
+gabonais remonte sans que le reste soit masqué. Un lecteur peut restreindre ou
+élargir via le filtre pays, ou passer le tri en `?tri=monde`.
+
+### Trois dérivés par image
+
+L'envoi est préparé dans le navigateur (`app/lib/images.js`) avant tout
+transfert :
+
+| Dérivé | Rôle | Taille |
+|---|---|---|
+| `thumbnail_url` | grilles | 600 px max |
+| `url` | affichage | 2400 px max |
+| `original_url` | téléchargement HD | fichier source |
+| `blur_data_url` | placeholder | 16 px, en base64 |
+
+Le photographe téléverse donc quelques centaines de kilo-octets là où il
+envoyait auparavant le fichier brut, et c'est la vignette — non l'original de
+plusieurs mégaoctets — qui est servie en page d'accueil. Sur une connexion
+mobile facturée au mégaoctet, l'écart est décisif.
+
+### Recherche
+
+`media.search_vector` est un `tsvector` français **désaccentué** (configuration
+`public.fr_unaccent`), alimenté par le titre, les mots-clés, le texte
+alternatif, le lieu, le pays et la description, avec des poids décroissants.
+« foret ivindo » trouve « Forêt d'Ivindo ». Le repli en correspondance
+partielle n'intervient que si le vecteur ne renvoie rien.
+
+---
+
+## Structure
+
+```
+app/
+  lib/
+    supabase.js     client Supabase
+    database.js     toutes les requêtes (pagination, recherche, likes, …)
+    media.js        forme unique d'un média côté interface + téléchargement
+    images.js       préparation des images dans le navigateur
+    auth.js         session, OAuth, profils
+  components/       grille, cartes, filtres, boutons d'action
+  themes/           pages par thème
+  pays/             pages par pays
+  photos/[id]/      page d'une image
+  users/[username]/ profil et ses onglets
+supabase/
+  migrations/       le schéma de référence
+  legacy/           anciens fichiers SQL, archivés
+```
+
+## Commandes
+
+```bash
+npm run dev     # développement
+npm run build   # build de production
+npm run lint    # ESLint
+```

@@ -1,81 +1,117 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { collections } from "../../../lib/data"; // You'll need to ensure this export exists in data.js
-import { Layers } from "lucide-react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { Layers, Loader2, Lock } from "lucide-react";
+import { getUserCollections, getUserProfile } from "../../../lib/database";
 
+/**
+ * Onglet « Collections ».
+ *
+ * La page affichait trois collections codées en dur pour tous les profils,
+ * illustrées par des photos Unsplash, avec un commentaire admettant que les
+ * données n'existaient pas. Elle lit maintenant les vraies collections.
+ */
 export default function UserCollectionsPage() {
     const { username } = useParams();
+    const [collections, setCollections] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // Mock: filtering collections relevant to user or just all of them for demo
-    // const userCollections = collections.filter(c => c.author.username === username);
-    const userCollections = collections || [];
+    useEffect(() => {
+        if (!username) return;
+        let cancelled = false;
+
+        async function load() {
+            const profile = await getUserProfile(username);
+            if (cancelled) return;
+
+            if (profile) {
+                // La politique de sécurité filtre déjà les collections privées
+                // dont on n'est pas propriétaire.
+                setCollections(await getUserCollections(profile.id));
+            }
+            if (!cancelled) setLoading(false);
+        }
+
+        load();
+        return () => { cancelled = true; };
+    }, [username]);
+
+    if (loading) {
+        return (
+            <div className="py-20 flex justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
+            </div>
+        );
+    }
+
+    if (collections.length === 0) {
+        return (
+            <div className="py-24 text-center flex flex-col items-center">
+                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                    <Layers className="w-8 h-8 text-gray-300" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Aucune collection</h3>
+                <p className="text-gray-500 max-w-md">
+                    Les collections servent à regrouper des images : un reportage, une
+                    ambiance, une commande client.
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {userCollections.length > 0 ? (
-                userCollections.map(collection => (
-                    <Link href={`/collections/${collection.id}`} key={collection.id} className="group block cursor-pointer">
-                        {/* Collection Preview Grid (1 Main + 2 Side) */}
-                        <div className="h-64 grid grid-cols-3 gap-0.5 rounded-lg overflow-hidden bg-gray-100 mb-4 opacity-90 group-hover:opacity-100 transition-opacity">
-                            {/* Main Image (Left, takes 2/3) */}
-                            <div className="col-span-2 h-full relative">
-                                <img
-                                    src={collection.preview_photos[0]}
-                                    alt={collection.title}
-                                    className="absolute inset-0 w-full h-full object-cover"
-                                />
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
-                            </div>
-                            {/* Side Images (Right, stacked) */}
-                            <div className="col-span-1 grid grid-rows-2 gap-0.5 h-full">
-                                <div className="relative h-full">
-                                    <img
-                                        src={collection.preview_photos[1] || collection.preview_photos[0]}
-                                        className="absolute inset-0 w-full h-full object-cover"
+            {collections.map((collection) => (
+                <Link key={collection.id} href={`/collections/${collection.id}`} className="group block">
+                    <div className="h-64 grid grid-cols-3 gap-0.5 rounded-lg overflow-hidden bg-gray-100 mb-4">
+                        {collection.preview_photos.length > 0 ? (
+                            <>
+                                <div className="col-span-2 relative h-full">
+                                    <Image
+                                        src={collection.preview_photos[0]}
                                         alt=""
+                                        fill
+                                        sizes="(max-width: 640px) 66vw, 22vw"
+                                        className="object-cover transition-transform duration-500 group-hover:scale-105"
                                     />
                                 </div>
-                                <div className="relative h-full">
-                                    <img
-                                        src={collection.preview_photos[2] || collection.preview_photos[0]}
-                                        className="absolute inset-0 w-full h-full object-cover"
-                                        alt=""
-                                    />
+                                <div className="col-span-1 grid grid-rows-2 gap-0.5 h-full">
+                                    {[1, 2].map((index) => (
+                                        <div key={index} className="relative h-full bg-gray-100">
+                                            {collection.preview_photos[index] && (
+                                                <Image
+                                                    src={collection.preview_photos[index]}
+                                                    alt=""
+                                                    fill
+                                                    sizes="11vw"
+                                                    className="object-cover"
+                                                />
+                                            )}
+                                        </div>
+                                    ))}
                                 </div>
+                            </>
+                        ) : (
+                            <div className="col-span-3 flex items-center justify-center text-gray-300">
+                                <Layers className="w-8 h-8" />
                             </div>
-                        </div>
-
-                        {/* Title & Info */}
-                        <div>
-                            <h3 className="text-lg font-bold text-gray-900 group-hover:text-black mb-1">
-                                {collection.title}
-                            </h3>
-                            <div className="flex items-center gap-2 text-sm text-gray-500">
-                                <span>{collection.total_photos} photos</span>
-                                <span>•</span>
-                                <span>Curated by {collection.author.name}</span>
-                            </div>
-                            <div className="flex flex-wrap gap-2 mt-3">
-                                {collection.tags.slice(0, 3).map(tag => (
-                                    <span key={tag} className="px-2.5 py-1 bg-gray-100 text-gray-600 text-xs rounded-md font-medium hover:bg-gray-200 transition-colors">
-                                        {tag}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    </Link>
-                ))
-            ) : (
-                <div className="col-span-full py-20 text-center flex flex-col items-center">
-                    <div className="w-32 h-32 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-                        <Layers className="w-12 h-12 text-gray-300" />
+                        )}
                     </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Aucune collection</h3>
-                    <p className="text-gray-500 max-w-md">Cet utilisateur n'a pas encore créé de collection.</p>
-                </div>
-            )}
+
+                    <h3 className="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
+                        {collection.title}
+                        {collection.is_private && (
+                            <Lock className="w-3.5 h-3.5 text-gray-400" aria-label="Collection privée" />
+                        )}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                        {collection.total_photos} image{collection.total_photos > 1 ? "s" : ""}
+                    </p>
+                </Link>
+            ))}
         </div>
     );
 }

@@ -251,7 +251,7 @@ export default function SettingsPage() {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-sm font-semibold text-gray-900">Nom d'utilisateur</label>
+                                        <label className="text-sm font-semibold text-gray-900">Nom d&apos;utilisateur</label>
                                         <input
                                             type="text"
                                             value={profile.username}

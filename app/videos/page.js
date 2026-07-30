@@ -1,32 +1,35 @@
-
-"use client";
-
-import Hero from "../components/Hero";
+import { Suspense } from "react";
 import TopicBar from "../components/TopicBar";
-import { videos } from "../lib/data";
-import VideoCard from "../components/VideoCard";
+import VideoGrid from "../components/VideoGrid";
 
+export const metadata = {
+    title: "Vidéos libres de droits",
+    description:
+        "Séquences vidéo libres de droits et gratuites, partagées par la communauté JEaLiFe Stock.",
+    alternates: { canonical: "/videos" },
+};
+
+/**
+ * La page listait trois vidéos de démonstration hébergées chez Pexels, chacune
+ * répétée trois fois pour remplir la grille. Elle lit maintenant la base.
+ */
 export default function VideosPage() {
     return (
-        <main className="min-h-screen">
-            <Hero />
-            <TopicBar />
+        <main className="min-h-screen bg-white">
+            <Suspense fallback={<div className="h-16 border-b border-gray-100" />}>
+                <TopicBar />
+            </Suspense>
 
-            <div className="max-w-[1400px] mx-auto px-4 py-8">
-                <h2 className="text-2xl font-bold mb-6 text-gray-900">Vidéos gratuites</h2>
-                <div className="columns-1 sm:columns-2 md:columns-3 gap-6 space-y-6">
-                    {videos.map((v) => (
-                        <VideoCard key={v.id} video={v} />
-                    ))}
-                    {/* Duplicates for demo */}
-                    {videos.map((v) => (
-                        <VideoCard key={`dup-${v.id}`} video={{ ...v, id: `dup-${v.id}` }} />
-                    ))}
-                    {videos.map((v) => (
-                        <VideoCard key={`dup2-${v.id}`} video={{ ...v, id: `dup2-${v.id}` }} />
-                    ))}
-                </div>
-            </div>
+            <header className="max-w-[1600px] mx-auto px-4 pt-10 pb-4">
+                <h1 className="text-3xl font-extrabold text-gray-900">Vidéos</h1>
+                <p className="text-gray-500 mt-2">
+                    Séquences libres de droits, à télécharger gratuitement.
+                </p>
+            </header>
+
+            <Suspense fallback={<div className="py-20" />}>
+                <VideoGrid />
+            </Suspense>
         </main>
     );
 }

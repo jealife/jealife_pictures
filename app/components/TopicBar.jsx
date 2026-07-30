@@ -1,103 +1,96 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { getTopics } from "../lib/database";
+import CountryFilter from "./CountryFilter";
 
-export default function TopicBar() {
+/**
+ * Barre de navigation par thème.
+ *
+ * Trois corrections :
+ *   · les thèmes affichés étaient une liste codée en dur copiée d'Unsplash
+ *     (« Street Photography », « Film »…), complétée par… un seul thème de la
+ *     base, à cause d'un `.slice(0, 1)` là où le commentaire annonçait 15 ;
+ *   · les liens pointaient vers `/?q=<nom>`, une simple recherche texte, alors
+ *     que la table `media_topics` existe justement pour offrir de vraies pages
+ *     de thème ;
+ *   · aucun filtre géographique n'était proposé, alors que c'est la promesse
+ *     centrale du site.
+ */
+export default function TopicBar({ activeTopic = null }) {
+    const pathname = usePathname();
     const scrollRef = useRef(null);
-    const [showLeftArrow, setShowLeftArrow] = useState(false);
-    const [showRightArrow, setShowRightArrow] = useState(true);
-    const [activeTopic, setActiveTopic] = useState("À la Une");
     const [topics, setTopics] = useState([]);
-
-    // Featured topics similar to Unsplash
-    const featuredTopics = [
-        "À la Une",
-        "Fond d'écran",
-        "Nature",
-        "Architecture",
-        "Voyage",
-        "Street Photography",
-        "Personnes",
-        "Animaux",
-        "Textures & Motifs",
-        "Film"
-    ];
-
-    const capitalize = (str) => {
-        if (!str) return "";
-        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-    };
+    const [showLeftArrow, setShowLeftArrow] = useState(false);
+    const [showRightArrow, setShowRightArrow] = useState(false);
 
     useEffect(() => {
-        async function fetchTopics() {
-            const data = await getTopics();
-            if (data) {
-                // Get unique names, properly formatted, excluding those already in featured
-                const dbNames = data
-                    .map(t => capitalize(t.name))
-                    .filter(name => !featuredTopics.includes(name));
-
-                // Keep only unique ones and limit to 15 popular ones from DB
-                const uniqueDbNames = [...new Set(dbNames)].slice(0, 1);
-                setTopics(uniqueDbNames);
-            }
-        }
-        fetchTopics();
+        getTopics({ limit: 30 }).then(setTopics);
     }, []);
 
-    const scroll = (direction) => {
-        if (scrollRef.current) {
-            const { current } = scrollRef;
-            const scrollAmount = 400;
-            if (direction === 'left') {
-                current.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-            } else {
-                current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-            }
-        }
-    };
-
     const checkScroll = () => {
-        if (scrollRef.current) {
-            const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-            setShowLeftArrow(scrollLeft > 10);
-            setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
-        }
+        const element = scrollRef.current;
+        if (!element) return;
+        const { scrollLeft, scrollWidth, clientWidth } = element;
+        setShowLeftArrow(scrollLeft > 10);
+        setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
     };
 
     useEffect(() => {
-        const el = scrollRef.current;
-        if (el) {
-            el.addEventListener('scroll', checkScroll);
-            checkScroll();
-            // Need a slight delay for initial check as content might load
-            setTimeout(checkScroll, 500);
-            return () => el.removeEventListener('scroll', checkScroll);
-        }
+        const element = scrollRef.current;
+        if (!element) return;
+        element.addEventListener("scroll", checkScroll);
+        checkScroll();
+        const timer = setTimeout(checkScroll, 300);
+        return () => {
+            element.removeEventListener("scroll", checkScroll);
+            clearTimeout(timer);
+        };
     }, [topics]);
 
-    const allDisplayTopics = [...featuredTopics, ...topics];
+    const scroll = (direction) => {
+        scrollRef.current?.scrollBy({
+            left: direction === "left" ? -400 : 400,
+            behavior: "smooth",
+        });
+    };
+
+    const mediaTypes = [
+        { href: "/", label: "Photos" },
+        { href: "/illustrations", label: "Illustrations" },
+        { href: "/videos", label: "Vidéos" },
+    ];
 
     return (
-        <div className="sticky top-16 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-100 py-3">
-            <div className="relative max-w-[1800px] mx-auto px-4 flex items-center gap-6">
+        <div className="sticky top-16 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+            <div className="max-w-[1800px] mx-auto px-4 flex items-center gap-6 py-3">
+                <nav className="hidden md:flex items-center gap-1 pr-6 border-r border-gray-200 shrink-0">
+                    {mediaTypes.map((type) => (
+                        <Link
+                            key={type.href}
+                            href={type.href}
+                            className={`px-3 py-1.5 text-sm transition-colors ${
+                                pathname === type.href
+                                    ? "font-semibold text-black"
+                                    : "font-medium text-gray-500 hover:text-black"
+                            }`}
+                        >
+                            {type.label}
+                        </Link>
+                    ))}
+                </nav>
 
-                {/* Fixed Media Types */}
-                <div className="hidden md:flex items-center gap-1 pr-6 border-r border-gray-200 shrink-0">
-                    <Link href="/" className="px-3 py-1.5 text-sm font-semibold text-black hover:text-gray-600 transition-colors">Photos</Link>
-                    <Link href="/illustrations" className="px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-black transition-colors">Illustrations</Link>
-                    <Link href="/videos" className="px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-black transition-colors">Vidéos</Link>
-                </div>
-
-                {/* Scrollable Topics */}
-                <div className="relative flex-1 overflow-hidden group">
-
+                <div className="relative flex-1 overflow-hidden">
                     {showLeftArrow && (
                         <div className="absolute left-0 top-0 bottom-0 w-16 bg-linear-to-r from-white via-white to-transparent z-10 flex items-center pl-2">
-                            <button onClick={() => scroll('left')} className="p-1.5 bg-white shadow-lg rounded-full border border-gray-100 hover:scale-110 transition-transform">
+                            <button
+                                onClick={() => scroll("left")}
+                                className="p-1.5 bg-white shadow-lg rounded-full border border-gray-100 hover:scale-110 transition-transform"
+                                aria-label="Faire défiler vers la gauche"
+                            >
                                 <ChevronLeft className="w-4 h-4 text-gray-700" />
                             </button>
                         </div>
@@ -106,28 +99,47 @@ export default function TopicBar() {
                     <div
                         ref={scrollRef}
                         className="flex items-center gap-6 overflow-x-auto scrollbar-hide px-2 py-1"
-                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
-                        {allDisplayTopics.map((name) => (
+                        <Link
+                            href="/"
+                            className={`whitespace-nowrap pb-2 text-sm font-medium transition-all border-b-2 hover:text-black ${
+                                !activeTopic && pathname === "/"
+                                    ? "border-black text-black"
+                                    : "border-transparent text-gray-500"
+                            }`}
+                        >
+                            À la une
+                        </Link>
+
+                        {topics.map((topic) => (
                             <Link
-                                key={name}
-                                href={name === "À la Une" ? "/" : `/?q=${name.toLowerCase()}`}
-                                onClick={() => setActiveTopic(name)}
-                                className={`whitespace-nowrap pb-2 text-sm font-medium transition-all border-b-2 hover:text-black ${activeTopic === name ? "border-black text-black" : "border-transparent text-gray-500"}`}
+                                key={topic.slug}
+                                href={`/themes/${topic.slug}`}
+                                className={`whitespace-nowrap pb-2 text-sm font-medium transition-all border-b-2 hover:text-black ${
+                                    activeTopic === topic.slug
+                                        ? "border-black text-black"
+                                        : "border-transparent text-gray-500"
+                                }`}
                             >
-                                {name}
+                                {topic.name}
                             </Link>
                         ))}
                     </div>
 
                     {showRightArrow && (
                         <div className="absolute right-0 top-0 bottom-0 w-16 bg-linear-to-l from-white via-white to-transparent z-10 flex items-center justify-end pr-2">
-                            <button onClick={() => scroll('right')} className="p-1.5 bg-white shadow-lg rounded-full border border-gray-100 hover:scale-110 transition-transform">
+                            <button
+                                onClick={() => scroll("right")}
+                                className="p-1.5 bg-white shadow-lg rounded-full border border-gray-100 hover:scale-110 transition-transform"
+                                aria-label="Faire défiler vers la droite"
+                            >
                                 <ChevronRight className="w-4 h-4 text-gray-700" />
                             </button>
                         </div>
                     )}
                 </div>
+
+                <CountryFilter />
             </div>
         </div>
     );

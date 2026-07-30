@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "../../../contexts/AuthContext";
-import { deleteMedia, getMediaById, updateMedia, syncTopics } from "../../../lib/database";
-import { ArrowLeft, Save, MapPin, Camera, Tag, Loader2, CheckCircle2, AlertCircle, Plus, Trash2 } from "lucide-react";
+import { deleteMedia, getMediaById, updateMedia, syncTopics, getCountries } from "../../../lib/database";
+import { ArrowLeft, Save, MapPin, Camera, Tag, Loader2, CheckCircle2, AlertCircle, Plus, Trash2, Globe2, Accessibility } from "lucide-react";
 import Link from "next/link";
 
 export default function EditPhotoPage() {
@@ -19,13 +19,21 @@ export default function EditPhotoPage() {
     const [status, setStatus] = useState({ type: "", message: "" });
     const [formData, setFormData] = useState({
         title: "",
+        // `alt_text` est renseigné à la publication et sert au référencement
+        // comme aux lecteurs d'écran : il doit rester modifiable ensuite.
+        alt_text: "",
         description: "",
         location: "",
+        city: "",
+        country_code: "",
         camera: "",
         tags: []
     });
+    const [countries, setCountries] = useState([]);
     const [newTag, setNewTag] = useState("");
     const [photoUrl, setPhotoUrl] = useState("");
+
+    useEffect(() => { getCountries().then(setCountries); }, []);
 
     useEffect(() => {
         if (!authLoading) {
@@ -49,12 +57,15 @@ export default function EditPhotoPage() {
                 }
                 setFormData({
                     title: data.title || "",
+                    alt_text: data.alt_text || "",
                     description: data.description || "",
                     location: data.location || "",
+                    city: data.city || "",
+                    country_code: data.country_code || "",
                     camera: data.camera || "",
                     tags: data.tags || []
                 });
-                setPhotoUrl(data.url);
+                setPhotoUrl(data.thumbnail_url || data.url);
             } else {
                 router.push('/');
             }
@@ -84,7 +95,13 @@ export default function EditPhotoPage() {
         setSaving(true);
         setStatus({ type: "", message: "" });
 
-        const result = await updateMedia(id, formData);
+        // Une chaîne vide sur `country_code` violerait la clé étrangère vers
+        // la table des pays : on envoie NULL.
+        const result = await updateMedia(id, {
+            ...formData,
+            country_code: formData.country_code || null,
+            city: formData.city.trim() || null,
+        });
 
         if (result.success) {
             // Synchroniser les mots-clés avec la table topics
@@ -144,7 +161,7 @@ export default function EditPhotoPage() {
                         <div className="aspect-4/5 rounded-xl overflow-hidden bg-gray-50 border border-gray-100 shadow-sm">
                             <img src={photoUrl} className="w-full h-full object-cover" alt="Preview" />
                         </div>
-                        <p className="text-xs text-gray-400 text-center italic">Aperçu de l'image originale</p>
+                        <p className="text-xs text-gray-400 text-center italic">Aperçu de l&apos;image originale</p>
                     </div>
 
                     {/* Edit Form */}
@@ -164,7 +181,60 @@ export default function EditPhotoPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-bold text-gray-900">Description</label>
+                                <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                    <Accessibility className="w-4 h-4" /> Description de l&apos;image
+                                    <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.alt_text}
+                                    onChange={(e) => setFormData({ ...formData, alt_text: e.target.value })}
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black focus:ring-1 focus:ring-black outline-hidden transition-all"
+                                    placeholder="Ce que l&apos;on voit sur l&apos;image, en une phrase"
+                                    required
+                                />
+                                <p className="text-xs text-gray-400">
+                                    Lu par Google Images et les lecteurs d&apos;écran.
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                        <Globe2 className="w-4 h-4" /> Pays
+                                    </label>
+                                    <select
+                                        value={formData.country_code}
+                                        onChange={(e) => setFormData({ ...formData, country_code: e.target.value })}
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black focus:ring-1 focus:ring-black outline-hidden transition-all"
+                                    >
+                                        <option value="">Non précisé</option>
+                                        <optgroup label="Afrique">
+                                            {countries.filter(c => c.is_african).map(c => (
+                                                <option key={c.code} value={c.code}>{c.emoji} {c.name_fr}</option>
+                                            ))}
+                                        </optgroup>
+                                        <optgroup label="Reste du monde">
+                                            {countries.filter(c => !c.is_african).map(c => (
+                                                <option key={c.code} value={c.code}>{c.emoji} {c.name_fr}</option>
+                                            ))}
+                                        </optgroup>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-bold text-gray-900">Ville</label>
+                                    <input
+                                        type="text"
+                                        value={formData.city}
+                                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                        className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black focus:ring-1 focus:ring-black outline-hidden transition-all"
+                                        placeholder="Libreville"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-gray-900">Contexte</label>
                                 <textarea
                                     rows={4}
                                     value={formData.description}
@@ -184,7 +254,7 @@ export default function EditPhotoPage() {
                                         value={formData.location}
                                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                                         className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-black focus:ring-1 focus:ring-black outline-hidden transition-all"
-                                        placeholder="Libreville, Gabon..."
+                                        placeholder="Lieu de prise de vue"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -253,10 +323,10 @@ export default function EditPhotoPage() {
                         {/* Delete Section */}
                         <div className="pt-12 border-t border-red-100">
                             <div className="bg-red-50/30 rounded-2xl border border-red-100 p-8">
-                                <h3 className="text-lg font-bold text-red-900 mb-2">Supprimer l'image</h3>
+                                <h3 className="text-lg font-bold text-red-900 mb-2">Supprimer l&apos;image</h3>
                                 <p className="text-sm text-red-700/80 mb-6 leading-relaxed">
-                                    Lorsqu'une image est supprimée de JEaLiFe Pictures, nous faisons tout notre possible pour empêcher sa diffusion.
-                                    Néanmoins, la licence JEaLiFe est irrévocable, les copies de l'image qui ont été téléchargées avant la suppression peuvent donc toujours être utilisées.
+                                    Lorsqu&apos;une image est supprimée de JEaLiFe Stock, nous faisons tout notre possible pour empêcher sa diffusion.
+                                    Néanmoins, la licence JEaLiFe est irrévocable, les copies de l&apos;image qui ont été téléchargées avant la suppression peuvent donc toujours être utilisées.
                                 </p>
 
                                 {!showDeleteConfirm ? (
@@ -266,7 +336,7 @@ export default function EditPhotoPage() {
                                         className="text-red-600 font-bold text-sm hover:underline flex items-center gap-2"
                                     >
                                         <Trash2 className="w-4 h-4" />
-                                        J'aimerais supprimer cette image
+                                        J&apos;aimerais supprimer cette image
                                     </button>
                                 ) : (
                                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 animate-in fade-in slide-in-from-top-2 duration-300">

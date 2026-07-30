@@ -53,8 +53,8 @@ export default function UserProfileLayout({ children }) {
         return (
             <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Profil introuvable</h2>
-                <p className="text-gray-500">L'utilisateur @{username} n'existe pas ou a été supprimé.</p>
-                <Link href="/" className="mt-6 text-blue-600 hover:underline">Retour à l'accueil</Link>
+                <p className="text-gray-500">L&apos;utilisateur @{username} n&apos;existe pas ou a été supprimé.</p>
+                <Link href="/" className="mt-6 text-blue-600 hover:underline">Retour à l&apos;accueil</Link>
             </div>
         );
     }
@@ -68,7 +68,10 @@ export default function UserProfileLayout({ children }) {
     ];
 
     const privateTabs = [
-        { id: 'likes', label: 'J\'aime', icon: Heart, count: profileUser.total_likes || 0, path: `/users/${username}/likes` },
+        // `total_likes` était ambigu : il comptait les j'aime *donnés* par
+        // l'utilisateur, alors qu'affiché sur un profil public il se lisait
+        // comme les j'aime reçus. Les deux sont désormais distincts.
+        { id: 'likes', label: 'J\'aime', icon: Heart, count: profileUser.total_likes_given || 0, path: `/users/${username}/likes` },
         { id: 'stats', label: 'Statistiques', icon: BarChart3, count: null, path: `/users/${username}/stats` },
     ];
 
@@ -112,7 +115,7 @@ export default function UserProfileLayout({ children }) {
                                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-3 text-sm text-gray-500">
                                     {profileUser.status !== 'unavailable' && (
                                         <span className="flex items-center gap-1.5 text-blue-600 font-medium">
-                                            <CheckBadgeIcon className="w-4 h-4" /> Disponible à l'embauche
+                                            <CheckBadgeIcon className="w-4 h-4" /> Disponible à l&apos;embauche
                                         </span>
                                     )}
                                     {profileUser.location && (

@@ -1,20 +1,60 @@
 "use client";
 
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { ImageOff, Loader2 } from "lucide-react";
 import PhotoCard from "./PhotoCard";
 import SkeletonCard from "./SkeletonCard";
-import { useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
-import { getMedia, searchMedia } from "../lib/database";
+import { useAuth } from "../contexts/AuthContext";
+import {
+    PAGE_SIZE,
+    getLikedMediaIds,
+    getMedia,
+    getMediaByTopic,
+    getUserMedia,
+    searchMedia,
+} from "../lib/database";
+import { normalizeMediaList } from "../lib/media";
 
-export default function MasonryGrid({ searchQuery: propQuery = null, mobileColumns = null, hideActions = false }) {
+/**
+ * Grille de médias.
+ *
+ * Deux manques structurels sont corrigés ici :
+ *   · la grille chargeait 50 médias, une seule fois, sans aucun moyen d'aller
+ *     plus loin — une banque d'images ne peut pas s'arrêter à 50 images ;
+ *   · l'état « j'aime » n'était jamais lu, donc un cœur déjà donné
+ *     réapparaissait vide à chaque rechargement.
+ */
+export default function MasonryGrid({
+    type = "photo",
+    searchQuery: propQuery = null,
+    topic = null,
+    country = null,
+    userId = null,
+    sort = null,
+    mobileColumns = null,
+    hideActions = false,
+    emptyMessage = null,
+}) {
     const searchParams = useSearchParams();
-    const query = (propQuery || searchParams.get("q"))?.toLowerCase();
-    const [photos, setPhotos] = useState([]);
+    const { user } = useAuth();
+
+    const query = propQuery ?? searchParams.get("q");
+    const activeCountry = country ?? searchParams.get("pays");
+    const activeSort = sort ?? searchParams.get("tri") ?? "defaut";
+
+    const [items, setItems] = useState([]);
+    const [likedIds, setLikedIds] = useState(new Set());
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
     const [error, setError] = useState(null);
     const [columnCount, setColumnCount] = useState(3);
 
-    // Dynamic column count based on window width
+    const sentinelRef = useRef(null);
+    // Évite qu'un résultat de requête lente écrase un filtre plus récent.
+    const requestIdRef = useRef(0);
+
     useEffect(() => {
         const updateColumns = () => {
             const width = window.innerWidth;
@@ -25,69 +65,113 @@ export default function MasonryGrid({ searchQuery: propQuery = null, mobileColum
         };
 
         updateColumns();
-        window.addEventListener('resize', updateColumns);
-        return () => window.removeEventListener('resize', updateColumns);
-    }, []);
+        window.addEventListener("resize", updateColumns);
+        return () => window.removeEventListener("resize", updateColumns);
+    }, [mobileColumns]);
 
+    const fetchPage = useCallback(
+        async (offset) => {
+            const options = { type, limit: PAGE_SIZE, offset, country: activeCountry, sort: activeSort };
+
+            if (userId) return getUserMedia(userId, { type, limit: PAGE_SIZE, offset });
+            if (topic) return getMediaByTopic(topic, options);
+            if (query) return searchMedia(query, options);
+            return getMedia(options);
+        },
+        [type, topic, query, userId, activeCountry, activeSort]
+    );
+
+    // Premier chargement, et rechargement complet à chaque changement de filtre.
     useEffect(() => {
-        async function fetchPhotos() {
+        const requestId = ++requestIdRef.current;
+        let cancelled = false;
+
+        async function load() {
             setLoading(true);
             setError(null);
+            setItems([]);
+            setHasMore(true);
 
             try {
-                let data;
-                if (query) {
-                    data = await searchMedia(query, 'photo');
-                } else {
-                    data = await getMedia('photo', 50);
-                }
+                const rows = await fetchPage(0);
+                if (cancelled || requestId !== requestIdRef.current) return;
 
-                // Transform data to match component structure
-                const transformedData = data.map(item => ({
-                    id: item.id,
-                    url: item.url,
-                    alt: item.alt_text || item.title || 'Image',
-                    author: {
-                        name: item.profiles?.full_name || item.profiles?.username || 'Anonyme',
-                        username: item.profiles?.username || 'unknown',
-                        avatar: item.profiles?.avatar_url || '/default-avatar.png',
-                        bio: item.profiles?.bio,
-                        location: item.profiles?.location
-                    },
-                    likes: item.likes_count || 0,
-                    location: item.location,
-                    width: item.width,
-                    height: item.height
-                }));
-
-                setPhotos(transformedData);
+                const normalized = normalizeMediaList(rows);
+                setItems(normalized);
+                setHasMore(rows.length === PAGE_SIZE);
             } catch (err) {
-                console.error('Error fetching photos:', err);
-                setError('Impossible de charger les photos. Veuillez réessayer.');
+                if (cancelled) return;
+                console.error("Error fetching media:", err);
+                setError("Impossible de charger les images. Vérifiez votre connexion et réessayez.");
             } finally {
-                setLoading(false);
+                if (!cancelled && requestId === requestIdRef.current) setLoading(false);
             }
         }
 
-        fetchPhotos();
-    }, [query]);
+        load();
+        return () => { cancelled = true; };
+    }, [fetchPage]);
+
+    const loadMore = useCallback(async () => {
+        if (loadingMore || loading || !hasMore) return;
+
+        setLoadingMore(true);
+        try {
+            const rows = await fetchPage(items.length);
+            const normalized = normalizeMediaList(rows);
+
+            setItems((previous) => {
+                // Le classement peut faire réapparaître un média déjà chargé ;
+                // on déduplique plutôt que d'afficher deux fois la même photo.
+                const seen = new Set(previous.map((item) => item.id));
+                return [...previous, ...normalized.filter((item) => !seen.has(item.id))];
+            });
+            setHasMore(rows.length === PAGE_SIZE);
+        } catch (err) {
+            console.error("Error loading more media:", err);
+            setHasMore(false);
+        } finally {
+            setLoadingMore(false);
+        }
+    }, [fetchPage, hasMore, items.length, loading, loadingMore]);
+
+    // Chargement à l'approche du bas de page.
+    useEffect(() => {
+        const sentinel = sentinelRef.current;
+        if (!sentinel || !hasMore || loading) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => { if (entries[0].isIntersecting) loadMore(); },
+            { rootMargin: "600px" }
+        );
+
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    }, [hasMore, loading, loadMore]);
+
+    // Cœurs déjà donnés par l'utilisateur connecté.
+    useEffect(() => {
+        if (!user || items.length === 0) {
+            setLikedIds(new Set());
+            return;
+        }
+        let cancelled = false;
+        getLikedMediaIds(user.id, items.map((item) => item.id)).then((ids) => {
+            if (!cancelled) setLikedIds(ids);
+        });
+        return () => { cancelled = true; };
+    }, [user, items]);
 
     if (loading) {
-        // Distribute skeletons across columns to match the actual layout
-        const skeletonCols = Array.from({ length: columnCount }, () => []);
-        [...Array(12)].forEach((_, i) => skeletonCols[i % columnCount].push(i));
+        const skeletonColumns = Array.from({ length: columnCount }, () => []);
+        [...Array(12)].forEach((_, i) => skeletonColumns[i % columnCount].push(i));
 
         return (
             <div className="max-w-[1600px] mx-auto px-4 py-8">
-                {query && (
-                    <div className="h-8 w-48 bg-gray-100 rounded-md animate-pulse mb-6"></div>
-                )}
                 <div className="flex flex-row gap-6">
-                    {skeletonCols.map((col, colIdx) => (
-                        <div key={colIdx} className="flex-1 flex flex-col gap-6">
-                            {col.map(i => (
-                                <SkeletonCard key={i} index={i} />
-                            ))}
+                    {skeletonColumns.map((column, columnIndex) => (
+                        <div key={columnIndex} className="flex-1 flex flex-col gap-6">
+                            {column.map((i) => <SkeletonCard key={i} index={i} />)}
                         </div>
                     ))}
                 </div>
@@ -97,42 +181,78 @@ export default function MasonryGrid({ searchQuery: propQuery = null, mobileColum
 
     if (error) {
         return (
-            <div className="max-w-[1600px] mx-auto px-4 py-20">
-                <div className="text-center">
-                    <p className="text-red-500 text-lg">{error}</p>
-                </div>
+            <div className="max-w-[1600px] mx-auto px-4 py-20 text-center">
+                <p className="text-red-600 text-lg">{error}</p>
             </div>
         );
     }
 
-    // Distribute photos across columns perfectly
+    if (items.length === 0) {
+        return (
+            <div className="max-w-[1600px] mx-auto px-4 py-24 text-center flex flex-col items-center">
+                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                    <ImageOff className="w-8 h-8 text-gray-300" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    {query ? `Aucun résultat pour « ${query} »` : "Rien à afficher pour l'instant"}
+                </h3>
+                <p className="text-gray-500 max-w-md">
+                    {emptyMessage ||
+                        (query
+                            ? "Essayez un autre mot-clé, ou soyez le premier à publier sur ce sujet."
+                            : "Les premières images arrivent bientôt. Vous pouvez déjà publier les vôtres.")}
+                </p>
+            </div>
+        );
+    }
+
+    // Répartition en colonnes de hauteur libre : c'est ce qui donne la
+    // mosaïque sans laisser de trous en bas.
     const columns = Array.from({ length: columnCount }, () => []);
-    photos.forEach((photo, index) => {
-        columns[index % columnCount].push(photo);
-    });
+    items.forEach((item, index) => columns[index % columnCount].push(item));
 
     return (
         <div className="max-w-[1600px] mx-auto px-4 py-8">
-            {query && (
-                <h2 className="text-2xl font-bold mb-6 capitalize text-gray-900">{query}</h2>
-            )}
-
-            {/* Masonry Layout using Flexbox Columns (The "True" Masonry way for React) */}
             <div className="flex flex-row gap-6">
-                {columns.map((columnPhotos, colIndex) => (
-                    <div key={colIndex} className="flex-1 flex flex-col gap-6">
-                        {columnPhotos.map((photo) => (
-                            <PhotoCard key={photo.id} photo={photo} hideActions={hideActions} />
+                {columns.map((columnItems, columnIndex) => (
+                    <div key={columnIndex} className="flex-1 flex flex-col gap-6">
+                        {columnItems.map((item, itemIndex) => (
+                            <PhotoCard
+                                key={item.id}
+                                photo={item}
+                                liked={likedIds.has(item.id)}
+                                hideActions={hideActions}
+                                priority={columnIndex === 0 && itemIndex === 0}
+                            />
                         ))}
                     </div>
                 ))}
             </div>
 
-            {photos.length === 0 && !loading && (
-                <div className="py-20 text-center w-full">
-                    <p className="text-gray-500 text-lg">Aucune image trouvée{query ? ` pour "${query}"` : ''}.</p>
-                    <p className="text-gray-400">Essayez d'autres mots-clés.</p>
+            <div ref={sentinelRef} className="h-px" aria-hidden="true" />
+
+            {loadingMore && (
+                <div className="flex justify-center py-10">
+                    <Loader2 className="w-6 h-6 animate-spin text-gray-300" />
                 </div>
+            )}
+
+            {/* Repli explicite si l'observateur ne se déclenche pas. */}
+            {hasMore && !loadingMore && (
+                <div className="flex justify-center py-10">
+                    <button
+                        onClick={loadMore}
+                        className="px-6 py-3 border border-gray-200 rounded-full text-sm font-bold text-gray-600 hover:border-black hover:text-black transition-colors"
+                    >
+                        Afficher plus d&apos;images
+                    </button>
+                </div>
+            )}
+
+            {!hasMore && items.length > PAGE_SIZE && (
+                <p className="text-center text-sm text-gray-400 py-10">
+                    Vous avez tout vu.
+                </p>
             )}
         </div>
     );

@@ -9,18 +9,18 @@ export async function generateMetadata({ params }) {
 
     if (!photo) {
         return {
-            title: "Photo non trouvée | JEaLiFe Pictures",
+            title: "Photo non trouvée | JEaLiFe Stock",
         };
     }
 
-    const title = `${photo.title || "Photo"} par ${photo.profiles?.full_name || photo.profiles?.username} | JEaLiFe Pictures`;
-    const description = photo.description || `Découvrez cette superbe photo de ${photo.profiles?.full_name} sur JEaLiFe Pictures. Téléchargement gratuit en haute résolution.`;
+    const title = `${photo.title || "Photo"} par ${photo.profiles?.full_name || photo.profiles?.username} | JEaLiFe Stock`;
+    const description = photo.description || `Découvrez cette superbe photo de ${photo.profiles?.full_name} sur JEaLiFe Stock. Téléchargement gratuit en haute résolution.`;
     const author = photo.profiles?.full_name || photo.profiles?.username;
 
     return {
         title: title,
         description: description,
-        keywords: [author, ...(photo.tags || []), "photo gratuite", "JEaLiFe", "Gabon"],
+        keywords: [author, ...(photo.tags || []), "photo gratuite", "libre de droits", "JEaLiFe Stock"],
         openGraph: {
             title: title,
             description: description,

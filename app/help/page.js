@@ -27,7 +27,7 @@ export default function HelpPage() {
                             <HelpCircle className="w-6 h-6" />
                         </div>
                         <h3 className="text-xl font-bold text-gray-900 mb-2">FAQ Générale</h3>
-                        <p className="text-gray-500 text-sm">Réponses aux questions les plus fréquentes sur l'utilisation du site.</p>
+                        <p className="text-gray-500 text-sm">Réponses aux questions les plus fréquentes sur l&apos;utilisation du site.</p>
                     </div>
                     <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
                         <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center text-green-600 mb-6">

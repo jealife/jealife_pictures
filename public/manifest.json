@@ -1,11 +1,11 @@
 {
-    "name": "JEaLiFe Pictures",
+    "name": "JEaLiFe Stock",
     "short_name": "JEaLiFe",
-    "description": "La source d'images internet. Propulsé par des créateurs du Gabon et d'ailleurs.",
+    "description": "Banque d'images libres de droits et gratuites.",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",
-    "theme_color": "#000000",
+    "theme_color": "#0b3d2e",
     "icons": [
         {
             "src": "/icons/icon-192x192.png",

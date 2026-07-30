@@ -26,7 +26,7 @@ export default function AboutPage() {
                         Photos for everyone.
                     </h1>
                     <p className="text-xl md:text-2xl text-gray-700 font-medium max-w-2xl mx-auto leading-relaxed">
-                        La plus grande source d'images du Gabon et d'Afrique Centrale. Libres de droits. Pour tous les créateurs.
+                        Une banque d&apos;images libres de droits. Pour tous les créateurs.
                     </p>
                 </div>
             </div>
@@ -35,16 +35,16 @@ export default function AboutPage() {
             <div className="max-w-7xl mx-auto px-6 py-24">
                 <div className="grid md:grid-cols-2 gap-16 items-center">
                     <div>
-                        <h2 className="text-3xl md:text-4xl font-bold mb-6">Nous construisons l'internet visuel de l'Afrique.</h2>
+                        <h2 className="text-3xl md:text-4xl font-bold mb-6">Une banque d&apos;images qui a du caractère.</h2>
                         <div className="prose prose-lg text-gray-600 space-y-6">
                             <p>
-                                JEaLiFe Pictures est né d'une idée simple : la beauté de notre continent ne devrait pas être enfermée derrière des murs payants.
+                                JEaLiFe Stock est né d&apos;une idée simple : de belles images ne devraient pas être enfermées derrière des murs payants.
                             </p>
                             <p>
-                                Nous connectons les photographes talentueux du Gabon avec des créateurs du monde entier — designers, écrivains, artistes et entrepreneurs — qui ont besoin d'images authentiques pour raconter leurs histoires.
+                                Nous relions des photographes à des créateurs du monde entier — designers, écrivains, artistes et entrepreneurs — qui ont besoin d&apos;images authentiques pour raconter leurs histoires.
                             </p>
                             <p>
-                                Ce qui a commencé comme une petite collection de photos de Libreville est devenu une plateforme mondiale alimentée par une communauté généreuse.
+                                Une collection personnelle devenue une plateforme ouverte, alimentée par une communauté généreuse.
                             </p>
                         </div>
                     </div>
@@ -86,9 +86,9 @@ export default function AboutPage() {
 
             {/* Team CTA */}
             <div className="max-w-4xl mx-auto px-6 py-32 text-center">
-                <h2 className="text-4xl md:text-5xl font-bold mb-6">Rejoignez l'équipe</h2>
+                <h2 className="text-4xl md:text-5xl font-bold mb-6">Rejoignez l&apos;équipe</h2>
                 <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
-                    Nous sommes une petite équipe avec de grandes ambitions. Aidez-nous à construire le futur de la photographie en Afrique.
+                    Nous sommes une petite équipe avec de grandes ambitions. Aidez-nous à faire grandir la banque.
                 </p>
                 <Link href="/team" className="inline-flex items-center gap-2 px-8 py-4 bg-black text-white rounded-full font-bold hover:bg-gray-800 transition-all hover:scale-105">
                     Voir les carrières <ArrowRight className="w-5 h-5" />

@@ -1,8 +1,9 @@
 import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import ClientLayout from "./components/ClientLayout";
 import { AuthProvider } from "./contexts/AuthContext";
-import { Analytics } from "@vercel/analytics/next"
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -14,66 +15,62 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  metadataBase: new URL("https://jealife-pictures.vercel.app"),
+  metadataBase: new URL("https://stock.jealife.com/"),
   title: {
-    default: "JEaLiFe Pictures | Belles images gratuites et photos",
-    template: "%s | JEaLiFe Pictures"
+    default: "JEaLiFe Stock | Images libres de droits et gratuites",
+    template: "%s | JEaLiFe Stock",
   },
-  description: "La source d'images internet. Propulsé par des créateurs du Gabon et d'ailleurs. Téléchargez des photos haute résolution gratuites.",
+  description:
+    "Banque d'images libres de droits et gratuites. Une sélection soignée, où l'on trouve de belles images du continent.",
   manifest: "/manifest.json",
-  themeColor: "#000000",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "JEaLiFe Pictures",
+    title: "JEaLiFe Stock",
   },
-  keywords: ["photos gratuites", "Gabon", "images libres de droits", "JEaLiFe", "photographie", "Afrique", "Libreville"],
-  authors: [{ name: "JEaLiFe Team" }],
-  creator: "JEaLiFe",
+  keywords: [
+    "banque d'images", "images libres de droits", "photos gratuites",
+    "photo haute résolution", "images du continent africain", "JEaLiFe Stock",
+  ],
+  authors: [{ name: "JEaLiFe Stock" }],
+  creator: "JEaLiFe Stock",
   openGraph: {
     type: "website",
     locale: "fr_FR",
-    url: "https://jealife-pictures.vercel.app",
-    siteName: "JEaLiFe Pictures",
-    title: "JEaLiFe Pictures | Belles images gratuites",
-    description: "Découvrez des milliers de photos haute résolution gratuites partagées par une communauté talentueuse.",
-    images: [
-      {
-        url: "https://images.unsplash.com/photo-1759082927410-1d1856152b50?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-        width: 1200,
-        height: 630,
-        alt: "JEaLiFe Pictures",
-      },
-    ],
+    url: "/",
+    siteName: "JEaLiFe Stock",
+    title: "JEaLiFe Stock | Images libres de droits et gratuites",
+    description:
+      "Une sélection soignée d'images libres de droits, à télécharger gratuitement.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "JEaLiFe Pictures",
-    description: "Belles images gratuites et photos haute résolution.",
-    images: ["https://images.unsplash.com/photo-1759082927410-1d1856152b50?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"],
+    title: "JEaLiFe Stock",
+    description:
+      "Images libres de droits, à télécharger gratuitement.",
   },
-  robots: {
-    index: true,
-    follow: true,
-  },
-  icons: {
-    apple: "/icons/icon-192x192.png",
-  }
+  robots: { index: true, follow: true },
+  icons: { apple: "/icons/icon-192x192.png" },
+};
+
+// `themeColor` et `viewport` déclarés dans `metadata` sont ignorés depuis
+// Next 15 — ils déclenchaient un avertissement sur chaque page du site.
+export const viewport = {
+  themeColor: "#0b3d2e",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="fr">
-      <Analytics />
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
-          <ClientLayout>
-            {children}
-          </ClientLayout>
+          <ClientLayout>{children}</ClientLayout>
         </AuthProvider>
+        {/* Placé dans <body> : entre </html> et <body>, le composant était
+            dans une position invalide du document. */}
+        <Analytics />
       </body>
     </html>
   );

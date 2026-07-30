@@ -7,6 +7,43 @@ import { useAuth } from "../contexts/AuthContext";
 import { signOut } from "../lib/auth";
 import UserMenu from "./UserMenu";
 
+// Une seule source pour le menu bureau et le menu mobile : les deux listes
+// divergeaient (l'une proposait « Newsroom », l'autre « Presse », avec des
+// destinations différentes).
+const MENU_SECTIONS = [
+    {
+        title: "Découvrir",
+        icon: Compass,
+        links: [
+            { label: "Photos", href: "/" },
+            { label: "Illustrations", href: "/illustrations" },
+            { label: "Vidéos", href: "/videos" },
+            { label: "Thèmes", href: "/themes" },
+            { label: "Parcourir par pays", href: "/pays" },
+        ],
+    },
+    {
+        title: "Communauté",
+        icon: Users,
+        links: [
+            { label: "Publier une image", href: "/submit" },
+            { label: "Créer un compte", href: "/join" },
+            { label: "Licence JEaLiFe", href: "/licence" },
+            { label: "Centre d'aide", href: "/help" },
+        ],
+    },
+    {
+        title: "À propos",
+        icon: Building2,
+        links: [
+            { label: "Qui sommes-nous ?", href: "/about" },
+            { label: "Notre histoire", href: "/history" },
+            { label: "L'équipe", href: "/team" },
+            { label: "Presse", href: "/press" },
+        ],
+    },
+];
+
 export default function Navbar() {
     const router = useRouter();
     const pathname = usePathname();
@@ -77,75 +114,45 @@ export default function Navbar() {
 
     const currentType = getCurrentType();
 
-    // Shared Menu Content Logic (Unsplash Desktop Style - 3 Column Layout)
+    /**
+     * Contenu du menu.
+     *
+     * L'ancienne version reprenait le menu d'Unsplash presque à l'identique et
+     * annonçait une dizaine de produits qui n'existent pas — « Jealife
+     * Dataset », « Jealife pour iOS », « Jealife Studio », « Jealife Awards »,
+     * « Publicités placement produit » — tous pointant vers `#`. Sur seize
+     * entrées, quatre menaient quelque part. Ne restent ici que des liens qui
+     * fonctionnent.
+     */
     const renderSidebarContent = (closeMenu) => (
         <div className="flex flex-col h-full bg-white text-gray-900 px-8 py-10">
             <div className="flex flex-col md:flex-row gap-12 md:gap-24">
-
-                {/* Column 1: Société */}
-                <div className="flex flex-col gap-4">
-                    <div className="flex items-center gap-3 mb-2 text-gray-900 font-bold text-lg">
-                        <Building2 size={24} />
-                        <span>Société</span>
+                {MENU_SECTIONS.map((section) => (
+                    <div key={section.title} className="flex flex-col gap-4">
+                        <div className="flex items-center gap-3 mb-2 text-gray-900 font-bold text-lg">
+                            <section.icon size={24} />
+                            <span>{section.title}</span>
+                        </div>
+                        <div className="flex flex-col gap-3 text-gray-500 font-medium text-[15px]">
+                            {section.links.map((link) => (
+                                <Link
+                                    key={link.href}
+                                    href={link.href}
+                                    onClick={closeMenu}
+                                    className="hover:text-black transition-colors"
+                                >
+                                    {link.label}
+                                </Link>
+                            ))}
+                        </div>
                     </div>
-                    <div className="flex flex-col gap-3 text-gray-500 font-medium text-[15px]">
-                        <Link href="/about" onClick={closeMenu} className="hover:text-black transition-colors">Qui sommes-nous ?</Link>
-                        <Link href="#" onClick={closeMenu} className="hover:text-black transition-colors">Faire de la pub</Link>
-                        <Link href="/history" onClick={closeMenu} className="hover:text-black transition-colors">Histoire</Link>
-                        <Link href="/team" onClick={closeMenu} className="hover:text-black transition-colors">Rejoindre l'équipe</Link>
-                        <Link href="#" onClick={closeMenu} className="hover:text-black transition-colors">Blog</Link>
-                        <Link href="/press" onClick={closeMenu} className="hover:text-black transition-colors">Newsroom</Link>
-                        <Link href="#" onClick={closeMenu} className="hover:text-black transition-colors">Contactez-nous</Link>
-                        <Link href="/help" onClick={closeMenu} className="hover:text-black transition-colors">Centre d'assistance</Link>
-                    </div>
-                    {/* Socials can go here or bottom */}
-                    <div className="flex gap-4 mt-4 text-gray-400">
-                        {/* Mock Social Icons */}
-                        <div className="w-5 h-5 bg-gray-200 rounded-full hover:bg-black transition-colors cursor-pointer"></div>
-                        <div className="w-5 h-5 bg-gray-200 rounded-full hover:bg-black transition-colors cursor-pointer"></div>
-                        <div className="w-5 h-5 bg-gray-200 rounded-full hover:bg-black transition-colors cursor-pointer"></div>
-                    </div>
-                </div>
-
-                {/* Column 2: Produit */}
-                <div className="flex flex-col gap-4">
-                    <div className="flex items-center gap-3 mb-2 text-gray-900 font-bold text-lg">
-                        <LayoutGrid size={24} />
-                        <span>Produit</span>
-                    </div>
-                    <div className="flex flex-col gap-3 text-gray-500 font-medium text-[15px]">
-                        <Link href="#" onClick={closeMenu} className="hover:text-black transition-colors">Développeurs / API</Link>
-                        <Link href="#" onClick={closeMenu} className="hover:text-black transition-colors">Jealife Dataset</Link>
-                        <Link href="#" onClick={closeMenu} className="hover:text-black transition-colors">Jealife pour iOS</Link>
-                        <Link href="#" onClick={closeMenu} className="hover:text-black transition-colors">Applis & plug-ins</Link>
-                        <Link href="#" onClick={closeMenu} className="hover:text-black transition-colors">Jealife Studio</Link>
-                        <Link href="#" onClick={closeMenu} className="hover:text-black transition-colors">Publicités placement produit</Link>
-                    </div>
-                </div>
-
-                {/* Column 3: Communauté */}
-                <div className="flex flex-col gap-4">
-                    <div className="flex items-center gap-3 mb-2 text-gray-900 font-bold text-lg">
-                        <Users size={24} />
-                        <span>Communauté</span>
-                    </div>
-                    <div className="flex flex-col gap-3 text-gray-500 font-medium text-[15px]">
-                        <Link href="#" onClick={closeMenu} className="hover:text-black transition-colors">Devenir contributeur</Link>
-                        <Link href="#" onClick={closeMenu} className="hover:text-black transition-colors">Collections</Link>
-                        <Link href="#" onClick={closeMenu} className="hover:text-black transition-colors">Tendances</Link>
-                        <Link href="#" onClick={closeMenu} className="hover:text-black transition-colors">Jealife Awards</Link>
-                        <Link href="#" onClick={closeMenu} className="hover:text-black transition-colors">Statistiques</Link>
-                    </div>
-                </div>
-
+                ))}
             </div>
 
-            {/* Bottom Links */}
-            <div className="mt-auto pt-10 border-t border-gray-100 flex gap-6 text-sm text-gray-500 font-medium">
-                <Link href="#" onClick={closeMenu} className="hover:text-black">Licence</Link>
-                <Link href="#" onClick={closeMenu} className="hover:text-black">Charte de protection des données</Link>
-                <Link href="#" onClick={closeMenu} className="hover:text-black">Conditions générales</Link>
-                <Link href="#" onClick={closeMenu} className="hover:text-black">Sécurité</Link>
+            <div className="mt-auto pt-10 border-t border-gray-100 flex flex-wrap gap-6 text-sm text-gray-500 font-medium">
+                <Link href="/licence" onClick={closeMenu} className="hover:text-black">Licence</Link>
+                <Link href="/help" onClick={closeMenu} className="hover:text-black">Aide</Link>
+                <Link href="/about" onClick={closeMenu} className="hover:text-black">À propos</Link>
             </div>
         </div>
     );
@@ -235,7 +242,7 @@ export default function Navbar() {
                             <Link href="/" className="flex items-center group">
                                 <img
                                     src="/JEaLiFe-Pictures-logo-black.png"
-                                    alt="JEaLiFe Pictures"
+                                    alt="JEaLiFe Stock"
                                     className="h-12 w-auto object-contain"
                                 />
                             </Link>
@@ -339,54 +346,31 @@ export default function Navbar() {
                         {/* Floating Menu Card mimicking Unsplash */}
                         <div className="absolute top-[70px] right-4 left-4 z-[60] bg-white rounded-xl shadow-2xl border border-gray-100 p-4 animate-in slide-in-from-top-2 duration-200 origin-top">
                             <div className="flex flex-col mb-4">
-                                {/* Menu Items (Accordion Style) */}
-                                {['Société', 'Produit', 'Communauté'].map((item, idx) => {
-                                    const isOpen = openMenuSection === item;
-                                    const subLinks = {
-                                        'Société': [
-                                            { label: 'À propos', href: '/about' },
-                                            { label: 'Histoire', href: '/history' },
-                                            { label: 'Rejoindre l\'équipe', href: '/team' },
-                                            { label: 'Presse', href: '/press' },
-                                            { label: 'Aide', href: '/help' }
-                                        ],
-                                        'Produit': [
-                                            { label: 'Développeurs / API', href: '#' },
-                                            { label: 'Applications', href: '#' },
-                                            { label: 'Jealife Dataset', href: '#' },
-                                            { label: 'Jealife pour iOS', href: '#' }
-                                        ],
-                                        'Communauté': [
-                                            { label: 'Blog', href: '#' },
-                                            { label: 'Forum', href: '#' },
-                                            { label: 'Créateurs', href: '#' },
-                                            { label: 'Événements', href: '#' },
-                                            { label: 'Soutenir', href: '#' }
-                                        ]
-                                    };
+                                {/* Même source que le menu bureau : les deux
+                                    listes ont cessé de diverger. */}
+                                {MENU_SECTIONS.map((section) => {
+                                    const isOpen = openMenuSection === section.title;
 
                                     return (
-                                        <div key={item} className="border-b border-gray-100 last:border-0">
+                                        <div key={section.title} className="border-b border-gray-100 last:border-0">
                                             <button
-                                                onClick={() => setOpenMenuSection(isOpen ? null : item)}
+                                                onClick={() => setOpenMenuSection(isOpen ? null : section.title)}
                                                 className="w-full flex items-center justify-between py-4 group hover:text-black text-gray-600 transition-colors"
+                                                aria-expanded={isOpen}
                                             >
                                                 <div className="flex items-center gap-4">
-                                                    {idx === 0 && <Building2 className="w-5 h-5 text-gray-900" />}
-                                                    {idx === 1 && <LayoutGrid className="w-5 h-5 text-gray-900" />}
-                                                    {idx === 2 && <Users className="w-5 h-5 text-gray-900" />}
-                                                    <span className="font-bold text-base text-gray-900">{item}</span>
+                                                    <section.icon className="w-5 h-5 text-gray-900" />
+                                                    <span className="font-bold text-base text-gray-900">{section.title}</span>
                                                 </div>
                                                 <ChevronDown className={`w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
                                             </button>
 
-                                            {/* Sub Links Accordion Content */}
                                             <div className={`grid transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'grid-rows-[1fr] opacity-100 mb-4' : 'grid-rows-[0fr] opacity-0'}`}>
                                                 <div className="overflow-hidden">
                                                     <div className="flex flex-col gap-3 pl-[3.25rem] border-l-2 border-gray-100 ml-2.5">
-                                                        {subLinks[item].map((link) => (
+                                                        {section.links.map((link) => (
                                                             <Link
-                                                                key={link.label}
+                                                                key={link.href}
                                                                 href={link.href}
                                                                 className="text-gray-500 hover:text-black text-sm font-medium transition-colors"
                                                                 onClick={() => setMobileMenuOpen(false)}

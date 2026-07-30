@@ -8,21 +8,21 @@ export default function HistoryPage() {
         {
             year: "2026",
             title: "Voices of Africa",
-            description: "Lancement de l'initiative panafricaine pour documenter les cultures méconnues. JEaLiFe pictures s'ouvre à 15 nouveaux pays.",
+            description: "Ouverture de la banque à de nouveaux pays et à de nouvelles thématiques.",
             image: "https://images.unsplash.com/photo-1523805009345-7448845a9e53?q=80&w=800",
             icon: <Globe className="w-6 h-6 text-white" />
         },
         {
             year: "2025",
             title: "La Barre des 1M",
-            description: "Un million de téléchargements atteints. La communauté célèbre cet événement avec une exposition physique à Libreville.",
+            description: "La communauté franchit ses premiers paliers de téléchargements.",
             image: "https://images.unsplash.com/photo-1496568816309-51d7c20e3b21?q=80&w=800",
             icon: <Flag className="w-6 h-6 text-white" />
         },
         {
             year: "2024",
             title: "Première Ligne de Code",
-            description: "Lancement de la version Alpha. 50 photographes, 500 photos, et une vision commune : partager le Gabon avec le monde.",
+            description: "Lancement de la version Alpha, autour d'une vision simple : partager de belles images, librement.",
             image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=800",
             icon: <Calendar className="w-6 h-6 text-white" />
         },
@@ -42,7 +42,7 @@ export default function HistoryPage() {
             <div className="max-w-4xl mx-auto px-6 pt-32 pb-20 text-center">
                 <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8">Notre Parcours.</h1>
                 <p className="text-xl text-gray-600 leading-relaxed max-w-2xl mx-auto">
-                    D'une simple idée née dans la forêt gabonaise à une plateforme utilisée par des millions de créateurs. Voici comment nous en sommes arrivés là.
+                    D&apos;une simple idée à une plateforme ouverte à tous les créateurs. Voici comment nous en sommes arrivés là.
                 </p>
             </div>
 
@@ -93,7 +93,7 @@ export default function HistoryPage() {
                     <div className="relative flex justify-center mt-24">
                         <div className="relative z-10 bg-white px-4">
                             <span className="inline-block px-6 py-3 border-2 border-dashed border-gray-300 rounded-full text-gray-400 font-bold tracking-widest uppercase">
-                                La suite s'écrit avec vous
+                                La suite s&apos;écrit avec vous
                             </span>
                         </div>
                     </div>

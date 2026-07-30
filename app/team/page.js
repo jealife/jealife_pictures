@@ -15,7 +15,7 @@ export default function TeamPage() {
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500">meaningful.</span>
                 </h1>
                 <p className="text-xl md:text-2xl text-gray-600 max-w-3xl leading-relaxed">
-                    Chez JEaLiFe, nous ne construisons pas seulement une banque d'images. Nous construisons une communauté qui célèbre la culture, la créativité et le partage.
+                    Chez JEaLiFe, nous ne construisons pas seulement une banque d&apos;images. Nous construisons une communauté qui célèbre la culture, la créativité et le partage.
                 </p>
             </div>
 
@@ -54,13 +54,13 @@ export default function TeamPage() {
                     <div>
                         <h3 className="text-xl font-bold mb-4">Impact Culturel</h3>
                         <p className="text-gray-600">
-                            Chaque ligne de code, chaque pixel contribue à changer la narration visuelle d'un continent.
+                            Chaque ligne de code, chaque pixel contribue à faire exister de belles images.
                         </p>
                     </div>
                     <div>
                         <h3 className="text-xl font-bold mb-4">Open & Transparent</h3>
                         <p className="text-gray-600">
-                            Nous partageons nos succès et nos échecs. Nous construisons en public et valorisons l'honnêteté radicale.
+                            Nous partageons nos succès et nos échecs. Nous construisons en public et valorisons l&apos;honnêteté radicale.
                         </p>
                     </div>
                 </div>

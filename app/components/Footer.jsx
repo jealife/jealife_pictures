@@ -1,86 +1,95 @@
-"use client";
-
 import Link from "next/link";
-import { Facebook, Twitter, Instagram, Linkedin, Globe, Camera } from "lucide-react";
+import Image from "next/image";
+
+/**
+ * Pied de page.
+ *
+ * Les quinze liens du pied de page pointaient tous vers « / », à trois
+ * exceptions près. « Conditions d'utilisation », « Politique de
+ * confidentialité », « FAQ », « Forum » et « Collections populaires »
+ * renvoyaient tous à l'accueil. Ne restent que des destinations réelles.
+ */
+const SECTIONS = [
+    {
+        title: "Découvrir",
+        links: [
+            { label: "Photos", href: "/" },
+            { label: "Illustrations", href: "/illustrations" },
+            { label: "Vidéos", href: "/videos" },
+            { label: "Thèmes", href: "/themes" },
+            { label: "Parcourir par pays", href: "/pays" },
+        ],
+    },
+    {
+        title: "Communauté",
+        links: [
+            { label: "Publier une image", href: "/submit" },
+            { label: "Créer un compte", href: "/join" },
+            { label: "Se connecter", href: "/login" },
+            { label: "Centre d'aide", href: "/help" },
+        ],
+    },
+    {
+        title: "À propos",
+        links: [
+            { label: "Qui sommes-nous ?", href: "/about" },
+            { label: "Notre histoire", href: "/history" },
+            { label: "L'équipe", href: "/team" },
+            { label: "Presse", href: "/press" },
+            { label: "Licence JEaLiFe", href: "/licence" },
+        ],
+    },
+];
 
 export default function Footer() {
-    const currentYear = new Date().getFullYear();
-
     return (
         <footer className="bg-white border-t border-gray-100 pt-16 pb-8">
             <div className="max-w-[1600px] mx-auto px-4 md:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
-                    {/* Brand Section */}
                     <div className="space-y-4">
-                        <Link href="/" className="flex items-center gap-2 group">
-                            <div className="bg-black text-white p-1.5 rounded-lg group-hover:scale-110 transition-transform">
-                                <Camera className="w-5 h-5" />
-                            </div>
-                            <span className="font-bold text-xl tracking-tight">JEaLiFe Pictures</span>
+                        <Link href="/" className="flex items-center gap-2 group w-fit">
+                            <Image
+                                src="/JEaLiFe-Pictures-logo-black.png"
+                                alt="JEaLiFe Stock"
+                                width={120}
+                                height={40}
+                                style={{ height: "auto" }}
+                                className="w-[120px] object-contain group-hover:scale-105 transition-transform"
+                            />
                         </Link>
                         <p className="text-gray-500 text-sm leading-relaxed max-w-xs">
-                            La source d'images internet. Propulsée par des créateurs du Gabon et d'ailleurs.
-                            Partagez et découvrez des ressources libres de droits.
+                            Banque d&apos;images libres de droits et gratuites. Une sélection
+                            soignée, où l&apos;on trouve de belles images du continent.
                         </p>
-                        <div className="flex items-center gap-4 pt-2">
-                            <a href="#" className="p-2 bg-gray-50 rounded-full text-gray-500 hover:bg-black hover:text-white transition-all transform hover:-translate-y-1">
-                                <Facebook className="w-4 h-4" />
-                            </a>
-                            <a href="#" className="p-2 bg-gray-50 rounded-full text-gray-500 hover:bg-black hover:text-white transition-all transform hover:-translate-y-1">
-                                <Twitter className="w-4 h-4" />
-                            </a>
-                            <a href="#" className="p-2 bg-gray-50 rounded-full text-gray-500 hover:bg-black hover:text-white transition-all transform hover:-translate-y-1">
-                                <Instagram className="w-4 h-4" />
-                            </a>
-                            <a href="#" className="p-2 bg-gray-50 rounded-full text-gray-500 hover:bg-black hover:text-white transition-all transform hover:-translate-y-1">
-                                <Linkedin className="w-4 h-4" />
-                            </a>
-                        </div>
                     </div>
 
-                    {/* Links Columns */}
-                    <div>
-                        <h3 className="font-bold text-gray-900 mb-6">Découvrir</h3>
-                        <ul className="space-y-3">
-                            <li><Link href="/" className="text-gray-500 hover:text-green-600 transition-colors text-sm font-medium">Choix de la rédaction</Link></li>
-                            <li><Link href="/" className="text-gray-500 hover:text-green-600 transition-colors text-sm font-medium">Collections populaires</Link></li>
-                            <li><Link href="/" className="text-gray-500 hover:text-green-600 transition-colors text-sm font-medium">Photos populaires</Link></li>
-                            <li><Link href="/" className="text-gray-500 hover:text-green-600 transition-colors text-sm font-medium">Recherches fréquentes</Link></li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h3 className="font-bold text-gray-900 mb-6">Communauté</h3>
-                        <ul className="space-y-3">
-                            <li><Link href="/" className="text-gray-500 hover:text-green-600 transition-colors text-sm font-medium">Devenir contributeur</Link></li>
-                            <li><Link href="/join" className="text-gray-500 hover:text-green-600 transition-colors text-sm font-medium">S'inscrire</Link></li>
-                            <li><Link href="/login" className="text-gray-500 hover:text-green-600 transition-colors text-sm font-medium">Connexion</Link></li>
-                            <li><Link href="/" className="text-gray-500 hover:text-green-600 transition-colors text-sm font-medium">Forum</Link></li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h3 className="font-bold text-gray-900 mb-6">À propos</h3>
-                        <ul className="space-y-3">
-                            <li><Link href="/" className="text-gray-500 hover:text-green-600 transition-colors text-sm font-medium">À propos de nous</Link></li>
-                            <li><Link href="/" className="text-gray-500 hover:text-green-600 transition-colors text-sm font-medium">FAQ</Link></li>
-                            <li><Link href="/" className="text-gray-500 hover:text-green-600 transition-colors text-sm font-medium">Conditions d'utilisation</Link></li>
-                            <li><Link href="/" className="text-gray-500 hover:text-green-600 transition-colors text-sm font-medium">Politique de confidentialité</Link></li>
-                        </ul>
-                    </div>
+                    {SECTIONS.map((section) => (
+                        <nav key={section.title} aria-label={section.title}>
+                            <h2 className="font-bold text-gray-900 mb-6">{section.title}</h2>
+                            <ul className="space-y-3">
+                                {section.links.map((link) => (
+                                    <li key={link.href}>
+                                        <Link
+                                            href={link.href}
+                                            className="text-gray-500 hover:text-emerald-700 transition-colors text-sm font-medium"
+                                        >
+                                            {link.label}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </nav>
+                    ))}
                 </div>
 
-                {/* Bottom Bar */}
                 <div className="pt-8 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4">
                     <p className="text-xs text-gray-400">
-                        © {currentYear} JEaLiFe Pictures. Tous droits réservés.
+                        © {new Date().getFullYear()} JEaLiFe Stock. Les images
+                        appartiennent à leurs auteurs.
                     </p>
-                    <div className="flex items-center gap-6">
-                        <button className="flex items-center gap-2 text-xs font-semibold text-gray-600 hover:text-black transition-colors">
-                            <Globe className="w-3 h-3" />
-                            Français
-                        </button>
-                    </div>
+                    <Link href="/licence" className="text-xs font-semibold text-gray-500 hover:text-black transition-colors">
+                        Licence & conditions d&apos;utilisation
+                    </Link>
                 </div>
             </div>
         </footer>

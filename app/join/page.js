@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { Check, Eye, EyeOff } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signUpWithEmail, signInWithOAuth, upsertProfile } from "../lib/auth";
-import { AUTH_IMAGES } from "../lib/auth-images";
+import AuthBackground from "../components/AuthBackground";
 
 export default function JoinPage() {
     const router = useRouter();
@@ -18,14 +18,6 @@ export default function JoinPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
-    const [backgroundImage, setBackgroundImage] = useState(AUTH_IMAGES[0]);
-
-    useEffect(() => {
-        // Select a random image on client-side mount
-        const randomIndex = Math.floor(Math.random() * AUTH_IMAGES.length);
-        setBackgroundImage(AUTH_IMAGES[randomIndex]);
-    }, []);
-
     const handleSignUp = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -86,32 +78,15 @@ export default function JoinPage() {
 
     return (
         <div className="min-h-screen flex bg-white font-sans text-[#111]">
-            {/* Left: Decorative Image */}
-            <div className="hidden lg:block lg:w-[40%] relative bg-gray-100 overflow-hidden">
-                {/* Background Image */}
-                <div className="absolute inset-0 bg-black/20 z-10 transition-opacity duration-700"></div>
-                <img
-                    src={backgroundImage.url}
-                    alt="Join Background"
-                    className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
+            <div className="relative hidden lg:block lg:w-[40%]">
+                <AuthBackground
+                    imageIndex={3}
+                    title="La création commence ici"
+                    quote="Des images libres de droits que vous ne trouverez nulle part ailleurs."
                 />
-
-                {/* Gradient Overlay for Text Readability */}
-                <div className="absolute inset-0 bg-linear-to-b from-black/40 via-transparent to-black/80 z-10"></div>
-
-                <div className="absolute bottom-8 left-8 right-8 z-20 text-white">
-                    <h2 className="text-4xl font-bold mb-2">La création commence ici</h2>
-                    <p className="text-lg opacity-90 max-w-md">
-                        Accédez à des photos haute résolution gratuites que vous ne trouverez nulle part ailleurs.
-                    </p>
-                    <p className="text-sm mt-4 opacity-70">
-                        Photo par <a href={backgroundImage.photographer_url} target="_blank" rel="noopener noreferrer" className="hover:underline text-white">{backgroundImage.photographer}</a>
-                    </p>
-                </div>
-                {/* Logo top left */}
                 <div className="absolute top-8 left-8 z-20">
                     <Link href="/" className="text-white hover:opacity-90 transition-opacity">
-                        <span className="font-bold text-xl tracking-tight">JEaLiFe Pictures</span>
+                        <span className="font-bold text-xl tracking-tight">JEaLiFe Stock</span>
                     </Link>
                 </div>
             </div>
@@ -120,7 +95,7 @@ export default function JoinPage() {
             <div className="w-full lg:w-[60%] flex flex-col justify-center items-center px-4 sm:px-12 md:px-24 py-12 lg:py-0 overflow-y-auto">
                 <div className="w-full max-w-[560px]">
                     <div className="text-center mb-10">
-                        <h1 className="text-5xl font-bold text-[#111] mb-4">S'inscrire à JEaLiFe</h1>
+                        <h1 className="text-5xl font-bold text-[#111] mb-4">S&apos;inscrire à JEaLiFe</h1>
                         <p className="text-[#111]">
                             Vous avez déjà un compte ? <Link href="/login" className="underline text-[#767676] hover:text-[#111] transition-colors">Connexion</Link>
                         </p>
@@ -134,7 +109,7 @@ export default function JoinPage() {
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 fill-current">
                                 <path d="M24 12.0733C24 5.4054 18.6274 0 12 0C5.37258 0 0 5.4054 0 12.0733C0 18.1009 4.38823 23.0955 10.125 24V15.561H7.07813V12.0733H10.125V9.42398C10.125 6.4178 11.9165 4.75704 14.6576 4.75704C15.9705 4.75704 17.3438 4.99139 17.3438 4.99139V7.94098H15.8306C14.341 7.94098 13.875 8.86541 13.875 9.8145V12.0733H17.2031L16.6711 15.561H13.875V24C19.6118 23.0955 24 18.1009 24 12.0733Z" />
                             </svg>
-                            S'inscrire avec Facebook
+                            S&apos;inscrire avec Facebook
                         </button>
                         <button
                             onClick={() => handleOAuthSignUp('google')}
@@ -146,7 +121,7 @@ export default function JoinPage() {
                                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
                                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                             </svg>
-                            S'inscrire avec Google
+                            S&apos;inscrire avec Google
                         </button>
                     </div>
 
@@ -208,7 +183,7 @@ export default function JoinPage() {
 
                         <div>
                             <label className="block text-sm text-[#111] mb-1.5">
-                                Nom d'utilisateur <span className="text-[#767676] font-normal">(n'utilisez que des lettres, des chiffres ou des tirets)</span>
+                                Nom d&apos;utilisateur <span className="text-[#767676] font-normal">(n&apos;utilisez que des lettres, des chiffres ou des tirets)</span>
                             </label>
                             <input
                                 type="text"
