@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getUserProfile } from "../../../lib/database";
+import { getUserProfile, getUserStats } from "../../../lib/database";
 import { useAuth } from "../../../contexts/AuthContext";
 import { BarChart3, Download, Info, TrendingUp, Globe } from "lucide-react";
 
@@ -12,6 +12,7 @@ export default function UserStatsPage() {
     const { user: currentUser } = useAuth();
     const [isOwner, setIsOwner] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [stats, setStats] = useState({ total_views: 0, total_downloads: 0 });
 
     useEffect(() => {
         const checkOwnership = async () => {
@@ -24,6 +25,8 @@ export default function UserStatsPage() {
                 const profile = await getUserProfile(username);
                 if (profile && profile.id === currentUser.id) {
                     setIsOwner(true);
+                    const userStats = await getUserStats(profile.id);
+                    if (userStats) setStats(userStats);
                 }
             } catch (err) {
                 console.error(err);
@@ -82,7 +85,7 @@ export default function UserStatsPage() {
                             <span className="font-semibold text-gray-900">Vues</span>
                         </div>
                         <div className="flex items-baseline gap-3">
-                            <h2 className="text-4xl font-bold text-gray-900">73 263</h2>
+                            <h2 className="text-4xl font-bold text-gray-900">{stats.total_views?.toLocaleString('fr-FR') || 0}</h2>
                         </div>
                         <p className="text-sm text-gray-500 mt-2 flex items-center gap-1">
                             Vous faites partie des 10 % de contributeurs les plus importants <span className="text-yellow-500">⭐</span>
@@ -111,7 +114,7 @@ export default function UserStatsPage() {
                             <span className="font-semibold text-gray-900">Téléchargements</span>
                         </div>
                         <div className="flex items-baseline gap-3">
-                            <h2 className="text-4xl font-bold text-gray-900">789</h2>
+                            <h2 className="text-4xl font-bold text-gray-900">{stats.total_downloads?.toLocaleString('fr-FR') || 0}</h2>
                         </div>
                         <p className="text-sm text-gray-500 mt-2 flex items-center gap-1">
                             Vous faites partie des 10 % de contributeurs les plus importants <span className="text-blue-500">🌍</span>

@@ -15,6 +15,7 @@ export default function UserProfileLayout({ children }) {
 
     const [profileUser, setProfileUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [showConnect, setShowConnect] = useState(false);
 
     useEffect(() => {
         const fetchProfileAndStats = async () => {
@@ -123,9 +124,50 @@ export default function UserProfileLayout({ children }) {
                                             <MapPin className="w-4 h-4 text-gray-400" /> {profileUser.location}
                                         </span>
                                     )}
-                                    <span className="flex items-center gap-1.5 hover:text-black cursor-pointer transition-colors">
-                                        <Mail className="w-4 h-4 text-gray-400" /> Connectez-vous avec {(profileUser.full_name || profileUser.username || "cet utilisateur").split(' ')[0]}
-                                    </span>
+                                    <div className="relative">
+                                        <button 
+                                            onClick={(e) => { e.preventDefault(); setShowConnect(!showConnect); }}
+                                            className="flex items-center gap-1.5 hover:text-black transition-colors"
+                                        >
+                                            <Mail className="w-4 h-4 text-gray-400" /> Connectez-vous avec {(profileUser.full_name || profileUser.username || "cet utilisateur").split(' ')[0]}
+                                        </button>
+                                        
+                                        {showConnect && (
+                                            <>
+                                                <div className="fixed inset-0 z-40" onClick={() => setShowConnect(false)} />
+                                                <div className="absolute left-0 top-full mt-2 w-56 bg-white border border-gray-200 shadow-xl rounded-md overflow-hidden z-50 py-1 text-left">
+                                                    <div className="px-4 py-2 text-[11px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50/50">
+                                                        Connectez-vous avec {(profileUser.full_name || profileUser.username).split(' ')[0]}
+                                                    </div>
+                                                    {profileUser.email && (
+                                                        <a href={`mailto:${profileUser.email}`} className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors">
+                                                            <Mail className="w-4 h-4 text-gray-400" /> Envoyer un email
+                                                        </a>
+                                                    )}
+                                                    {profileUser.website && (
+                                                        <a href={profileUser.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors">
+                                                            <Globe className="w-4 h-4 text-gray-400" /> Site web
+                                                        </a>
+                                                    )}
+                                                    {profileUser.instagram_username && (
+                                                        <a href={`https://instagram.com/${profileUser.instagram_username}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors">
+                                                            <ImageIcon className="w-4 h-4 text-gray-400" /> Instagram
+                                                        </a>
+                                                    )}
+                                                    {profileUser.twitter_username && (
+                                                        <a href={`https://twitter.com/${profileUser.twitter_username}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors">
+                                                            <Mail className="w-4 h-4 text-gray-400" /> Twitter
+                                                        </a>
+                                                    )}
+                                                    {!profileUser.email && !profileUser.website && !profileUser.instagram_username && !profileUser.twitter_username && (
+                                                        <div className="px-4 py-3 text-[13px] text-gray-500 italic">
+                                                            Aucun lien de contact renseigné.
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
