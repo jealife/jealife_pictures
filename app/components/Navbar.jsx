@@ -162,11 +162,11 @@ export default function Navbar() {
             {/* Desktop Navigation Rail (Unsplash Style) */}
             <div className="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-[64px] z-[60] bg-white border-r border-gray-100 items-center py-4 bg-white">
                 {/* Logo */}
-                <Link href="/" className="mb-10 px-1">
+                <Link href="/" className="mb-10 px-2">
                     <img
                         src="/JEaLiFe-Stock-Logo-transparent-noir.png"
                         alt="Logo"
-                        className="w-14 h-auto object-contain hover:scale-105 transition-transform"
+                        className="w-auto h-8 object-contain hover:scale-105 transition-transform"
                     />
                 </Link>
 
