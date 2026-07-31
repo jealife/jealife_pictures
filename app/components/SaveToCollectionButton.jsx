@@ -91,8 +91,8 @@ export default function SaveToCollectionButton({ mediaId, variant = "overlay", c
                 aria-label="Ajouter à une collection"
                 aria-expanded={open}
             >
-                <Plus className={variant === "overlay" ? "w-5 h-5" : "w-4 h-4"} />
-                {variant !== "overlay" && <span>Collection</span>}
+                <Plus className={variant === "overlay" ? "w-5 h-5" : "w-4 h-4 shrink-0"} />
+                {variant !== "overlay" && <span className="hidden sm:inline">Collection</span>}
             </button>
 
             {open && (

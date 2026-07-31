@@ -171,22 +171,22 @@ export default function PhotoDetail() {
                         />
                         <div className="flex flex-col min-w-0">
                             <span className="font-bold text-[15px] text-gray-900 truncate leading-tight group-hover:underline">{photo.author.name}</span>
-                            <span className="hidden sm:flex text-[13px] text-blue-500 font-medium truncate items-center gap-1">
+                            <span className="flex text-[13px] text-blue-500 font-medium truncate items-center gap-1">
                                 Disponible à l'embauche
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-blue-500 mt-0.5"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.4-1.4 3.6 3.6 7.6-7.6L19 8l-9 9z"/></svg>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-blue-500 mt-0.5 shrink-0"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.4-1.4 3.6 3.6 7.6-7.6L19 8l-9 9z"/></svg>
                             </span>
                         </div>
                     </Link>
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
-                    <SaveToCollectionButton mediaId={photo.id} variant="outline" className="hidden sm:flex h-9 px-3 border-gray-300 text-gray-600 hover:border-gray-900 hover:text-gray-900 rounded-md shadow-sm" />
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                    <SaveToCollectionButton mediaId={photo.id} variant="outline" className="flex justify-center w-9 sm:w-auto h-9 sm:px-3 border-gray-300 text-gray-600 hover:border-gray-900 hover:text-gray-900 rounded-md shadow-sm" />
                     <LikeButton
                         mediaId={photo.id}
                         initialLiked={liked}
                         initialCount={photo.likes}
                         variant="outline"
-                        className="hidden sm:flex h-9 px-3 border-gray-300 text-gray-600 hover:border-gray-900 hover:text-gray-900 rounded-md shadow-sm"
+                        className="flex justify-center w-9 sm:w-auto h-9 sm:px-3 border-gray-300 text-gray-600 hover:border-gray-900 hover:text-gray-900 rounded-md shadow-sm"
                     />
 
                     {isOwner && (
@@ -225,8 +225,8 @@ export default function PhotoDetail() {
             <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
                 
                 {/* Stats & Actions Row */}
-                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 mb-10">
-                    <div className="flex items-center gap-8 md:gap-12">
+                <div className="flex justify-between items-start mb-6 sm:mb-10">
+                    <div className="flex flex-col sm:flex-row gap-4 sm:gap-12">
                         <div className="flex flex-col">
                             <span className="text-[13px] text-gray-500 font-medium mb-1">Vues</span>
                             <span className="text-[15px] font-semibold text-gray-900">{formatCount(photo.views)}</span>
@@ -237,7 +237,7 @@ export default function PhotoDetail() {
                         </div>
                     </div>
                     
-                    <div className="flex items-center gap-2 self-end sm:self-auto">
+                    <div className="flex items-center gap-2">
                         <button 
                             onClick={share}
                             className="flex items-center gap-2 h-8 px-3 border border-gray-300 rounded-md text-[13px] font-medium text-gray-600 hover:text-gray-900 hover:border-gray-900 transition-colors shadow-sm"
