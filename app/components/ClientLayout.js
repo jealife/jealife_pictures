@@ -7,8 +7,19 @@ import Footer from "./Footer";
 
 export default function ClientLayout({ children }) {
     const pathname = usePathname();
-    // Liste des routes où la navbar et la sidebar ne doivent pas être affichées
-    const hiddenRoutes = ["/join", "/login"];
+
+    // Les pages d'authentification occupent tout l'écran, avec leur propre
+    // logo : y superposer la navigation du site casse la mise en page et
+    // propose des sorties au milieu d'un parcours qu'on veut voir aboutir.
+    // Seules /login et /join étaient couvertes ; les trois autres écrans du
+    // parcours ont été ajoutés depuis.
+    const hiddenRoutes = [
+        "/login",
+        "/join",
+        "/forgot-password",
+        "/reset-password",
+        "/auth/callback",
+    ];
     const shouldHideLayout = hiddenRoutes.includes(pathname);
 
     useEffect(() => {

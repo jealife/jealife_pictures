@@ -126,6 +126,48 @@ export const DOWNLOAD_SIZES = [
     { key: "original", label: "Format original", width: null },
 ];
 
+/**
+ * Options de téléchargement réellement disponibles pour un média.
+ *
+ * Une vidéo ne peut pas être ré-encodée dans le navigateur. Lui proposer
+ * « Petit / Moyen / Grand » revenait à redimensionner son image d'aperçu :
+ * qui choisissait « Petit » sur une vidéo repartait avec une photo, sans que
+ * rien ne le signale. On n'offre donc pour une vidéo que ce qui existe
+ * vraiment — le fichier lui-même, et son aperçu s'il est utile.
+ */
+export function downloadOptionsFor(media) {
+    if (media?.type === "video") {
+        return [
+            { key: "original", label: "Vidéo", hint: "Fichier d'origine", width: null },
+            { key: "poster", label: "Image d'aperçu", hint: "Photogramme, en JPEG", width: null },
+        ];
+    }
+    return DOWNLOAD_SIZES.map((size) => ({
+        ...size,
+        hint: size.width ? `${size.width} px de large` : null,
+    }));
+}
+
+const EXTENSION_BY_MIME = {
+    "image/webp": "webp",
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/avif": "avif",
+    "image/gif": "gif",
+    "video/mp4": "mp4",
+    "video/webm": "webm",
+    "video/quicktime": "mov",
+};
+
+/** Extension à partir du type MIME, avec repli sur celle de l'URL. */
+function extensionFor(blob, sourceUrl) {
+    const fromMime = EXTENSION_BY_MIME[blob.type];
+    if (fromMime) return fromMime;
+
+    const fromUrl = (sourceUrl || "").split("?")[0].split(".").pop();
+    return /^[a-z0-9]{2,4}$/i.test(fromUrl) ? fromUrl.toLowerCase() : "bin";
+}
+
 function slugifyForFilename(value) {
     return (value || "photo")
         .toLowerCase()
@@ -144,15 +186,26 @@ function slugifyForFilename(value) {
  * et récupérait quand même l'original.
  */
 export async function downloadMedia(media, sizeKey = "original") {
-    const size = DOWNLOAD_SIZES.find((s) => s.key === sizeKey) || DOWNLOAD_SIZES[3];
-    const source = size.key === "original" ? media.originalUrl || media.url : media.url;
+    const options = downloadOptionsFor(media);
+    const option = options.find((o) => o.key === sizeKey) || options[0];
+    const isVideo = media?.type === "video";
 
-    const blob = size.width
-        ? await resizeRemoteImage(source, size.width)
+    // Pour une vidéo, `url` est l'image d'aperçu et `originalUrl` le fichier
+    // vidéo : les confondre est précisément ce qui produisait une photo à la
+    // place du film.
+    let source;
+    if (isVideo) {
+        source = option.key === "poster" ? media.url : media.originalUrl || media.url;
+    } else {
+        source = option.key === "original" ? media.originalUrl || media.url : media.url;
+    }
+
+    const blob = option.width
+        ? await resizeRemoteImage(source, option.width)
         : await (await fetch(source)).blob();
 
-    const extension = blob.type === "image/webp" ? "webp" : "jpg";
-    const filename = `jealife-${slugifyForFilename(media.title || media.author?.username)}-${size.key}.${extension}`;
+    const extension = extensionFor(blob, source);
+    const filename = `jealife-${slugifyForFilename(media.title || media.author?.username)}-${option.key}.${extension}`;
 
     const objectUrl = URL.createObjectURL(blob);
     const link = document.createElement("a");

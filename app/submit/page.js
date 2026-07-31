@@ -345,6 +345,10 @@ export default function SubmitPage() {
                     country_code: countryCode || null,
                     width: processed.width,
                     height: processed.height,
+                    // Lue sur la vidéo pendant l'extraction de l'aperçu ; nulle
+                    // pour une image. Sans elle, le badge de durée des cartes
+                    // vidéo ne s'affichait jamais.
+                    duration: processed.duration,
                     file_size: file.size,
                     mime_type: file.type || null,
                     status: "published",
@@ -431,7 +435,7 @@ export default function SubmitPage() {
                                     Glissez et déposez votre fichier ici
                                 </p>
                                 <p className="mt-1.5 text-[13px] text-gray-500">
-                                    Format JPG, PNG, WebP, SVG ou MP4 • Jusqu'à 50 Mo
+                                    Format JPG, PNG, WebP, SVG ou MP4 • Jusqu&apos;à 50 Mo
                                 </p>
                             </div>
                             <input

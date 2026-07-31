@@ -375,7 +375,7 @@ export default function SettingsPage() {
                                     <div className="space-y-6">
                                         <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
                                             <h3 className="text-sm font-bold text-gray-900 mb-1">Adresse e-mail</h3>
-                                            <p className="text-sm text-gray-600 mb-3">L'e-mail utilisé pour vous connecter à votre compte.</p>
+                                            <p className="text-sm text-gray-600 mb-3">L&apos;e-mail utilisé pour vous connecter à votre compte.</p>
                                             <div className="flex items-center gap-3">
                                                 <Mail className="w-5 h-5 text-gray-400" />
                                                 <span className="font-medium text-gray-900">{user?.email || "Non disponible"}</span>
@@ -384,7 +384,7 @@ export default function SettingsPage() {
                                         <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
                                             <h3 className="text-sm font-bold text-gray-900 mb-1">Mot de passe</h3>
                                             <p className="text-sm text-gray-600">
-                                                Votre mot de passe est géré de manière sécurisée. Si vous devez le réinitialiser, veuillez vous déconnecter et utiliser l'option "Mot de passe oublié" sur la page de connexion.
+                                                Votre mot de passe est géré de manière sécurisée. Si vous devez le réinitialiser, veuillez vous déconnecter et utiliser l&apos;option &quot;Mot de passe oublié&quot; sur la page de connexion.
                                             </p>
                                         </div>
                                     </div>

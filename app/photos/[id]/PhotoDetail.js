@@ -240,7 +240,7 @@ export default function PhotoDetail() {
                             href={`/photos/${rawId}/edit`}
                             className="hidden sm:flex items-center gap-2 h-9 px-3 border border-gray-300 bg-white rounded-md text-[13px] font-medium text-gray-700 hover:border-gray-900 hover:text-gray-900 transition-all shadow-sm"
                         >
-                            <Edit2 className="w-3.5 h-3.5" /> Modifier l'image
+                            <Edit2 className="w-3.5 h-3.5" /> Modifier l&apos;image
                         </Link>
                     )}
 
@@ -333,7 +333,7 @@ export default function PhotoDetail() {
                                             onClick={() => { setShowMenu(false); setShowReport(true); }}
                                             className="w-full px-4 py-2 text-left text-[13px] hover:bg-gray-50 text-gray-700"
                                         >
-                                            Signaler l'image
+                                            Signaler l&apos;image
                                         </button>
                                     </div>
                                 </>

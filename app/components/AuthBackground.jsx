@@ -9,12 +9,17 @@ import { AUTH_IMAGES } from "../lib/auth-images";
  * L'image est choisie par index plutôt que tirée au sort : ces pages sont
  * statiques, et un tirage au montage coûtait un rendu supplémentaire pour un
  * bénéfice nul.
+ *
+ * Le composant remplit son parent (`absolute inset-0`) et ne décide ni de sa
+ * largeur ni de sa visibilité : c'est la page qui les fixe, sur le conteneur
+ * positionné qui l'entoure. Porter ces classes ici aussi aboutissait à
+ * 40 % de 40 %, sans hauteur — le panneau disparaissait.
  */
 export default function AuthBackground({ title, quote, imageIndex = 0 }) {
     const background = AUTH_IMAGES[imageIndex % AUTH_IMAGES.length];
 
     return (
-        <div className="hidden lg:block lg:w-[40%] relative bg-black overflow-hidden">
+        <div className="absolute inset-0 bg-black overflow-hidden">
             <Image
                 src={background.url}
                 alt=""

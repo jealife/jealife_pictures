@@ -70,6 +70,14 @@ function drawResized(bitmap, width, height) {
     return canvas;
 }
 
+/**
+ * Charge un fichier sous une forme dessinable sur un canvas.
+ *
+ * Renvoie toujours `{ source, duration }` : pour une vidéo, la durée est lue
+ * au passage. Elle était jusqu'ici calculée pour choisir l'instant de la
+ * capture, puis jetée — d'où des vidéos enregistrées sans durée, et le badge
+ * de durée absent sur toutes les cartes.
+ */
 async function loadBitmap(file) {
     if (file.type.startsWith("video/")) {
         return new Promise((resolve, reject) => {
@@ -82,7 +90,7 @@ async function loadBitmap(file) {
             video.src = url;
 
             video.onloadeddata = () => {
-                // Seek to 25% of the video to avoid black frames at the beginning
+                // On se place à 25 % pour éviter les premières images noires.
                 video.currentTime = Math.max(0, Math.min(1, video.duration * 0.25));
             };
 
@@ -92,8 +100,10 @@ async function loadBitmap(file) {
                 canvas.height = video.videoHeight;
                 const ctx = canvas.getContext("2d");
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                const duration = Number.isFinite(video.duration) ? video.duration : null;
                 URL.revokeObjectURL(url);
-                resolve(canvas); // Canvas is a valid ImageImageSource for canvas drawing
+                resolve({ source: canvas, duration });
             };
 
             video.onerror = () => {
@@ -107,11 +117,11 @@ async function loadBitmap(file) {
     // les photos prises en portrait au téléphone arrivaient couchées.
     if (typeof createImageBitmap === "function") {
         try {
-            return await createImageBitmap(file, { imageOrientation: "from-image" });
+            return { source: await createImageBitmap(file, { imageOrientation: "from-image" }), duration: null };
         } catch {
             // Certains navigateurs refusent l'option ; on retente sans.
             try {
-                return await createImageBitmap(file);
+                return { source: await createImageBitmap(file), duration: null };
             } catch {
                 /* on bascule sur <img> ci-dessous */
             }
@@ -123,7 +133,7 @@ async function loadBitmap(file) {
         const url = URL.createObjectURL(file);
         image.onload = () => {
             URL.revokeObjectURL(url);
-            resolve(image);
+            resolve({ source: image, duration: null });
         };
         image.onerror = () => {
             URL.revokeObjectURL(url);
@@ -133,15 +143,23 @@ async function loadBitmap(file) {
     });
 }
 
+/** Durée en secondes → « 1:23 ». Format attendu par la colonne `duration`. */
+export function formatDuration(seconds) {
+    if (!Number.isFinite(seconds) || seconds <= 0) return null;
+    const total = Math.round(seconds);
+    const minutes = Math.floor(total / 60);
+    return `${minutes}:${String(total % 60).padStart(2, "0")}`;
+}
+
 /**
  * @param {File} file
  * @returns {Promise<{
- *   width: number, height: number, extension: string, mimeType: string,
- *   display: Blob, thumbnail: Blob, blurDataURL: string
+ *   width: number, height: number, duration: string|null, extension: string,
+ *   mimeType: string, display: Blob, thumbnail: Blob, blurDataURL: string
  * }>}
  */
 export async function processImage(file) {
-    const bitmap = await loadBitmap(file);
+    const { source: bitmap, duration } = await loadBitmap(file);
     const width = bitmap.width || bitmap.naturalWidth;
     const height = bitmap.height || bitmap.naturalHeight;
 
@@ -176,6 +194,7 @@ export async function processImage(file) {
     return {
         width,
         height,
+        duration: formatDuration(duration),
         extension,
         mimeType,
         display,
@@ -197,7 +216,7 @@ export async function resizeRemoteImage(url, maxWidth) {
     const blob = await response.blob();
     if (!maxWidth) return blob;
 
-    const bitmap = await loadBitmap(blob);
+    const { source: bitmap } = await loadBitmap(blob);
     const width = bitmap.width || bitmap.naturalWidth;
     const height = bitmap.height || bitmap.naturalHeight;
 
