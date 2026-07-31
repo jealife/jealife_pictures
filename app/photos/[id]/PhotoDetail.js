@@ -203,17 +203,15 @@ export default function PhotoDetail() {
             </div>
 
             {/* Unsplash-style Image Container */}
-            <div className="w-full bg-white sm:px-4 lg:px-8 py-2 sm:py-6 flex justify-center">
-                <div 
-                    className="relative w-full flex items-center justify-center bg-gray-50 overflow-hidden sm:rounded-[2px]" 
-                    style={{ minHeight: "300px", maxHeight: "calc(100vh - 140px)", height: "85vh", maxWidth: "max-content" }}
-                >
+            <div className="w-full bg-white sm:px-4 lg:px-8 py-0 sm:py-6 flex justify-center">
+                <div className="relative flex items-center justify-center bg-gray-50 overflow-hidden sm:rounded-[2px]">
                     <Image
                         src={photo.url}
                         alt={photo.alt}
                         width={photo.width || 1200}
                         height={photo.height || 800}
-                        className="object-contain w-auto h-full max-w-full"
+                        className="w-auto h-auto max-w-full object-contain"
+                        style={{ maxHeight: "calc(100vh - 140px)" }}
                         priority
                         quality={90}
                         {...(photo.blurDataURL
