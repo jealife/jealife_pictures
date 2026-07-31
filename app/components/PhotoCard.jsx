@@ -6,7 +6,7 @@ import { BadgeCheck, MapPin } from "lucide-react";
 import LikeButton from "./LikeButton";
 import DownloadButton from "./DownloadButton";
 import SaveToCollectionButton from "./SaveToCollectionButton";
-import { locationLabel } from "../lib/media";
+import { locationLabel, mediaUrl } from "../lib/media";
 
 export default function PhotoCard({ photo, liked = false, hideActions = false, priority = false }) {
     if (!photo) return null;
@@ -17,7 +17,7 @@ export default function PhotoCard({ photo, liked = false, hideActions = false, p
     return (
         <div className="relative group mb-6 break-inside-avoid">
             <div className="relative w-full overflow-hidden rounded-2xl bg-gray-100 shadow-sm transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
-                <Link href={`/photos/${photo.id}`} className="block">
+                <Link href={mediaUrl(photo)} className="block">
                     {hasDimensions ? (
                         <Image
                             src={photo.thumbnailUrl}

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Play, MapPin } from "lucide-react";
 import LikeButton from "./LikeButton";
 import SaveToCollectionButton from "./SaveToCollectionButton";
-import { locationLabel } from "../lib/media";
+import { locationLabel, mediaUrl } from "../lib/media";
 
 export default function VideoCard({ video, liked = false }) {
     if (!video) return null;
@@ -16,7 +16,7 @@ export default function VideoCard({ video, liked = false }) {
     return (
         <div className="relative group">
             <div className="relative w-full overflow-hidden rounded-2xl bg-gray-900 shadow-sm transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
-                <Link href={`/photos/${video.id}`} className="block">
+                <Link href={mediaUrl(video)} className="block">
                     <div className="relative aspect-video">
                         <Image
                             src={poster}

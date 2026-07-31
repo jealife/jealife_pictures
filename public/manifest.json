@@ -1,6 +1,6 @@
 {
     "name": "JEaLiFe Stock",
-    "short_name": "JEaLiFe",
+    "short_name": "Stock",
     "description": "Banque d'images libres de droits et gratuites.",
     "start_url": "/",
     "display": "standalone",

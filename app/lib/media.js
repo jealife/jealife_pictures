@@ -2,6 +2,39 @@ import { incrementDownloads } from "./database";
 import { resizeRemoteImage } from "./images";
 
 /**
+ * Slug ASCII côté client — miroir de la fonction SQL `slugify()`.
+ * « Forêt d'Ivindo » → « foret-d-ivindo ».
+ */
+export function slugifyClient(text) {
+    return (text || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/-{2,}/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 80);
+}
+
+/**
+ * URL canonique d'un média : `/photos/123-paysage-du-gabon`.
+ * L'ID reste en tête pour un lookup DB rapide via `parseInt()`.
+ */
+export function mediaUrl(media) {
+    if (!media) return "/";
+    const slug = slugifyClient(media.title || media.alt || "photo");
+    return `/photos/${media.id}-${slug}`;
+}
+
+/**
+ * Extrait l'ID numérique d'un paramètre d'URL slugifié.
+ * « 123-paysage-du-gabon » → 123, « 123 » → 123.
+ */
+export function parseMediaId(param) {
+    return parseInt(param, 10);
+}
+
+/**
  * Forme unique d'un média côté interface.
  *
  * Cette conversion était recopiée à l'identique dans MasonryGrid, la page

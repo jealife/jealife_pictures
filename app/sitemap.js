@@ -1,4 +1,5 @@
 import { supabase } from "./lib/supabase";
+import { slugifyClient } from "./lib/media";
 
 const BASE_URL = "https://stock.jealife.com/";
 
@@ -46,7 +47,7 @@ export default async function sitemap() {
         safeQuery(() =>
             supabase
                 .from("media")
-                .select("id, updated_at")
+                .select("id, title, alt_text, updated_at")
                 .eq("status", "published")
                 .order("created_at", { ascending: false })
                 .limit(20000)
@@ -82,11 +83,14 @@ export default async function sitemap() {
             changeFrequency: "weekly",
             priority: 0.6,
         })),
-        ...media.map((item) => ({
-            url: `${BASE_URL}/photos/${item.id}`,
-            lastModified: item.updated_at ? new Date(item.updated_at) : now,
-            changeFrequency: "monthly",
-            priority: 0.9,
-        })),
+        ...media.map((item) => {
+            const slug = slugifyClient(item.title || item.alt_text || "photo");
+            return {
+                url: `${BASE_URL}/photos/${item.id}-${slug}`,
+                lastModified: item.updated_at ? new Date(item.updated_at) : now,
+                changeFrequency: "monthly",
+                priority: 0.9,
+            };
+        }),
     ];
 }

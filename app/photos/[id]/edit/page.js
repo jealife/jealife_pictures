@@ -4,11 +4,13 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "../../../contexts/AuthContext";
 import { deleteMedia, getMediaById, updateMedia, syncTopics, getCountries } from "../../../lib/database";
+import { slugifyClient, parseMediaId } from "../../../lib/media";
 import { ArrowLeft, Save, MapPin, Camera, Tag, Loader2, CheckCircle2, AlertCircle, Plus, Trash2, Globe2, Accessibility } from "lucide-react";
 import Link from "next/link";
 
 export default function EditPhotoPage() {
-    const { id } = useParams();
+    const { id: rawId } = useParams();
+    const id = parseMediaId(rawId);
     const router = useRouter();
     const { user, loading: authLoading } = useAuth();
 
@@ -108,7 +110,8 @@ export default function EditPhotoPage() {
             await syncTopics(id, formData.tags);
 
             setStatus({ type: "success", message: "Photo mise à jour avec succès !" });
-            setTimeout(() => router.push(`/photos/${id}`), 1500);
+            const slug = slugifyClient(formData.title.trim() || formData.alt_text.trim() || "photo");
+            setTimeout(() => router.push(`/photos/${id}-${slug}`), 1500);
         } else {
             setStatus({ type: "error", message: "Erreur lors de la mise à jour." });
             setSaving(false);
@@ -211,12 +214,12 @@ export default function EditPhotoPage() {
                                         <option value="">Non précisé</option>
                                         <optgroup label="Afrique">
                                             {countries.filter(c => c.is_african).map(c => (
-                                                <option key={c.code} value={c.code}>{c.emoji} {c.name_fr}</option>
+                                                <option key={c.code} value={c.code}>{c.name_fr}</option>
                                             ))}
                                         </optgroup>
                                         <optgroup label="Reste du monde">
                                             {countries.filter(c => !c.is_african).map(c => (
-                                                <option key={c.code} value={c.code}>{c.emoji} {c.name_fr}</option>
+                                                <option key={c.code} value={c.code}>{c.name_fr}</option>
                                             ))}
                                         </optgroup>
                                     </select>

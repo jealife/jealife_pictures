@@ -70,7 +70,6 @@ export default function CountryFilter() {
             >
                 {current ? (
                     <>
-                        <span aria-hidden="true">{current.emoji}</span>
                         <span className="hidden sm:inline">{current.name_fr}</span>
                     </>
                 ) : (
@@ -138,7 +137,6 @@ function CountryRow({ country, active, onSelect }) {
             className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 text-left transition-colors"
         >
             <span className="flex items-center gap-2 text-sm font-medium text-gray-900 truncate">
-                <span aria-hidden="true">{country.emoji}</span>
                 {country.name_fr}
             </span>
             <span className="flex items-center gap-2 shrink-0">

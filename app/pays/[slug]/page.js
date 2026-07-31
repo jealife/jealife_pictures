@@ -37,8 +37,7 @@ export default async function CountryPage({ params }) {
                 <Link href="/pays" className="text-sm font-medium text-gray-400 hover:text-black transition-colors">
                     ← Tous les pays
                 </Link>
-                <h1 className="text-4xl font-extrabold text-gray-900 mt-4 flex items-center gap-3">
-                    <span aria-hidden="true">{country.emoji}</span>
+                <h1 className="text-4xl font-extrabold text-gray-900 mt-4">
                     {country.name_fr}
                 </h1>
                 <p className="text-gray-500 mt-2">

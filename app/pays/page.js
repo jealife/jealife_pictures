@@ -64,7 +64,6 @@ export default async function CountriesPage() {
                                             }`}
                                         >
                                             <span className="flex items-center gap-2 min-w-0">
-                                                <span aria-hidden="true">{country.emoji}</span>
                                                 <span className="text-sm font-medium text-gray-900 truncate">
                                                     {country.name_fr}
                                                 </span>

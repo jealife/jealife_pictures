@@ -1,11 +1,13 @@
 import { getMediaById } from "../../lib/database";
+import { parseMediaId, mediaUrl } from "../../lib/media";
 import PhotoDetail from "./PhotoDetail";
 
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }) {
     const { id } = await params;
-    const photo = await getMediaById(id);
+    const numericId = parseMediaId(id);
+    const photo = await getMediaById(numericId);
 
     if (!photo) {
         return {
@@ -20,6 +22,7 @@ export async function generateMetadata({ params }) {
     return {
         title: title,
         description: description,
+        alternates: { canonical: mediaUrl(photo) },
         keywords: [author, ...(photo.tags || []), "photo gratuite", "libre de droits", "JEaLiFe Stock"],
         openGraph: {
             title: title,

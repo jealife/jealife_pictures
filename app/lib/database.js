@@ -19,7 +19,7 @@ const DETAIL_SELECT = `
     id, username, full_name, avatar_url, bio, location,
     is_verified, total_views, total_downloads
   ),
-  countries:country_code ( code, name_fr, slug, emoji, region ),
+  countries:country_code ( code, name_fr, slug, region ),
   media_topics ( topics ( id, name, slug ) )
 `;
 
@@ -294,7 +294,7 @@ export async function getCountries({ africanOnly = false } = {}) {
     try {
         let query = supabase
             .from('countries')
-            .select('code, name_fr, slug, region, is_african, is_cemac, emoji')
+            .select('code, name_fr, slug, region, is_african, is_cemac')
             .order('name_fr');
 
         if (africanOnly) query = query.eq('is_african', true);
@@ -329,7 +329,7 @@ export async function getActiveCountries() {
     try {
         const { data, error } = await supabase
             .from('media')
-            .select('country_code, countries:country_code ( code, name_fr, slug, emoji, is_african )')
+            .select('country_code, countries:country_code ( code, name_fr, slug, is_african )')
             .eq('status', 'published')
             .not('country_code', 'is', null)
             .limit(1000);

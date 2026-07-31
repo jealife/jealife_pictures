@@ -12,6 +12,7 @@ import { supabase } from "../lib/supabase";
 import { upsertProfile } from "../lib/auth";
 import { syncTopics, getTopics, getCountries } from "../lib/database";
 import { processImage, formatFileSize } from "../lib/images";
+import { slugifyClient } from "../lib/media";
 
 const POPULAR_TAGS = [
     "Nature", "Forêt", "Océan", "Portrait", "Culture", "Faune",
@@ -302,7 +303,8 @@ export default function SubmitPage() {
 
             if (mediaRecord) await syncTopics(mediaRecord.id, tags);
 
-            router.push(`/photos/${mediaRecord.id}`);
+            const slug = slugifyClient(title.trim() || altText.trim() || "photo");
+            router.push(`/photos/${mediaRecord.id}-${slug}`);
         } catch (err) {
             console.error("Submission error:", err);
             setFormError(err.message || "La publication a échoué. Réessayez.");
@@ -545,14 +547,14 @@ export default function SubmitPage() {
                                             <optgroup label="Afrique">
                                                 {africanCountries.map((country) => (
                                                     <option key={country.code} value={country.code}>
-                                                        {country.emoji} {country.name_fr}
+                                                        {country.name_fr}
                                                     </option>
                                                 ))}
                                             </optgroup>
                                             <optgroup label="Reste du monde">
                                                 {otherCountries.map((country) => (
                                                     <option key={country.code} value={country.code}>
-                                                        {country.emoji} {country.name_fr}
+                                                        {country.name_fr}
                                                     </option>
                                                 ))}
                                             </optgroup>
