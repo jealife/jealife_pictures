@@ -87,6 +87,9 @@ export function normalizeMedia(row) {
             bio: profile.bio || null,
             location: profile.location || null,
             isVerified: !!profile.is_verified,
+            website: profile.website || null,
+            instagramUsername: profile.instagram_username || null,
+            twitterUsername: profile.twitter_username || null,
         },
     };
 }

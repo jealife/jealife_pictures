@@ -6,7 +6,8 @@ import Link from "next/link";
 import Image from "next/image";
 import {
     MapPin, Camera, Eye, Download, ArrowLeft, Edit2, Check, Copy,
-    Share2, Flag, Globe2, X, MoreHorizontal, ShieldCheck, Calendar, Info
+    Share2, Flag, Globe2, X, MoreHorizontal, ShieldCheck, Calendar, Info,
+    Mail, Twitter, Instagram
 } from "lucide-react";
 import LikeButton from "../../components/LikeButton";
 import DownloadButton from "../../components/DownloadButton";
@@ -37,6 +38,7 @@ export default function PhotoDetail() {
     const [showReport, setShowReport] = useState(false);
     const [copied, setCopied] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
+    const [showConnect, setShowConnect] = useState(false);
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -160,7 +162,7 @@ export default function PhotoDetail() {
                         <ArrowLeft className="w-5 h-5" />
                     </button>
 
-                    <Link href={`/users/${photo.author.username}`} className="flex items-center gap-3 group min-w-0">
+                    <Link href={`/users/${photo.author.username}`} className="shrink-0 group">
                         <Image
                             src={photo.author.avatar}
                             alt=""
@@ -169,14 +171,58 @@ export default function PhotoDetail() {
                             unoptimized
                             className="rounded-full object-cover shrink-0 ring-1 ring-gray-200 group-hover:ring-gray-300 transition-all"
                         />
-                        <div className="flex flex-col min-w-0">
-                            <span className="font-bold text-[15px] text-gray-900 truncate leading-tight group-hover:underline">{photo.author.name}</span>
-                            <span className="flex text-[13px] text-blue-500 font-medium truncate items-center gap-1">
-                                Disponible
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-blue-500 mt-0.5 shrink-0"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.4-1.4 3.6 3.6 7.6-7.6L19 8l-9 9z"/></svg>
-                            </span>
-                        </div>
                     </Link>
+                    <div className="flex flex-col min-w-0">
+                        <Link href={`/users/${photo.author.username}`} className="group">
+                            <span className="font-bold text-[15px] text-gray-900 truncate leading-tight group-hover:underline">{photo.author.name}</span>
+                        </Link>
+                        {/* Menu "Connectez-vous avec" */}
+                        <div className="relative">
+                            <button
+                                onClick={(e) => { e.preventDefault(); setShowConnect(!showConnect); }}
+                                className="flex text-[13px] text-blue-500 hover:text-blue-600 font-medium truncate items-center gap-1 transition-colors"
+                            >
+                                Disponible
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="mt-0.5 shrink-0"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.4-1.4 3.6 3.6 7.6-7.6L19 8l-9 9z"/></svg>
+                            </button>
+
+                            {showConnect && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setShowConnect(false)} />
+                                    <div className="absolute left-0 top-full mt-2 w-56 bg-white border border-gray-200 shadow-xl rounded-md overflow-hidden z-50 py-1">
+                                        <div className="px-4 py-2 text-[11px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50/50">
+                                            Connectez-vous avec {photo.author.name}
+                                        </div>
+                                        {photo.author.email && (
+                                            <a href={`mailto:${photo.author.email}`} className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors">
+                                                <Mail className="w-4 h-4 text-gray-400" /> Envoyer un email
+                                            </a>
+                                        )}
+                                        {photo.author.website && (
+                                            <a href={photo.author.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors">
+                                                <Globe2 className="w-4 h-4 text-gray-400" /> Site web
+                                            </a>
+                                        )}
+                                        {photo.author.instagramUsername && (
+                                            <a href={`https://instagram.com/${photo.author.instagramUsername}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors">
+                                                <Instagram className="w-4 h-4 text-gray-400" /> Instagram
+                                            </a>
+                                        )}
+                                        {photo.author.twitterUsername && (
+                                            <a href={`https://twitter.com/${photo.author.twitterUsername}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors">
+                                                <Twitter className="w-4 h-4 text-gray-400" /> Twitter
+                                            </a>
+                                        )}
+                                        {!photo.author.email && !photo.author.website && !photo.author.instagramUsername && !photo.author.twitterUsername && (
+                                            <div className="px-4 py-3 text-[13px] text-gray-500 italic">
+                                                Aucun lien de contact renseigné.
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
