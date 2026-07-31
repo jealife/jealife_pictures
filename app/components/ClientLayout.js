@@ -22,6 +22,18 @@ export default function ClientLayout({ children }) {
     ];
     const shouldHideLayout = hiddenRoutes.includes(pathname);
 
+    const footerRoutes = [
+        "/about",
+        "/history",
+        "/press",
+        "/team",
+        "/help",
+        "/licence",
+        "/settings",
+        "/submit"
+    ];
+    const shouldShowFooter = !shouldHideLayout && footerRoutes.some(route => pathname.startsWith(route));
+
     useEffect(() => {
         window.scrollTo(0, 0);
     }, [pathname]);
@@ -33,7 +45,7 @@ export default function ClientLayout({ children }) {
                 <div className="flex-1">
                     {children}
                 </div>
-                {!shouldHideLayout && <Footer />}
+                {shouldShowFooter && <Footer />}
             </div>
         </>
     );
