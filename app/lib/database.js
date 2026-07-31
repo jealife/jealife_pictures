@@ -268,12 +268,47 @@ export async function getTopics({ featuredOnly = false, limit = 60 } = {}) {
 
         const { data, error } = await query;
         if (error) throw error;
-        return data || [];
+
+        const topics = data || [];
+
+        // Pour chaque topic sans cover_image_url, on va chercher la thumbnail
+        // de la première photo associée via media_topics
+        const needsCover = topics.filter((t) => !t.cover_image_url && t.total_media > 0);
+
+        if (needsCover.length > 0) {
+            const ids = needsCover.map((t) => t.id);
+
+            const { data: links } = await supabase
+                .from('media_topics')
+                .select('topic_id, media ( thumbnail_url, url )')
+                .in('topic_id', ids)
+                .not('media.thumbnail_url', 'is', null)
+                .limit(needsCover.length * 3); // quelques candidats par topic
+
+            if (links) {
+                // Indexe la première photo trouvée par topic_id
+                const coverMap = {};
+                for (const link of links) {
+                    if (link.media && !coverMap[link.topic_id]) {
+                        coverMap[link.topic_id] = link.media.thumbnail_url || link.media.url;
+                    }
+                }
+                // Injecte dans les topics
+                for (const topic of topics) {
+                    if (!topic.cover_image_url && coverMap[topic.id]) {
+                        topic.cover_image_url = coverMap[topic.id];
+                    }
+                }
+            }
+        }
+
+        return topics;
     } catch (error) {
         console.error('Error fetching topics:', error.message || error);
         return [];
     }
 }
+
 
 export async function getTopicBySlug(slug) {
     try {

@@ -10,6 +10,19 @@ export const metadata = {
         "Parcourez les images libres de droits de JEaLiFe Stock par thème : nature, culture, portrait, vie quotidienne, architecture et bien d'autres.",
 };
 
+// Gradients de fallback par thème (si pas de cover_image_url)
+const FALLBACK_GRADIENTS = [
+    "from-emerald-900 to-teal-700",
+    "from-amber-900 to-orange-700",
+    "from-violet-900 to-purple-700",
+    "from-sky-900 to-blue-700",
+    "from-rose-900 to-pink-700",
+    "from-lime-900 to-green-700",
+    "from-indigo-900 to-cyan-700",
+    "from-red-900 to-orange-800",
+    "from-slate-800 to-gray-600",
+];
+
 export default async function TopicsPage() {
     const topics = await getTopics({ limit: 200 });
     const withMedia = topics.filter((topic) => topic.total_media > 0);
@@ -26,26 +39,46 @@ export default async function TopicsPage() {
 
                 {withMedia.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-16">
-                        {withMedia.map((topic) => (
-                            <Link
-                                key={topic.slug}
-                                href={`/themes/${topic.slug}`}
-                                className="group p-6 border border-gray-100 rounded-2xl hover:border-gray-300 hover:shadow-lg transition-all"
-                            >
-                                <h2 className="font-bold text-lg text-gray-900 group-hover:text-emerald-700 transition-colors">
-                                    {topic.name}
-                                </h2>
-                                {topic.description && (
-                                    <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                                        {topic.description}
-                                    </p>
-                                )}
-                                <p className="text-xs text-gray-400 mt-3 font-medium">
-                                    {formatCount(topic.total_media)} image
-                                    {topic.total_media > 1 ? "s" : ""}
-                                </p>
-                            </Link>
-                        ))}
+                        {withMedia.map((topic, i) => {
+                            const fallback = FALLBACK_GRADIENTS[i % FALLBACK_GRADIENTS.length];
+                            return (
+                                <Link
+                                    key={topic.slug}
+                                    href={`/themes/${topic.slug}`}
+                                    className="group relative overflow-hidden rounded-2xl aspect-[4/3] flex items-end shadow-sm hover:shadow-xl transition-all duration-300"
+                                >
+                                    {/* Image de fond */}
+                                    {topic.cover_image_url ? (
+                                        <img
+                                            src={topic.cover_image_url}
+                                            alt={topic.name}
+                                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                        />
+                                    ) : (
+                                        <div className={`absolute inset-0 bg-gradient-to-br ${fallback}`} />
+                                    )}
+
+                                    {/* Overlay gradient sombre */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+
+                                    {/* Contenu */}
+                                    <div className="relative z-10 p-5 w-full">
+                                        <h2 className="font-bold text-xl text-white drop-shadow group-hover:text-emerald-300 transition-colors">
+                                            {topic.name}
+                                        </h2>
+                                        {topic.description && (
+                                            <p className="text-sm text-white/70 mt-1 line-clamp-1">
+                                                {topic.description}
+                                            </p>
+                                        )}
+                                        <p className="text-xs text-white/50 mt-2 font-medium">
+                                            {formatCount(topic.total_media)} image
+                                            {topic.total_media > 1 ? "s" : ""}
+                                        </p>
+                                    </div>
+                                </Link>
+                            );
+                        })}
                     </div>
                 )}
 
