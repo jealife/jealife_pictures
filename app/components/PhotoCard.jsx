@@ -34,16 +34,16 @@ export default function PhotoCard({ photo, liked = false, hideActions = false, p
                             />
                         </div>
                     ) : (
-                        <div className="relative w-full aspect-[4/3]">
-                            <Image
-                                src={photo.thumbnailUrl}
-                                alt={photo.alt}
-                                fill
-                                className="object-cover transform transition-transform duration-700 group-hover:scale-105 cursor-zoom-in"
-                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                                quality={85}
-                            />
-                        </div>
+                        <Image
+                            src={photo.thumbnailUrl}
+                            alt={photo.alt}
+                            width={0}
+                            height={0}
+                            sizes="100vw"
+                            className="w-full h-auto block object-cover transform transition-transform duration-700 group-hover:scale-105 cursor-zoom-in"
+                            quality={85}
+                            loading="lazy"
+                        />
                     )}
                 </Link>
 

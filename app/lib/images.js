@@ -65,9 +65,6 @@ function drawResized(bitmap, width, height) {
     const context = canvas.getContext("2d");
     context.imageSmoothingEnabled = true;
     context.imageSmoothingQuality = "high";
-    // Un fond blanc évite qu'un PNG transparent devienne noir en JPEG.
-    context.fillStyle = "#ffffff";
-    context.fillRect(0, 0, width, height);
     context.drawImage(bitmap, 0, 0, width, height);
 
     return canvas;
