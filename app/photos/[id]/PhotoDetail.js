@@ -180,13 +180,13 @@ export default function PhotoDetail() {
                 </div>
 
                 <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                    <SaveToCollectionButton mediaId={photo.id} variant="outline" className="flex justify-center w-9 sm:w-auto h-9 sm:px-3 border-gray-300 text-gray-600 hover:border-gray-900 hover:text-gray-900 rounded-md shadow-sm" />
+                    <SaveToCollectionButton mediaId={photo.id} variant="outline" className="hidden sm:flex justify-center w-9 sm:w-auto h-9 sm:px-3 border-gray-300 text-gray-600 hover:border-gray-900 hover:text-gray-900 rounded-md shadow-sm" />
                     <LikeButton
                         mediaId={photo.id}
                         initialLiked={liked}
                         initialCount={photo.likes}
                         variant="outline"
-                        className="flex justify-center w-9 sm:w-auto h-9 sm:px-3 border-gray-300 text-gray-600 hover:border-gray-900 hover:text-gray-900 rounded-md shadow-sm"
+                        className="hidden sm:flex justify-center w-9 sm:w-auto h-9 sm:px-3 border-gray-300 text-gray-600 hover:border-gray-900 hover:text-gray-900 rounded-md shadow-sm"
                     />
 
                     {isOwner && (
@@ -237,7 +237,19 @@ export default function PhotoDetail() {
                         </div>
                     </div>
                     
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <LikeButton
+                            mediaId={photo.id}
+                            initialLiked={liked}
+                            initialCount={photo.likes}
+                            variant="outline"
+                            className="flex sm:hidden items-center justify-center h-8 w-10 border border-gray-300 rounded-md text-gray-600 shadow-sm"
+                        />
+                        <SaveToCollectionButton 
+                            mediaId={photo.id} 
+                            variant="outline" 
+                            className="flex sm:hidden items-center justify-center h-8 w-10 border-gray-300 text-gray-600 rounded-md shadow-sm" 
+                        />
                         <button 
                             onClick={share}
                             className="flex items-center gap-2 h-8 px-3 border border-gray-300 rounded-md text-[13px] font-medium text-gray-600 hover:text-gray-900 hover:border-gray-900 transition-colors shadow-sm"
