@@ -1,21 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Loader2, VideoOff } from "lucide-react";
 import VideoCard from "./VideoCard";
 import { PAGE_SIZE, getMedia, searchMedia } from "../lib/database";
 import { normalizeMediaList } from "../lib/media";
 
-export default function VideoGrid() {
+export default function VideoGrid({ initialItems = null }) {
+    const seeded = Array.isArray(initialItems) && initialItems.length > 0;
     const searchParams = useSearchParams();
     const query = searchParams.get("q");
     const country = searchParams.get("pays");
 
-    const [items, setItems] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [items, setItems] = useState(() => (seeded ? normalizeMediaList(initialItems) : []));
+    const [loading, setLoading] = useState(!seeded);
     const [loadingMore, setLoadingMore] = useState(false);
-    const [hasMore, setHasMore] = useState(true);
+    const [hasMore, setHasMore] = useState(!seeded || initialItems.length === PAGE_SIZE);
+    // La première page vient du serveur : la redemander au montage ferait un
+    // aller-retour pour rien.
+    const useSeedRef = useRef(seeded);
 
     const fetchPage = useCallback(
         (offset) => {
@@ -27,6 +31,11 @@ export default function VideoGrid() {
 
     useEffect(() => {
         let cancelled = false;
+
+        if (useSeedRef.current) {
+            useSeedRef.current = false;
+            return;
+        }
 
         async function load() {
             setLoading(true);

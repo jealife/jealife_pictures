@@ -7,10 +7,18 @@ import CategorySection from "./components/CategorySection";
 import FeaturedTopics from "./components/FeaturedTopics";
 import GridFallback from "./components/GridFallback";
 import { pickShowcaseImage } from "./lib/auth-images";
+import { getMedia, PAGE_SIZE } from "./lib/database";
 
 export default async function Home({ searchParams }) {
   const params = await searchParams;
   const query = params?.q;
+
+  // Première page rendue par le serveur : sans elle, le HTML servi aux robots
+  // ne contenait aucun lien vers une fiche image. Les recherches, elles,
+  // restent côté client — elles n'ont pas vocation à être indexées.
+  const initialItems = query
+    ? null
+    : await getMedia({ type: "photo", limit: PAGE_SIZE, country: params?.pays || null });
 
   return (
     <main className="min-h-screen bg-white">
@@ -42,7 +50,7 @@ export default async function Home({ searchParams }) {
       )}
 
       <Suspense fallback={<GridFallback />}>
-        <MasonryGrid />
+        <MasonryGrid initialItems={initialItems} />
       </Suspense>
 
       {!query && (

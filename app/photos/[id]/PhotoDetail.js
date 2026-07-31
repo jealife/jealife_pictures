@@ -127,29 +127,10 @@ export default function PhotoDetail() {
         ? new Date(raw.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
         : null;
 
-    const jsonLd = {
-        "@context": "https://schema.org/",
-        "@type": "ImageObject",
-        contentUrl: photo.url,
-        thumbnailUrl: photo.thumbnailUrl,
-        datePublished: raw?.created_at,
-        description: photo.description || photo.alt,
-        name: photo.title || photo.alt,
-        license: "https://stock.jealife.com/licence",
-        acquireLicensePage: "https://stock.jealife.com/licence",
-        creditText: photo.author.name,
-        creator: { "@type": "Person", name: photo.author.name },
-        contentLocation: place ? { "@type": "Place", name: place } : undefined,
-        width: photo.width || undefined,
-        height: photo.height || undefined,
-    };
+    const isVideo = photo.type === "video";
 
     return (
         <div className="min-h-screen bg-white">
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-            />
 
             {/* Sticky Bar */}
             <div className="sticky top-0 sm:top-16 z-30 bg-white px-4 h-[72px] flex items-center justify-between gap-3">
@@ -251,7 +232,7 @@ export default function PhotoDetail() {
             {/* Unsplash-style Image Container */}
             <div className="w-full bg-white sm:px-4 lg:px-8 py-0 sm:py-6 flex justify-center">
                 <div className="relative flex items-center justify-center bg-gray-50 overflow-hidden sm:rounded-[2px]">
-                    {photo.type === "video" ? (
+                    {isVideo ? (
                         <video
                             src={photo.originalUrl}
                             poster={photo.url}

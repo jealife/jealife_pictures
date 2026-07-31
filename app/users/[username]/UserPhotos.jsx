@@ -14,7 +14,7 @@ import { getUserProfile } from "../../lib/database";
  * enregistré, l'en-tête du profil s'affichait correctement mais la galerie
  * restait obstinément vide. Les deux passent désormais par la même fonction.
  */
-export default function UserPhotosPage() {
+export default function UserPhotos() {
     const { username } = useParams();
     const [userId, setUserId] = useState(null);
     const [loading, setLoading] = useState(true);

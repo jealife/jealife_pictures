@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import TopicBar from "../components/TopicBar";
 import VideoGrid from "../components/VideoGrid";
+import { getMedia, PAGE_SIZE } from "../lib/database";
 
 export const metadata = {
     title: "Vidéos libres de droits",
@@ -13,7 +14,11 @@ export const metadata = {
  * La page listait trois vidéos de démonstration hébergées chez Pexels, chacune
  * répétée trois fois pour remplir la grille. Elle lit maintenant la base.
  */
-export default function VideosPage() {
+export const revalidate = 300;
+
+export default async function VideosPage() {
+    const initialItems = await getMedia({ type: "video", limit: PAGE_SIZE });
+
     return (
         <main className="min-h-screen bg-white">
             <Suspense fallback={<div className="h-16 border-b border-gray-100" />}>
@@ -28,7 +33,7 @@ export default function VideosPage() {
             </header>
 
             <Suspense fallback={<div className="py-20" />}>
-                <VideoGrid />
+                <VideoGrid initialItems={initialItems} />
             </Suspense>
         </main>
     );

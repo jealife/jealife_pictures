@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import MasonryGrid from "../../components/MasonryGrid";
 import TopicBar from "../../components/TopicBar";
 import GridFallback from "../../components/GridFallback";
-import { getTopicBySlug } from "../../lib/database";
+import { getTopicBySlug, getMediaByTopic, PAGE_SIZE } from "../../lib/database";
 import { formatCount } from "../../lib/media";
 
 export const revalidate = 300;
@@ -29,6 +29,8 @@ export default async function TopicPage({ params }) {
 
     if (!topic) notFound();
 
+    const initialItems = await getMediaByTopic(topic.slug, { limit: PAGE_SIZE });
+
     return (
         <main className="min-h-screen bg-white">
             <Suspense fallback={<div className="h-16 border-b border-gray-100" />}>
@@ -48,6 +50,7 @@ export default async function TopicPage({ params }) {
             <Suspense fallback={<GridFallback />}>
                 <MasonryGrid
                     topic={topic.slug}
+                    initialItems={initialItems}
                     emptyMessage={`Aucune image sur « ${topic.name} » pour l'instant. Publiez la première.`}
                 />
             </Suspense>

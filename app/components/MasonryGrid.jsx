@@ -20,11 +20,15 @@ import { normalizeMediaList } from "../lib/media";
 /**
  * Grille de médias.
  *
- * Deux manques structurels sont corrigés ici :
+ * Trois manques structurels sont corrigés ici :
  *   · la grille chargeait 50 médias, une seule fois, sans aucun moyen d'aller
  *     plus loin — une banque d'images ne peut pas s'arrêter à 50 images ;
  *   · l'état « j'aime » n'était jamais lu, donc un cœur déjà donné
- *     réapparaissait vide à chaque rechargement.
+ *     réapparaissait vide à chaque rechargement ;
+ *   · tout le contenu n'existait qu'après hydratation. Le HTML servi aux
+ *     robots ne contenait aucun lien vers une fiche image : le catalogue
+ *     entier était invisible pour qui n'exécute pas le JavaScript. D'où
+ *     `initialItems`, la première page rendue par le serveur.
  */
 export default function MasonryGrid({
     type = "photo",
@@ -36,6 +40,7 @@ export default function MasonryGrid({
     mobileColumns = null,
     hideActions = false,
     emptyMessage = null,
+    initialItems = null,
 }) {
     const searchParams = useSearchParams();
     const { user } = useAuth();
@@ -44,17 +49,22 @@ export default function MasonryGrid({
     const activeCountry = country ?? searchParams.get("pays");
     const activeSort = sort ?? searchParams.get("tri") ?? "defaut";
 
-    const [items, setItems] = useState([]);
+    const seeded = Array.isArray(initialItems) && initialItems.length > 0;
+
+    const [items, setItems] = useState(() => (seeded ? normalizeMediaList(initialItems) : []));
     const [likedIds, setLikedIds] = useState(new Set());
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(!seeded);
     const [loadingMore, setLoadingMore] = useState(false);
-    const [hasMore, setHasMore] = useState(true);
+    const [hasMore, setHasMore] = useState(!seeded || initialItems.length === PAGE_SIZE);
     const [error, setError] = useState(null);
     const [columnCount, setColumnCount] = useState(3);
 
     const sentinelRef = useRef(null);
     // Évite qu'un résultat de requête lente écrase un filtre plus récent.
     const requestIdRef = useRef(0);
+    // La première page vient du serveur : la redemander au montage ferait un
+    // aller-retour pour rien et ferait clignoter la grille.
+    const useSeedRef = useRef(seeded);
 
     useEffect(() => {
         const updateColumns = () => {
@@ -86,6 +96,13 @@ export default function MasonryGrid({
     useEffect(() => {
         const requestId = ++requestIdRef.current;
         let cancelled = false;
+
+        if (useSeedRef.current) {
+            // Les données du serveur servent au premier rendu ; tout
+            // changement de filtre ensuite repasse par une vraie requête.
+            useSeedRef.current = false;
+            return;
+        }
 
         async function load() {
             setLoading(true);

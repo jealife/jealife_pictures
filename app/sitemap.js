@@ -1,7 +1,6 @@
 import { supabase } from "./lib/supabase";
 import { slugifyClient } from "./lib/media";
-
-const BASE_URL = "https://stock.jealife.com/";
+import { absoluteUrl } from "./lib/site";
 
 export const revalidate = 3600;
 
@@ -11,24 +10,28 @@ export const revalidate = 3600;
  * L'ancien plan listait quatre URL fixes — l'accueil, une page /search
  * inexistante, la connexion et l'inscription — et pas une seule image ni un
  * seul profil. Pour une banque d'images, dont l'essentiel du trafic vient de
- * Google Images, cela revenait à laisser tout le catalogue hors du moteur de
- * recherche.
+ * Google Images, cela revenait à laisser tout le catalogue hors du moteur.
+ *
+ * Chaque média déclare en plus son fichier via l'extension image (ou vidéo)
+ * du protocole sitemap : c'est ce qui permet à Google Images d'indexer une
+ * image sans avoir à deviner quel `<img>` d'une page est le sujet principal.
  */
 export default async function sitemap() {
     const now = new Date();
 
     const staticRoutes = [
-        { url: BASE_URL, changeFrequency: "hourly", priority: 1 },
-        { url: `${BASE_URL}/illustrations`, changeFrequency: "daily", priority: 0.8 },
-        { url: `${BASE_URL}/videos`, changeFrequency: "daily", priority: 0.8 },
-        { url: `${BASE_URL}/themes`, changeFrequency: "daily", priority: 0.8 },
-        { url: `${BASE_URL}/pays`, changeFrequency: "weekly", priority: 0.8 },
-        { url: `${BASE_URL}/licence`, changeFrequency: "monthly", priority: 0.6 },
-        { url: `${BASE_URL}/about`, changeFrequency: "monthly", priority: 0.5 },
-        { url: `${BASE_URL}/help`, changeFrequency: "monthly", priority: 0.4 },
-        { url: `${BASE_URL}/join`, changeFrequency: "monthly", priority: 0.4 },
-        { url: `${BASE_URL}/login`, changeFrequency: "monthly", priority: 0.3 },
-    ].map((route) => ({ ...route, lastModified: now }));
+        { path: "/", changeFrequency: "hourly", priority: 1 },
+        { path: "/illustrations", changeFrequency: "daily", priority: 0.8 },
+        { path: "/videos", changeFrequency: "daily", priority: 0.8 },
+        { path: "/themes", changeFrequency: "daily", priority: 0.8 },
+        { path: "/pays", changeFrequency: "weekly", priority: 0.8 },
+        { path: "/licence", changeFrequency: "monthly", priority: 0.6 },
+        { path: "/about", changeFrequency: "monthly", priority: 0.5 },
+        { path: "/help", changeFrequency: "monthly", priority: 0.4 },
+        // /login, /join, /submit et /settings sont retirés : ce sont des
+        // formulaires, ils n'ont rien à faire dans un plan de site et diluent
+        // le budget d'exploration.
+    ].map(({ path, ...rest }) => ({ url: absoluteUrl(path), lastModified: now, ...rest }));
 
     // Sur une base vide ou injoignable, on renvoie au moins les routes fixes
     // plutôt que de faire échouer la génération du plan.
@@ -47,7 +50,7 @@ export default async function sitemap() {
         safeQuery(() =>
             supabase
                 .from("media")
-                .select("id, title, alt_text, updated_at")
+                .select("id, type, title, alt_text, url, thumbnail_url, original_url, updated_at")
                 .eq("status", "published")
                 .order("created_at", { ascending: false })
                 .limit(20000)
@@ -65,32 +68,52 @@ export default async function sitemap() {
 
     return [
         ...staticRoutes,
+
         ...topics.map((topic) => ({
-            url: `${BASE_URL}/themes/${topic.slug}`,
+            url: absoluteUrl(`/themes/${topic.slug}`),
             lastModified: now,
             changeFrequency: "daily",
             priority: 0.7,
         })),
+
         ...countries.map((country) => ({
-            url: `${BASE_URL}/pays/${country.slug}`,
+            url: absoluteUrl(`/pays/${country.slug}`),
             lastModified: now,
             changeFrequency: "weekly",
             priority: 0.7,
         })),
+
         ...profiles.map((profile) => ({
-            url: `${BASE_URL}/users/${profile.username}`,
+            url: absoluteUrl(`/users/${profile.username}`),
             lastModified: profile.updated_at ? new Date(profile.updated_at) : now,
             changeFrequency: "weekly",
             priority: 0.6,
         })),
+
         ...media.map((item) => {
             const slug = slugifyClient(item.title || item.alt_text || "photo");
-            return {
-                url: `${BASE_URL}/photos/${item.id}-${slug}`,
+            const entry = {
+                url: absoluteUrl(`/photos/${item.id}-${slug}`),
                 lastModified: item.updated_at ? new Date(item.updated_at) : now,
                 changeFrequency: "monthly",
                 priority: 0.9,
             };
+
+            if (item.type === "video") {
+                // Pour une vidéo, `url` est l'image d'aperçu et le fichier
+                // lui-même vit dans `original_url` : les confondre ferait
+                // rejeter l'entrée par Google.
+                entry.videos = [{
+                    title: item.title || item.alt_text || "Vidéo",
+                    thumbnail_loc: item.thumbnail_url || item.url,
+                    description: item.alt_text || item.title || "Vidéo libre de droits",
+                    content_loc: item.original_url || item.url,
+                }];
+            } else {
+                entry.images = [item.url];
+            }
+
+            return entry;
         }),
     ];
 }

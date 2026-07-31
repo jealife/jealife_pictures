@@ -4,6 +4,7 @@
 :root {
   --background: #ffffff;
   --foreground: #0f172a; /* Slate 900 */
+  color-scheme: light;
 }
 
 @theme inline {

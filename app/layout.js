@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
+import { SITE_URL, SITE_NAME } from "./lib/site";
 import ClientLayout from "./components/ClientLayout";
 import { AuthProvider } from "./contexts/AuthContext";
 
@@ -15,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  metadataBase: new URL("https://stock.jealife.com/"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "JEaLiFe Stock | Images libres de droits et gratuites",
     template: "%s | JEaLiFe Stock",
@@ -38,7 +39,7 @@ export const metadata = {
     type: "website",
     locale: "fr_FR",
     url: "/",
-    siteName: "JEaLiFe Stock",
+    siteName: SITE_NAME,
     title: "JEaLiFe Stock | Images libres de droits et gratuites",
     description:
       "Une sélection soignée d'images libres de droits, à télécharger gratuitement.",
@@ -59,6 +60,7 @@ export const viewport = {
   themeColor: "#0b3d2e",
   width: "device-width",
   initialScale: 1,
+  colorScheme: "light",
 };
 
 export default function RootLayout({ children }) {

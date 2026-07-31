@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import TopicBar from "../components/TopicBar";
 import MasonryGrid from "../components/MasonryGrid";
 import GridFallback from "../components/GridFallback";
+import { getMedia, PAGE_SIZE } from "../lib/database";
 
 export const metadata = {
     title: "Illustrations libres de droits",
@@ -14,7 +15,11 @@ export const metadata = {
  * La page affichait quatre illustrations codées en dur — des photos Unsplash,
  * en réalité — dupliquées « pour la démo ». Elle lit maintenant la base.
  */
-export default function IllustrationsPage() {
+export const revalidate = 300;
+
+export default async function IllustrationsPage() {
+    const initialItems = await getMedia({ type: "illustration", limit: PAGE_SIZE });
+
     return (
         <main className="min-h-screen bg-white">
             <Suspense fallback={<div className="h-16 border-b border-gray-100" />}>
@@ -31,6 +36,7 @@ export default function IllustrationsPage() {
             <Suspense fallback={<GridFallback />}>
                 <MasonryGrid
                     type="illustration"
+                    initialItems={initialItems}
                     emptyMessage="Aucune illustration publiée pour l'instant. Si vous dessinez, la place est libre."
                 />
             </Suspense>

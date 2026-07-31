@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import MasonryGrid from "../../components/MasonryGrid";
 import GridFallback from "../../components/GridFallback";
-import { getCountryBySlug } from "../../lib/database";
+import { getCountryBySlug, getMedia, PAGE_SIZE } from "../../lib/database";
 
 export const revalidate = 300;
 
@@ -31,6 +31,8 @@ export default async function CountryPage({ params }) {
 
     if (!country) notFound();
 
+    const initialItems = await getMedia({ type: "photo", limit: PAGE_SIZE, country: country.code });
+
     return (
         <main className="min-h-screen bg-white">
             <header className="max-w-[1600px] mx-auto px-4 pt-12 pb-6">
@@ -48,6 +50,7 @@ export default async function CountryPage({ params }) {
             <Suspense fallback={<GridFallback />}>
                 <MasonryGrid
                     country={country.code}
+                    initialItems={initialItems}
                     emptyMessage={`Aucune image du ${country.name_fr} pour l'instant. Publiez la première.`}
                 />
             </Suspense>

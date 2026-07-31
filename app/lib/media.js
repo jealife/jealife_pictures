@@ -8,12 +8,20 @@ import { resizeRemoteImage } from "./images";
 export function slugifyClient(text) {
     return (text || "")
         .toLowerCase()
+        // Les ligatures ne se décomposent pas en NFD : « cœur » devenait
+        // « c-ur » dans l'URL, ce qui perd le mot pour la recherche et donne
+        // une adresse illisible. `unaccent()`, côté SQL, les traite déjà.
+        .replace(/\u0153/g, "oe")
+        .replace(/\u00e6/g, "ae")
+        .replace(/\u00df/g, "ss")
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/-{2,}/g, "-")
         .replace(/^-+|-+$/g, "")
-        .slice(0, 80);
+        .slice(0, 80)
+        // Le découpage à 80 caractères peut laisser un tiret orphelin.
+        .replace(/-+$/g, "");
 }
 
 /**
@@ -237,4 +245,27 @@ export function locationLabel(media) {
     const parts = [media.city, media.country?.name_fr].filter(Boolean);
     if (parts.length > 0) return parts.join(", ");
     return media.location || null;
+}
+
+/**
+ * « 1:23 » → « PT1M23S ».
+ *
+ * Schema.org attend une durée au format ISO 8601 ; la base stocke un libellé
+ * lisible. Sans conversion, le champ `duration` d'un VideoObject est ignoré.
+ */
+export function isoDuration(label) {
+    if (!label) return undefined;
+    const parts = String(label).split(":").map(Number);
+    if (parts.some(Number.isNaN)) return undefined;
+
+    const [hours, minutes, seconds] =
+        parts.length === 3 ? parts : [0, parts[0] || 0, parts[1] || 0];
+
+    const result = [
+        hours ? `${hours}H` : "",
+        minutes ? `${minutes}M` : "",
+        seconds ? `${seconds}S` : "",
+    ].join("");
+
+    return result ? `PT${result}` : undefined;
 }
