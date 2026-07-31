@@ -19,7 +19,7 @@
  */
 
 export const DISPLAY_MAX_EDGE = 2400;
-export const THUMBNAIL_MAX_EDGE = 600;
+export const THUMBNAIL_MAX_EDGE = 800;
 const BLUR_MAX_EDGE = 16;
 
 let cachedWebpSupport = null;
@@ -160,14 +160,14 @@ export async function processImage(file) {
     const display = await canvasToBlob(
         drawResized(bitmap, displaySize.width, displaySize.height),
         mimeType,
-        0.82
+        0.85
     );
 
     const thumbSize = targetSize(width, height, THUMBNAIL_MAX_EDGE);
     const thumbnail = await canvasToBlob(
         drawResized(bitmap, thumbSize.width, thumbSize.height),
         mimeType,
-        0.72
+        0.85
     );
 
     const blurSize = targetSize(width, height, BLUR_MAX_EDGE);
