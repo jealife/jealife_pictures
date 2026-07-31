@@ -65,18 +65,14 @@ export async function signOut() {
     }
 }
 
-// Récupérer l'utilisateur actuel
+// Récupérer l'utilisateur actuel.
+// On appelle directement getUser() qui valide le JWT auprès du serveur
+// Supabase. L'ancienne approche passait par getSession() d'abord, mais
+// cette méthode lit le cache localStorage — en PWA standalone, après une
+// longue mise en veille, le token peut être expiré sans que le client le
+// sache.
 export async function getCurrentUser() {
     try {
-        // Vérifier d'abord s'il y a une session
-        const { data: { session } } = await supabase.auth.getSession();
-
-        // Si pas de session, retourner null sans erreur
-        if (!session) {
-            return null;
-        }
-
-        // Si session existe, récupérer l'utilisateur
         const { data: { user }, error } = await supabase.auth.getUser();
         if (error) throw error;
         return user;
@@ -88,6 +84,7 @@ export async function getCurrentUser() {
         return null;
     }
 }
+
 
 // Récupérer la session actuelle
 export async function getSession() {

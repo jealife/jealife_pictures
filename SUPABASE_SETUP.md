@@ -55,20 +55,31 @@ $$ language plpgsql security definer;
 3. Configurez les politiques de sécurité :
 
 ```sql
--- Politique pour la lecture publique
-create policy "Public Access"
-on storage.objects for select
-using ( bucket_id = 'media' );
+-- 1. Accès public en lecture
+drop policy if exists "Les fichiers média sont publics." on storage.objects;
+create policy "Les fichiers média sont publics."
+  on storage.objects for select
+  using ( bucket_id = 'media' );
 
--- Politique pour l'upload authentifié
-create policy "Authenticated users can upload media"
-on storage.objects for insert
-with check ( bucket_id = 'media' AND auth.role() = 'authenticated' );
+-- 2. Dépôt restreint au dossier de l'utilisateur authentifié (media/<user_id>/...)
+drop policy if exists "Chacun dépose dans son dossier." on storage.objects;
+create policy "Chacun dépose dans son dossier."
+  on storage.objects for insert to authenticated
+  with check (
+    bucket_id = 'media' 
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
 
--- Politique pour supprimer ses propres fichiers
-create policy "Users can delete own media"
-on storage.objects for delete
-using ( bucket_id = 'media' AND auth.uid() = owner );
+-- 3. Modification et suppression par l'auteur
+drop policy if exists "Chacun remplace ses fichiers." on storage.objects;
+create policy "Chacun remplace ses fichiers."
+  on storage.objects for update to authenticated
+  using ( bucket_id = 'media' and (storage.foldername(name))[1] = auth.uid()::text );
+
+drop policy if exists "Chacun supprime ses fichiers." on storage.objects;
+create policy "Chacun supprime ses fichiers."
+  on storage.objects for delete to authenticated
+  using ( bucket_id = 'media' and (storage.foldername(name))[1] = auth.uid()::text );
 ```
 
 ## 6. Données de test (optionnel)
