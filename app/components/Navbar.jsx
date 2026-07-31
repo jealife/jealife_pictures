@@ -243,7 +243,7 @@ export default function Navbar() {
                                 <img
                                     src="/JEaLiFe-Stock-Logo-transparent-noir.png"
                                     alt="JEaLiFe Stock"
-                                    className="h-12 w-auto object-contain"
+                                    className="h-6 w-auto object-contain"
                                 />
                             </Link>
                         </div>
