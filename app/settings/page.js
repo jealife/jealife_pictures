@@ -14,6 +14,7 @@ export default function SettingsPage() {
     const { user, loading: authLoading, refreshProfile } = useAuth();
 
     // States
+    const [activeTab, setActiveTab] = useState('profile');
     const [profile, setProfile] = useState({
         full_name: "",
         username: "",
@@ -177,23 +178,32 @@ export default function SettingsPage() {
                     <div className="w-full md:w-64 shrink-0">
                         <h1 className="text-3xl font-bold text-gray-900 mb-8">Paramètres</h1>
                         <nav className="space-y-1">
-                            <button className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 text-black font-semibold rounded-lg text-sm border-l-4 border-black transition-all">
+                            <button
+                                onClick={() => setActiveTab('profile')}
+                                className={`w-full flex items-center justify-between px-4 py-3 font-semibold rounded-lg text-sm transition-all ${activeTab === 'profile' ? 'bg-gray-50 text-black border-l-4 border-black' : 'text-gray-500 hover:text-black hover:bg-gray-50'}`}
+                            >
                                 <span className="flex items-center gap-3">
                                     <User className="w-4 h-4" /> Modifier le profil
                                 </span>
-                                <ChevronRight className="w-4 h-4 text-gray-400" />
+                                {activeTab !== 'profile' && <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />}
                             </button>
-                            <button className="w-full flex items-center justify-between px-4 py-3 text-gray-500 hover:text-black hover:bg-gray-50 rounded-lg text-sm transition-all group">
+                            <button
+                                onClick={() => setActiveTab('security')}
+                                className={`w-full flex items-center justify-between px-4 py-3 font-semibold rounded-lg text-sm transition-all group ${activeTab === 'security' ? 'bg-gray-50 text-black border-l-4 border-black' : 'text-gray-500 hover:text-black hover:bg-gray-50'}`}
+                            >
                                 <span className="flex items-center gap-3">
                                     <Mail className="w-4 h-4" /> Compte & Sécurité
                                 </span>
-                                <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                {activeTab !== 'security' && <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />}
                             </button>
-                            <button className="w-full flex items-center justify-between px-4 py-3 text-gray-500 hover:text-black hover:bg-gray-50 rounded-lg text-sm transition-all group">
+                            <button
+                                onClick={() => setActiveTab('social')}
+                                className={`w-full flex items-center justify-between px-4 py-3 font-semibold rounded-lg text-sm transition-all group ${activeTab === 'social' ? 'bg-gray-50 text-black border-l-4 border-black' : 'text-gray-500 hover:text-black hover:bg-gray-50'}`}
+                            >
                                 <span className="flex items-center gap-3">
                                     <Globe className="w-4 h-4" /> Réseaux Sociaux
                                 </span>
-                                <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                {activeTab !== 'social' && <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />}
                             </button>
                         </nav>
                     </div>
@@ -201,10 +211,21 @@ export default function SettingsPage() {
                     {/* Main Content */}
                     <div className="flex-1">
                         <section>
-                            <h2 className="text-2xl font-bold text-gray-900 mb-2">Modifier le profil</h2>
-                            <p className="text-gray-500 text-sm mb-10">Gérez vos informations publiques et votre avatar.</p>
+                            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                                {activeTab === 'profile' && 'Modifier le profil'}
+                                {activeTab === 'security' && 'Compte & Sécurité'}
+                                {activeTab === 'social' && 'Réseaux Sociaux'}
+                            </h2>
+                            <p className="text-gray-500 text-sm mb-10">
+                                {activeTab === 'profile' && 'Gérez vos informations publiques et votre avatar.'}
+                                {activeTab === 'security' && 'Informations de connexion à votre compte.'}
+                                {activeTab === 'social' && 'Ajoutez vos liens vers d\'autres plateformes.'}
+                            </p>
 
                             <form onSubmit={handleSubmit} className="space-y-8">
+                                
+                                {activeTab === 'profile' && (
+                                    <>
 
                                 {/* Photo Section */}
                                 <div className="flex items-center gap-8 pb-8 border-b border-gray-100">
@@ -294,6 +315,12 @@ export default function SettingsPage() {
                                             />
                                         </div>
                                     </div>
+                                </div>
+                                </>
+                                )}
+
+                                {activeTab === 'social' && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
                                             <Globe className="w-4 h-4 text-gray-400" />
@@ -341,7 +368,27 @@ export default function SettingsPage() {
                                             />
                                         </div>
                                     </div>
-                                </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'security' && (
+                                    <div className="space-y-6">
+                                        <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                                            <h3 className="text-sm font-bold text-gray-900 mb-1">Adresse e-mail</h3>
+                                            <p className="text-sm text-gray-600 mb-3">L'e-mail utilisé pour vous connecter à votre compte.</p>
+                                            <div className="flex items-center gap-3">
+                                                <Mail className="w-5 h-5 text-gray-400" />
+                                                <span className="font-medium text-gray-900">{user?.email || "Non disponible"}</span>
+                                            </div>
+                                        </div>
+                                        <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                                            <h3 className="text-sm font-bold text-gray-900 mb-1">Mot de passe</h3>
+                                            <p className="text-sm text-gray-600">
+                                                Votre mot de passe est géré de manière sécurisée. Si vous devez le réinitialiser, veuillez vous déconnecter et utiliser l'option "Mot de passe oublié" sur la page de connexion.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Status Messages */}
                                 {status.message && (
