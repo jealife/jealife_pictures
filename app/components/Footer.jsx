@@ -49,7 +49,7 @@ export default function Footer() {
                     <div className="space-y-4">
                         <Link href="/" className="flex items-center gap-2 group w-fit">
                             <Image
-                                src="/JEaLiFe-Pictures-logo-black.png"
+                                src="/JEaLiFe-Stock-Logo-transparent-noir.png"
                                 alt="JEaLiFe Stock"
                                 width={120}
                                 height={40}

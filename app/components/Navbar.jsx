@@ -164,7 +164,7 @@ export default function Navbar() {
                 {/* Logo */}
                 <Link href="/" className="mb-10 px-1">
                     <img
-                        src="/JEaLiFe-Pictures-logo-black.png"
+                        src="/JEaLiFe-Stock-Logo-transparent-noir.png"
                         alt="Logo"
                         className="w-14 h-auto object-contain hover:scale-105 transition-transform"
                     />
@@ -241,7 +241,7 @@ export default function Navbar() {
                         <div className="flex items-center gap-4 shrink-0 z-50 md:hidden">
                             <Link href="/" className="flex items-center group">
                                 <img
-                                    src="/JEaLiFe-Pictures-logo-black.png"
+                                    src="/JEaLiFe-Stock-Logo-transparent-noir.png"
                                     alt="JEaLiFe Stock"
                                     className="h-12 w-auto object-contain"
                                 />
