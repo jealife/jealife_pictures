@@ -3,7 +3,9 @@
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { getUserProfile, getUserStats } from "../../../lib/database";
+import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../contexts/AuthContext";
+import Link from "next/link";
 import { BarChart3, Download, Info, TrendingUp, Globe } from "lucide-react";
 
 export default function UserStatsPage() {
@@ -13,6 +15,8 @@ export default function UserStatsPage() {
     const [isOwner, setIsOwner] = useState(false);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({ total_views: 0, total_downloads: 0 });
+    const [topViewed, setTopViewed] = useState([]);
+    const [topDownloaded, setTopDownloaded] = useState([]);
 
     useEffect(() => {
         const checkOwnership = async () => {
@@ -27,6 +31,24 @@ export default function UserStatsPage() {
                     setIsOwner(true);
                     const userStats = await getUserStats(profile.id);
                     if (userStats) setStats(userStats);
+
+                    const { data: vData } = await supabase
+                        .from('media')
+                        .select('id, url, thumbnail_url, title, views_count')
+                        .eq('user_id', profile.id)
+                        .eq('status', 'published')
+                        .order('views_count', { ascending: false })
+                        .limit(3);
+                    if (vData) setTopViewed(vData);
+
+                    const { data: dData } = await supabase
+                        .from('media')
+                        .select('id, url, thumbnail_url, title, downloads_count')
+                        .eq('user_id', profile.id)
+                        .eq('status', 'published')
+                        .order('downloads_count', { ascending: false })
+                        .limit(3);
+                    if (dData) setTopDownloaded(dData);
                 }
             } catch (err) {
                 console.error(err);
@@ -137,57 +159,56 @@ export default function UserStatsPage() {
                 {/* Top Views */}
                 <div>
                     <div className="flex items-center gap-2 mb-6">
-                        <h3 className="font-bold text-gray-900">Les plus vues sur</h3>
+                        <h3 className="font-bold text-gray-900">Vos photos les plus vues</h3>
                         <Info className="w-4 h-4 text-gray-400" />
                     </div>
 
-                    <div className="space-y-2">
-                        {[
-                            { name: 'Unsplash', icon: 'https://images.unsplash.com/apple-touch-icon.png', photos: ['https://images.unsplash.com/photo-1547471080-165f61765106?w=100', 'https://images.unsplash.com/photo-1548695602-0e447b2c556b?w=100'] },
-                            { name: 'Notion', icon: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png', photos: ['https://images.unsplash.com/photo-1533167649158-6d508895b680?w=100'] },
-                            { name: 'Figma', icon: 'https://cdn.sanity.io/images/599r6htc/localized/46a76c802176eb17b06e1240bd0f2aa77f631db6-1024x1024.png?w=200&h=200&fit=crop', photos: [] }
-                        ].map((platform, i) => (
-                            <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                <div className="flex items-center gap-3">
-                                    <img src={platform.icon} className="w-6 h-6 rounded bg-white shadow-xs p-0.5 object-contain" />
-                                    <span className="font-medium text-sm text-gray-900">{platform.name}</span>
+                    <div className="space-y-3">
+                        {topViewed.map((photo, i) => (
+                            <Link key={photo.id} href={`/photos/${photo.id}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                <div className="flex items-center gap-4 min-w-0">
+                                    <span className="font-bold text-gray-400 w-4 text-center">{i + 1}</span>
+                                    <img src={photo.thumbnail_url || photo.url} alt={photo.title || "Photo"} className="w-12 h-12 rounded object-cover" />
+                                    <span className="font-medium text-sm text-gray-900 truncate max-w-[200px]">{photo.title || `Photo #${photo.id}`}</span>
                                 </div>
-                                <div className="flex -space-x-2">
-                                    {platform.photos.map((url, j) => (
-                                        <img key={j} src={url} className="w-10 h-10 rounded-md border-2 border-white object-cover" />
-                                    ))}
-                                    {platform.photos.length === 0 && <span className="text-xs text-gray-400 italic">--</span>}
+                                <div className="font-semibold text-gray-900 shrink-0">
+                                    {photo.views_count?.toLocaleString('fr-FR') || 0} vues
                                 </div>
-                            </div>
+                            </Link>
                         ))}
+                        {topViewed.length === 0 && (
+                            <div className="p-4 text-center text-sm text-gray-500 bg-gray-50 rounded-lg">
+                                Vous n&apos;avez publié aucune photo.
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* Top Downloads */}
                 <div>
                     <div className="flex items-center gap-2 mb-6">
-                        <h3 className="font-bold text-gray-900">Les plus téléchargées sur</h3>
+                        <h3 className="font-bold text-gray-900">Vos photos les plus téléchargées</h3>
                         <Info className="w-4 h-4 text-gray-400" />
                     </div>
 
-                    <div className="space-y-2">
-                        {[
-                            { name: 'Unsplash', icon: 'https://images.unsplash.com/apple-touch-icon.png', photos: ['https://images.unsplash.com/photo-1548695602-0e447b2c556b?w=100', 'https://images.unsplash.com/photo-1547471080-165f61765106?w=100'] },
-                            { name: 'Notion', icon: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png', photos: ['https://images.unsplash.com/photo-1502920514313-52581002a659?w=100'] },
-                            { name: 'Squarespace', icon: 'https://static-00.iconduck.com/assets.00/squarespace-icon-2048x2048-0br388v1.png', photos: ['https://images.unsplash.com/photo-1628173516164-3e911470438d?w=100'] }
-                        ].map((platform, i) => (
-                            <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                <div className="flex items-center gap-3">
-                                    <img src={platform.icon} className="w-6 h-6 rounded bg-white shadow-xs p-0.5 object-contain" />
-                                    <span className="font-medium text-sm text-gray-900">{platform.name}</span>
+                    <div className="space-y-3">
+                        {topDownloaded.map((photo, i) => (
+                            <Link key={photo.id} href={`/photos/${photo.id}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                <div className="flex items-center gap-4 min-w-0">
+                                    <span className="font-bold text-gray-400 w-4 text-center">{i + 1}</span>
+                                    <img src={photo.thumbnail_url || photo.url} alt={photo.title || "Photo"} className="w-12 h-12 rounded object-cover" />
+                                    <span className="font-medium text-sm text-gray-900 truncate max-w-[200px]">{photo.title || `Photo #${photo.id}`}</span>
                                 </div>
-                                <div className="flex -space-x-2">
-                                    {platform.photos.map((url, j) => (
-                                        <img key={j} src={url} className="w-10 h-10 rounded-md border-2 border-white object-cover" />
-                                    ))}
+                                <div className="font-semibold text-gray-900 shrink-0">
+                                    {photo.downloads_count?.toLocaleString('fr-FR') || 0} tél.
                                 </div>
-                            </div>
+                            </Link>
                         ))}
+                        {topDownloaded.length === 0 && (
+                            <div className="p-4 text-center text-sm text-gray-500 bg-gray-50 rounded-lg">
+                                Vous n&apos;avez publié aucune photo.
+                            </div>
+                        )}
                     </div>
                 </div>
 

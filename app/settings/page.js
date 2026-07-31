@@ -20,6 +20,8 @@ export default function SettingsPage() {
         bio: "",
         location: "",
         website: "",
+        instagram_username: "",
+        twitter_username: "",
         avatar_url: ""
     });
     const [loading, setLoading] = useState(true);
@@ -60,6 +62,8 @@ export default function SettingsPage() {
                     bio: data.bio || "",
                     location: data.location || "",
                     website: data.website || "",
+                    instagram_username: data.instagram_username || "",
+                    twitter_username: data.twitter_username || "",
                     avatar_url: data.avatar_url || ""
                 });
                 setAvatarPreview(data.avatar_url);
@@ -124,6 +128,8 @@ export default function SettingsPage() {
                 bio: profile.bio,
                 location: profile.location,
                 website: profile.website,
+                instagram_username: profile.instagram_username,
+                twitter_username: profile.twitter_username,
                 avatar_url: finalAvatarUrl
             };
 
@@ -288,16 +294,50 @@ export default function SettingsPage() {
                                             />
                                         </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-semibold text-gray-900">Site Web</label>
-                                        <div className="relative">
-                                            <Globe className="absolute left-3 top-3.5 w-4 h-4 text-gray-400" />
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                                            <Globe className="w-4 h-4 text-gray-400" />
+                                            Site web
+                                        </label>
+                                        <input
+                                            type="url"
+                                            value={profile.website}
+                                            onChange={(e) => setProfile({ ...profile, website: e.target.value })}
+                                            placeholder="https://votre-site.com"
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-1 focus:ring-black focus:border-black outline-hidden transition-all text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                                            Instagram
+                                        </label>
+                                        <div className="flex">
+                                            <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-200 bg-gray-50 text-gray-500 text-sm">
+                                                @
+                                            </span>
                                             <input
-                                                type="url"
-                                                value={profile.website}
-                                                onChange={(e) => setProfile({ ...profile, website: e.target.value })}
-                                                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 focus:border-black focus:ring-1 focus:ring-black outline-hidden transition-all text-sm"
-                                                placeholder="https://votre-site.com"
+                                                type="text"
+                                                value={profile.instagram_username}
+                                                onChange={(e) => setProfile({ ...profile, instagram_username: e.target.value })}
+                                                placeholder="votre_pseudo"
+                                                className="w-full px-4 py-3 border border-gray-200 rounded-r-lg focus:ring-1 focus:ring-black focus:border-black outline-hidden transition-all text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                                            Twitter / X
+                                        </label>
+                                        <div className="flex">
+                                            <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-200 bg-gray-50 text-gray-500 text-sm">
+                                                @
+                                            </span>
+                                            <input
+                                                type="text"
+                                                value={profile.twitter_username}
+                                                onChange={(e) => setProfile({ ...profile, twitter_username: e.target.value })}
+                                                placeholder="votre_pseudo"
+                                                className="w-full px-4 py-3 border border-gray-200 rounded-r-lg focus:ring-1 focus:ring-black focus:border-black outline-hidden transition-all text-sm"
                                             />
                                         </div>
                                     </div>
