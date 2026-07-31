@@ -171,10 +171,10 @@ export default function PhotoDetail() {
                         />
                         <div className="flex flex-col min-w-0">
                             <span className="font-bold text-[15px] text-gray-900 truncate leading-tight group-hover:underline">{photo.author.name}</span>
-                            {/* <span className="flex text-[13px] text-blue-500 font-medium truncate items-center gap-1">
-                                Disponible à l'embauche
+                            <span className="flex text-[13px] text-blue-500 font-medium truncate items-center gap-1">
+                                Disponible
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-blue-500 mt-0.5 shrink-0"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.4-1.4 3.6 3.6 7.6-7.6L19 8l-9 9z"/></svg>
-                            </span> */}
+                            </span>
                         </div>
                     </Link>
                 </div>
