@@ -251,19 +251,33 @@ export default function PhotoDetail() {
             {/* Unsplash-style Image Container */}
             <div className="w-full bg-white sm:px-4 lg:px-8 py-0 sm:py-6 flex justify-center">
                 <div className="relative flex items-center justify-center bg-gray-50 overflow-hidden sm:rounded-[2px]">
-                    <Image
-                        src={photo.url}
-                        alt={photo.alt}
-                        width={photo.width || 1200}
-                        height={photo.height || 800}
-                        className="w-auto h-auto max-w-full object-contain"
-                        style={{ maxHeight: "calc(100vh - 140px)" }}
-                        priority
-                        quality={90}
-                        {...(photo.blurDataURL
-                            ? { placeholder: "blur", blurDataURL: photo.blurDataURL }
-                            : {})}
-                    />
+                    {photo.type === "video" ? (
+                        <video
+                            src={photo.originalUrl}
+                            poster={photo.url}
+                            controls
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            className="w-auto h-auto max-w-full object-contain"
+                            style={{ maxHeight: "calc(100vh - 140px)" }}
+                        />
+                    ) : (
+                        <Image
+                            src={photo.url}
+                            alt={photo.alt}
+                            width={photo.width || 1200}
+                            height={photo.height || 800}
+                            className="w-auto h-auto max-w-full object-contain"
+                            style={{ maxHeight: "calc(100vh - 140px)" }}
+                            priority
+                            quality={90}
+                            {...(photo.blurDataURL
+                                ? { placeholder: "blur", blurDataURL: photo.blurDataURL }
+                                : {})}
+                        />
+                    )}
                 </div>
             </div>
 

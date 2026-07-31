@@ -74,6 +74,38 @@ function drawResized(bitmap, width, height) {
 }
 
 async function loadBitmap(file) {
+    if (file.type.startsWith("video/")) {
+        return new Promise((resolve, reject) => {
+            const video = document.createElement("video");
+            video.preload = "metadata";
+            video.muted = true;
+            video.playsInline = true;
+
+            const url = URL.createObjectURL(file);
+            video.src = url;
+
+            video.onloadeddata = () => {
+                // Seek to 25% of the video to avoid black frames at the beginning
+                video.currentTime = Math.max(0, Math.min(1, video.duration * 0.25));
+            };
+
+            video.onseeked = () => {
+                const canvas = document.createElement("canvas");
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                URL.revokeObjectURL(url);
+                resolve(canvas); // Canvas is a valid ImageImageSource for canvas drawing
+            };
+
+            video.onerror = () => {
+                URL.revokeObjectURL(url);
+                reject(new Error("Fichier vidéo illisible"));
+            };
+        });
+    }
+
     // `imageOrientation: "from-image"` applique la rotation EXIF : sans cela,
     // les photos prises en portrait au téléphone arrivaient couchées.
     if (typeof createImageBitmap === "function") {

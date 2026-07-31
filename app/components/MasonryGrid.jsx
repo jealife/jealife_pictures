@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ImageOff, Loader2 } from "lucide-react";
 import PhotoCard from "./PhotoCard";
+import VideoCard from "./VideoCard";
 import SkeletonCard from "./SkeletonCard";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -217,13 +218,21 @@ export default function MasonryGrid({
                 {columns.map((columnItems, columnIndex) => (
                     <div key={columnIndex} className="flex-1 flex flex-col gap-6">
                         {columnItems.map((item, itemIndex) => (
-                            <PhotoCard
-                                key={item.id}
-                                photo={item}
-                                liked={likedIds.has(item.id)}
-                                hideActions={hideActions}
-                                priority={columnIndex === 0 && itemIndex === 0}
-                            />
+                            item.type === 'video' ? (
+                                <VideoCard
+                                    key={item.id}
+                                    video={item}
+                                    liked={likedIds.has(item.id)}
+                                />
+                            ) : (
+                                <PhotoCard
+                                    key={item.id}
+                                    photo={item}
+                                    liked={likedIds.has(item.id)}
+                                    hideActions={hideActions}
+                                    priority={columnIndex === 0 && itemIndex === 0}
+                                />
+                            )
                         ))}
                     </div>
                 ))}

@@ -122,13 +122,19 @@ export default function SubmitPage() {
         const selected = files?.[0];
         if (!selected) return;
 
-        if (!selected.type.startsWith("image/")) {
-            setFormError("Pour l'instant, seules les images sont acceptées.");
+        let detectedType = "photo";
+        if (selected.type.startsWith("video/")) {
+            detectedType = "video";
+        } else if (selected.type.includes("svg") || selected.type.includes("illustrator")) {
+            detectedType = "illustration";
+        } else if (!selected.type.startsWith("image/")) {
+            setFormError("Format de fichier non supporté. Seules les images et les vidéos sont acceptées.");
             return;
         }
 
         setFormError(null);
         setFile(selected);
+        setSelectedType(detectedType);
         setTitle(selected.name.replace(/\.[^/.]+$/, ""));
         setPreviewUrl(URL.createObjectURL(selected));
         setStep(2);
@@ -374,18 +380,17 @@ export default function SubmitPage() {
                                 <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
                                     <UploadCloud className="w-10 h-10 text-gray-400" />
                                 </div>
-                                <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                                    Glissez-déposez ou parcourez
-                                </h2>
-                                <p className="text-gray-500">
-                                    JPG, PNG ou WebP. Envoyez le fichier le plus grand possible :
-                                    la compression est faite pour vous.
+                                <p className="mt-4 text-[15px] font-medium text-gray-700">
+                                    Glissez et déposez votre fichier ici
+                                </p>
+                                <p className="mt-1.5 text-[13px] text-gray-500">
+                                    Format JPG, PNG, WebP, SVG ou MP4 • Jusqu'à 50 Mo
                                 </p>
                             </div>
                             <input
                                 ref={fileInputRef}
                                 type="file"
-                                accept="image/*"
+                                accept="image/*,video/*"
                                 className="hidden"
                                 onChange={(e) => handleFileSelect(e.target.files)}
                             />
