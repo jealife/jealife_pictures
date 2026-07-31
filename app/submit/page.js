@@ -34,6 +34,7 @@ export default function SubmitPage() {
     const [uploadStage, setUploadStage] = useState("");
     const [dragActive, setDragActive] = useState(false);
     const [formError, setFormError] = useState(null);
+    const [isGeneratingMetadata, setIsGeneratingMetadata] = useState(false);
 
     const [file, setFile] = useState(null);
     const [processed, setProcessed] = useState(null);
@@ -216,6 +217,52 @@ export default function SubmitPage() {
         setProcessed(null);
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         setPreviewUrl("");
+    };
+
+    const generateMetadataWithAI = async () => {
+        if (!processed || !processed.thumbnail) return;
+        setIsGeneratingMetadata(true);
+        setFormError(null);
+
+        try {
+            const reader = new FileReader();
+            const base64Promise = new Promise((resolve) => {
+                reader.onloadend = () => resolve(reader.result.split(',')[1]);
+            });
+            reader.readAsDataURL(processed.thumbnail);
+            const base64Image = await base64Promise;
+
+            const res = await fetch("/api/generate-metadata", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    image: base64Image,
+                    mimeType: processed.mimeType,
+                    type: selectedType
+                })
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || "Erreur lors de la génération.");
+            }
+
+            const data = await res.json();
+            if (data.title) setTitle(data.title);
+            if (data.description) {
+                setAltText(data.description);
+                setDescription(data.description);
+            }
+            if (data.tags && Array.isArray(data.tags)) {
+                const newTags = data.tags.filter(tag => !tags.includes(tag));
+                setTags(prev => [...prev, ...newTags]);
+            }
+        } catch (error) {
+            console.error("Génération de métadonnées impossible :", error);
+            setFormError(error.message);
+        } finally {
+            setIsGeneratingMetadata(false);
+        }
     };
 
     const handleSubmit = async (event) => {
@@ -482,9 +529,20 @@ export default function SubmitPage() {
                                 </fieldset>
 
                                 <div>
-                                    <label htmlFor="title" className="block text-sm font-bold text-gray-900 mb-2">
-                                        Titre
-                                    </label>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label htmlFor="title" className="block text-sm font-bold text-gray-900">
+                                            Titre
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={generateMetadataWithAI}
+                                            disabled={isGeneratingMetadata || !processed}
+                                            className="text-[13px] font-medium text-amber-600 hover:text-amber-700 disabled:opacity-50 flex items-center gap-1 transition-colors"
+                                        >
+                                            {isGeneratingMetadata ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "✨"}
+                                            {isGeneratingMetadata ? "Génération..." : "Générer avec l'IA"}
+                                        </button>
+                                    </div>
                                     <input
                                         id="title"
                                         type="text"
