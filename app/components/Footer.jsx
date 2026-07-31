@@ -51,10 +51,10 @@ export default function Footer() {
                             <Image
                                 src="/JEaLiFe-Stock-Logo-transparent-noir.png"
                                 alt="JEaLiFe Stock"
-                                width={120}
+                                width={100}
                                 height={40}
                                 style={{ height: "auto" }}
-                                className="w-[120px] object-contain group-hover:scale-105 transition-transform"
+                                className="w-[50px] object-contain group-hover:scale-105 transition-transform"
                             />
                         </Link>
                         <p className="text-gray-500 text-sm leading-relaxed max-w-xs">
