@@ -21,6 +21,7 @@ export default function LikeButton({
     initialCount = 0,
     variant = "overlay",
     showCount = false,
+    className = "",
 }) {
     const { user } = useAuth();
     const router = useRouter();
@@ -76,7 +77,7 @@ export default function LikeButton({
         <button
             onClick={toggle}
             disabled={pending}
-            className={styles[variant] || styles.overlay}
+            className={`${styles[variant] || styles.overlay} ${className}`}
             aria-pressed={liked}
             aria-label={liked ? "Retirer des favoris" : "Ajouter aux favoris"}
             title={liked ? "Retirer des favoris" : "J'aime"}

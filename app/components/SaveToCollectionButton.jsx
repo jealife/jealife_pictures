@@ -18,7 +18,7 @@ import {
  * fonction qui transforme une galerie en outil de travail — un journaliste ou
  * un graphiste gabonais a besoin de mettre de côté ce qu'il repère.
  */
-export default function SaveToCollectionButton({ mediaId, variant = "overlay" }) {
+export default function SaveToCollectionButton({ mediaId, variant = "overlay", className = "" }) {
     const { user } = useAuth();
     const router = useRouter();
     const [open, setOpen] = useState(false);
@@ -87,7 +87,7 @@ export default function SaveToCollectionButton({ mediaId, variant = "overlay" })
         <div className="relative" ref={containerRef}>
             <button
                 onClick={openPanel}
-                className={triggerClass}
+                className={`${triggerClass} ${className}`}
                 aria-label="Ajouter à une collection"
                 aria-expanded={open}
             >

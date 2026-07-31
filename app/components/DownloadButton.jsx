@@ -73,14 +73,14 @@ export default function DownloadButton({ media, variant = "compact", onDownloade
                 <button
                     onClick={() => run("original")}
                     disabled={busy}
-                    className="h-10 px-5 bg-green-600 text-white rounded-l-lg font-bold text-sm hover:bg-green-700 transition-all shadow-sm flex items-center gap-2 disabled:opacity-70"
+                    className="h-9 px-3 sm:px-4 bg-green-600 text-white rounded-l-md font-medium text-[13px] hover:bg-green-700 transition-all shadow-sm flex items-center gap-2 disabled:opacity-70"
                 >
-                    {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : "Télécharger"}
+                    {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <><span className="hidden sm:inline">Télécharger gratuitement</span><span className="sm:hidden">Télécharger</span></>}
                 </button>
-                <div className="h-10 w-px bg-green-700/30" />
+                <div className="h-9 w-px bg-green-700/30" />
                 <button
                     onClick={() => setOpen(!open)}
-                    className="h-10 px-2 bg-green-600 text-white rounded-r-lg hover:bg-green-700 transition-all shadow-sm flex items-center"
+                    className="h-9 px-2 bg-green-600 text-white rounded-r-md hover:bg-green-700 transition-all shadow-sm flex items-center"
                     aria-label="Choisir une taille de téléchargement"
                     aria-expanded={open}
                 >

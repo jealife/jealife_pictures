@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import {
     MapPin, Camera, Eye, Download, ArrowLeft, Edit2, Check, Copy,
-    Share2, Flag, Globe2, X, MoreHorizontal, ShieldCheck
+    Share2, Flag, Globe2, X, MoreHorizontal, ShieldCheck, Calendar, Info
 } from "lucide-react";
 import LikeButton from "../../components/LikeButton";
 import DownloadButton from "../../components/DownloadButton";
@@ -149,12 +149,12 @@ export default function PhotoDetail() {
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
 
-            {/* Sticky Bar (Glassmorphism) */}
-            <div className="sticky top-0 sm:top-16 z-30 bg-white/90 backdrop-blur-xl border-b border-gray-100 px-4 h-[72px] flex items-center justify-between gap-3">
+            {/* Sticky Bar */}
+            <div className="sticky top-0 sm:top-16 z-30 bg-white px-4 h-[72px] flex items-center justify-between gap-3">
                 <div className="flex items-center gap-4 min-w-0">
                     <button
                         onClick={() => router.back()}
-                        className="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-black shrink-0"
+                        className="sm:hidden p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-black shrink-0"
                         aria-label="Revenir en arrière"
                     >
                         <ArrowLeft className="w-5 h-5" />
@@ -164,221 +164,182 @@ export default function PhotoDetail() {
                         <Image
                             src={photo.author.avatar}
                             alt=""
-                            width={40}
-                            height={40}
+                            width={36}
+                            height={36}
                             unoptimized
-                            className="rounded-full object-cover shrink-0 ring-2 ring-transparent group-hover:ring-gray-200 transition-all shadow-sm"
+                            className="rounded-full object-cover shrink-0 ring-1 ring-gray-200 group-hover:ring-gray-300 transition-all"
                         />
                         <div className="flex flex-col min-w-0">
-                            <span className="font-bold text-sm text-gray-900 truncate leading-tight group-hover:underline">{photo.author.name}</span>
-                            <span className="text-[11px] text-gray-500 truncate">@{photo.author.username}</span>
+                            <span className="font-bold text-[15px] text-gray-900 truncate leading-tight group-hover:underline">{photo.author.name}</span>
+                            <span className="hidden sm:flex text-[13px] text-blue-500 font-medium truncate items-center gap-1">
+                                Disponible à l'embauche
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-blue-500 mt-0.5"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.4-1.4 3.6 3.6 7.6-7.6L19 8l-9 9z"/></svg>
+                            </span>
                         </div>
                     </Link>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
-                    {isOwner && (
-                        <Link
-                            href={`/photos/${rawId}/edit`}
-                            className="hidden sm:flex items-center gap-2 px-4 py-2 border border-gray-200 bg-white rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 hover:border-gray-300 transition-all"
-                        >
-                            <Edit2 className="w-4 h-4" /> Modifier
-                        </Link>
-                    )}
-
+                    <SaveToCollectionButton mediaId={photo.id} variant="outline" className="hidden sm:flex h-9 px-3 border-gray-300 text-gray-600 hover:border-gray-900 hover:text-gray-900 rounded-md shadow-sm" />
                     <LikeButton
                         mediaId={photo.id}
                         initialLiked={liked}
                         initialCount={photo.likes}
                         variant="outline"
-                        showCount
+                        className="hidden sm:flex h-9 px-3 border-gray-300 text-gray-600 hover:border-gray-900 hover:text-gray-900 rounded-md shadow-sm"
                     />
 
-                    <DownloadButton media={photo} variant="primary" />
-
-                    <div className="relative">
-                        <button
-                            onClick={() => setShowMenu(!showMenu)}
-                            className="p-2.5 text-gray-500 hover:text-black hover:bg-gray-100 rounded-xl transition-all ml-1"
-                            aria-label="Plus d'options"
+                    {isOwner && (
+                        <Link
+                            href={`/photos/${rawId}/edit`}
+                            className="hidden sm:flex items-center gap-2 h-9 px-3 border border-gray-300 bg-white rounded-md text-[13px] font-medium text-gray-700 hover:border-gray-900 hover:text-gray-900 transition-all shadow-sm"
                         >
-                            <MoreHorizontal className="w-5 h-5" />
-                        </button>
-                        
-                        {showMenu && (
-                            <>
-                                <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
-                                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-100 shadow-xl rounded-xl overflow-hidden z-50 py-1 animate-in fade-in zoom-in-95 duration-100 origin-top-right">
-                                    <button
-                                        onClick={() => { setShowMenu(false); share(); }}
-                                        className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-gray-50 flex items-center gap-3 text-gray-700"
-                                    >
-                                        <Share2 className="w-4 h-4 text-gray-400" /> Partager
-                                    </button>
-                                    <button
-                                        onClick={() => { setShowMenu(false); setShowReport(true); }}
-                                        className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-red-50 flex items-center gap-3 text-red-600"
-                                    >
-                                        <Flag className="w-4 h-4 text-red-500" /> Signaler
-                                    </button>
-                                </div>
-                            </>
-                        )}
-                    </div>
+                            <Edit2 className="w-3.5 h-3.5" /> Modifier l'image
+                        </Link>
+                    )}
+
+                    <DownloadButton media={photo} variant="primary" />
                 </div>
             </div>
 
-            {/* Immersive Dark Background Image Section */}
-            <div className="w-full bg-gray-950 flex items-center justify-center min-h-[50vh] max-h-[85vh] relative select-none">
-                <Image
-                    src={photo.url}
-                    alt={photo.alt}
-                    fill
-                    className="object-contain"
-                    priority
-                    quality={90}
-                    sizes="100vw"
-                    {...(photo.blurDataURL
-                        ? { placeholder: "blur", blurDataURL: photo.blurDataURL }
-                        : {})}
-                />
+            {/* Unsplash-style Image Container */}
+            <div className="w-full bg-white sm:px-4 lg:px-8 py-2 sm:py-6 flex justify-center">
+                <div 
+                    className="relative w-full flex items-center justify-center bg-gray-50 overflow-hidden sm:rounded-[2px]" 
+                    style={{ minHeight: "300px", maxHeight: "calc(100vh - 140px)", height: "85vh", maxWidth: "max-content" }}
+                >
+                    <Image
+                        src={photo.url}
+                        alt={photo.alt}
+                        width={photo.width || 1200}
+                        height={photo.height || 800}
+                        className="object-contain w-auto h-full max-w-full"
+                        priority
+                        quality={90}
+                        {...(photo.blurDataURL
+                            ? { placeholder: "blur", blurDataURL: photo.blurDataURL }
+                            : {})}
+                    />
+                </div>
             </div>
 
             {/* Image Details Section */}
-            <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-16">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-16">
-                    
-                    {/* Left column: Title, Description, Tags */}
-                    <div className="lg:col-span-2 space-y-10">
-                        <div className="space-y-4">
-                            <h1 className="text-3xl md:text-5xl font-black text-gray-900 leading-tight text-balance">
-                                {photo.title || photo.alt}
-                            </h1>
-                            {photo.description && (
-                                <p className="text-lg text-gray-600 leading-relaxed max-w-prose">
-                                    {photo.description}
-                                </p>
-                            )}
+            <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
+                
+                {/* Stats & Actions Row */}
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 mb-10">
+                    <div className="flex items-center gap-8 md:gap-12">
+                        <div className="flex flex-col">
+                            <span className="text-[13px] text-gray-500 font-medium mb-1">Vues</span>
+                            <span className="text-[15px] font-semibold text-gray-900">{formatCount(photo.views)}</span>
                         </div>
-
-                        {(topics.length > 0 || photo.tags.length > 0) && (
-                            <div className="flex flex-wrap gap-2.5">
-                                {topics.map((topic) => (
-                                    <Link
-                                        key={topic.slug}
-                                        href={`/themes/${topic.slug}`}
-                                        className="px-4 py-2 bg-gray-100 text-gray-800 rounded-xl hover:bg-black hover:text-white transition-colors text-sm font-bold"
-                                    >
-                                        {topic.name}
-                                    </Link>
-                                ))}
-                                {photo.tags
-                                    .filter((tag) => !topics.some((t) => t.name.toLowerCase() === tag.toLowerCase()))
-                                    .map((tag) => (
-                                        <Link
-                                            key={tag}
-                                            href={`/?q=${encodeURIComponent(tag.toLowerCase())}`}
-                                            className="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl hover:border-gray-400 hover:text-black transition-colors text-sm font-medium shadow-sm"
-                                        >
-                                            {tag}
-                                        </Link>
-                                    ))}
-                            </div>
-                        )}
+                        <div className="flex flex-col">
+                            <span className="text-[13px] text-gray-500 font-medium mb-1">Téléchargements</span>
+                            <span className="text-[15px] font-semibold text-gray-900">{formatCount(photo.downloads)}</span>
+                        </div>
                     </div>
-
-                    {/* Right column: Stats and Info */}
-                    <div className="space-y-8">
-                        <div>
-                            <h3 className="text-[11px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-4">
-                                Statistiques
-                            </h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="p-5 bg-gray-50/80 rounded-2xl border border-gray-100 flex flex-col gap-1.5">
-                                    <span className="flex items-center gap-1.5 text-gray-500 text-[10px] font-bold uppercase tracking-wider">
-                                        <Eye className="w-3.5 h-3.5" /> Vues
-                                    </span>
-                                    <span className="text-3xl font-black text-gray-900">{formatCount(photo.views)}</span>
-                                </div>
-                                <div className="p-5 bg-gray-50/80 rounded-2xl border border-gray-100 flex flex-col gap-1.5">
-                                    <span className="flex items-center gap-1.5 text-gray-500 text-[10px] font-bold uppercase tracking-wider">
-                                        <Download className="w-3.5 h-3.5" /> DLs
-                                    </span>
-                                    <span className="text-3xl font-black text-gray-900">{formatCount(photo.downloads)}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <h3 className="text-[11px] font-bold uppercase tracking-[0.15em] text-gray-400 mb-4">
-                                Détails
-                            </h3>
-                            <div className="space-y-4">
-                                {place && (
-                                    <div className="flex items-start gap-3.5">
-                                        <div className="p-2 bg-gray-50 rounded-lg shrink-0 text-gray-400">
-                                            <MapPin className="w-4 h-4" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-gray-900 mt-0.5">{place}</p>
-                                            <p className="text-[11px] text-gray-500 font-medium">Lieu de prise de vue</p>
-                                        </div>
+                    
+                    <div className="flex items-center gap-2 self-end sm:self-auto">
+                        <button 
+                            onClick={share}
+                            className="flex items-center gap-2 h-8 px-3 border border-gray-300 rounded-md text-[13px] font-medium text-gray-600 hover:text-gray-900 hover:border-gray-900 transition-colors shadow-sm"
+                        >
+                            <Share2 className="w-4 h-4 text-gray-400" /> <span className="hidden sm:inline">Partager</span>
+                        </button>
+                        <button 
+                            className="flex items-center gap-2 h-8 px-3 border border-gray-300 rounded-md text-[13px] font-medium text-gray-600 hover:text-gray-900 hover:border-gray-900 transition-colors shadow-sm"
+                        >
+                            <Info className="w-4 h-4 text-gray-400" /> <span className="hidden sm:inline">Infos</span>
+                        </button>
+                        <div className="relative">
+                            <button
+                                onClick={() => setShowMenu(!showMenu)}
+                                className="flex items-center justify-center w-10 h-8 border border-gray-300 rounded-md text-gray-600 hover:text-gray-900 hover:border-gray-900 transition-colors shadow-sm"
+                                aria-label="Plus d'options"
+                            >
+                                <MoreHorizontal className="w-4 h-4 text-gray-400" />
+                            </button>
+                            
+                            {showMenu && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+                                    <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 shadow-xl rounded-md overflow-hidden z-50 py-1">
+                                        <button
+                                            onClick={() => { setShowMenu(false); setShowReport(true); }}
+                                            className="w-full px-4 py-2 text-left text-[13px] hover:bg-gray-50 text-gray-700"
+                                        >
+                                            Signaler l'image
+                                        </button>
                                     </div>
-                                )}
-                                {photo.country && !place && (
-                                    <div className="flex items-start gap-3.5">
-                                        <div className="p-2 bg-gray-50 rounded-lg shrink-0 text-gray-400">
-                                            <Globe2 className="w-4 h-4" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-gray-900 mt-0.5">{photo.country.name_fr}</p>
-                                            <p className="text-[11px] text-gray-500 font-medium">Pays</p>
-                                        </div>
-                                    </div>
-                                )}
-                                {raw?.camera && (
-                                    <div className="flex items-start gap-3.5">
-                                        <div className="p-2 bg-gray-50 rounded-lg shrink-0 text-gray-400">
-                                            <Camera className="w-4 h-4" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-gray-900 mt-0.5">{raw.camera}</p>
-                                            <p className="text-[11px] text-gray-500 font-medium">Appareil photo</p>
-                                        </div>
-                                    </div>
-                                )}
-                                {publishedOn && (
-                                    <div className="flex items-start gap-3.5">
-                                        <div className="p-2 bg-gray-50 rounded-lg shrink-0 text-gray-400">
-                                            <Check className="w-4 h-4" />
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-bold text-gray-900 mt-0.5">{publishedOn}</p>
-                                            <p className="text-[11px] text-gray-500 font-medium">Date de publication</p>
-                                        </div>
-                                    </div>
-                                )}
-                                <div className="flex items-start gap-3.5">
-                                    <div className="p-2 bg-emerald-50 rounded-lg shrink-0 text-emerald-600">
-                                        <ShieldCheck className="w-4 h-4" />
-                                    </div>
-                                    <div>
-                                        <Link href="/licence" className="text-sm font-bold text-gray-900 mt-0.5 hover:underline decoration-2 underline-offset-2">
-                                            Licence libre
-                                        </Link>
-                                        <p className="text-[11px] text-gray-500 font-medium">Gratuit pour tout usage</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div className="pt-2">
-                            <div className="w-full h-[52px] relative group cursor-pointer">
-                                <SaveToCollectionButton mediaId={photo.id} variant="outline" className="w-full h-full justify-center rounded-xl font-bold border-2" />
-                            </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
+
+                {/* Title, Desc & Info list */}
+                <div className="max-w-4xl space-y-6">
+                    <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-snug text-balance">
+                        {photo.title || photo.alt}
+                    </h1>
+                    
+                    {photo.description && (
+                        <p className="text-[15px] text-gray-700 leading-relaxed max-w-prose">
+                            {photo.description}
+                        </p>
+                    )}
+
+                    <div className="space-y-3 pt-2">
+                        {(place || photo.country) && (
+                            <div className="flex items-center gap-3 text-[14px] text-gray-500 hover:text-gray-900 transition-colors cursor-pointer w-fit">
+                                <MapPin className="w-4 h-4" /> 
+                                <span>{place || photo.country?.name_fr}</span>
+                            </div>
+                        )}
+                        {publishedOn && (
+                            <div className="flex items-center gap-3 text-[14px] text-gray-500">
+                                <Calendar className="w-4 h-4" /> 
+                                <span>Publiée le {publishedOn}</span>
+                            </div>
+                        )}
+                        {raw?.camera && (
+                            <div className="flex items-center gap-3 text-[14px] text-gray-500">
+                                <Camera className="w-4 h-4" /> 
+                                <span>{raw.camera}</span>
+                            </div>
+                        )}
+                        <div className="flex items-center gap-3 text-[14px] text-gray-500 hover:text-gray-900 transition-colors">
+                            <ShieldCheck className="w-4 h-4" /> 
+                            <Link href="/licence" className="hover:underline">Utilisation gratuite sous la Licence JEaLiFe</Link>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Tags Section */}
+                {(topics.length > 0 || photo.tags.length > 0) && (
+                    <div className="flex flex-wrap gap-2 pt-10">
+                        {topics.map((topic) => (
+                            <Link
+                                key={topic.slug}
+                                href={`/themes/${topic.slug}`}
+                                className="px-3 py-1.5 bg-[#eeeeee] text-gray-600 hover:bg-[#e1e1e1] hover:text-gray-900 rounded-[4px] transition-colors text-[13px] capitalize"
+                            >
+                                {topic.name}
+                            </Link>
+                        ))}
+                        {photo.tags
+                            .filter((tag) => !topics.some((t) => t.name.toLowerCase() === tag.toLowerCase()))
+                            .map((tag) => (
+                                <Link
+                                    key={tag}
+                                    href={`/?q=${encodeURIComponent(tag.toLowerCase())}`}
+                                    className="px-3 py-1.5 bg-[#eeeeee] text-gray-600 hover:bg-[#e1e1e1] hover:text-gray-900 rounded-[4px] transition-colors text-[13px] capitalize"
+                                >
+                                    {tag}
+                                </Link>
+                            ))}
+                    </div>
+                )}
             </div>
 
             {/* Related Images */}
