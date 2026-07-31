@@ -151,7 +151,7 @@ export default function PhotoDetail() {
 
             {/* Sticky Bar */}
             <div className="sticky top-0 sm:top-16 z-30 bg-white px-4 h-[72px] flex items-center justify-between gap-3">
-                <div className="flex items-center gap-4 min-w-0">
+                <div className="flex items-center gap-1 min-w-0">
                     <button
                         onClick={() => router.back()}
                         className="sm:hidden p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-black shrink-0"
@@ -171,10 +171,10 @@ export default function PhotoDetail() {
                         />
                         <div className="flex flex-col min-w-0">
                             <span className="font-bold text-[15px] text-gray-900 truncate leading-tight group-hover:underline">{photo.author.name}</span>
-                            <span className="flex text-[13px] text-blue-500 font-medium truncate items-center gap-1">
+                            {/* <span className="flex text-[13px] text-blue-500 font-medium truncate items-center gap-1">
                                 Disponible à l'embauche
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-blue-500 mt-0.5 shrink-0"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.4-1.4 3.6 3.6 7.6-7.6L19 8l-9 9z"/></svg>
-                            </span>
+                            </span> */}
                         </div>
                     </Link>
                 </div>

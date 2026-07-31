@@ -2,7 +2,7 @@
 
 import { Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { likeMedia, unlikeMedia } from "../lib/database";
 import { formatCount } from "../lib/media";
@@ -28,6 +28,14 @@ export default function LikeButton({
     const [liked, setLiked] = useState(initialLiked);
     const [count, setCount] = useState(initialCount);
     const [pending, setPending] = useState(false);
+
+    useEffect(() => {
+        setLiked(initialLiked);
+    }, [initialLiked]);
+
+    useEffect(() => {
+        setCount(initialCount);
+    }, [initialCount]);
 
     const toggle = async (event) => {
         event.preventDefault();
