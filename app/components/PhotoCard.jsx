@@ -19,26 +19,21 @@ export default function PhotoCard({ photo, liked = false, hideActions = false, p
             <div className="relative w-full overflow-hidden rounded-2xl bg-gray-100 shadow-sm transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
                 <Link href={mediaUrl(photo)} className="block">
                     {hasDimensions ? (
-                        <Image
-                            src={photo.thumbnailUrl}
-                            alt={photo.alt}
-                            width={photo.width}
-                            height={photo.height}
-                            className="w-full h-auto block object-cover transform transition-transform duration-700 group-hover:scale-105 cursor-zoom-in"
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                            quality={70}
-                            priority={priority}
-                            /* Le placeholder flou vient de la base : il est
-                               généré à l'envoi, donc il correspond vraiment à
-                               l'image et supprime le décalage de mise en page. */
-                            {...(photo.blurDataURL
-                                ? { placeholder: "blur", blurDataURL: photo.blurDataURL }
-                                : {})}
-                        />
+                        <div className="relative w-full" style={{ aspectRatio: `${photo.width} / ${photo.height}` }}>
+                            <Image
+                                src={photo.thumbnailUrl}
+                                alt={photo.alt}
+                                fill
+                                className="object-cover transform transition-transform duration-700 group-hover:scale-105 cursor-zoom-in"
+                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                                quality={85}
+                                priority={priority}
+                                {...(photo.blurDataURL
+                                    ? { placeholder: "blur", blurDataURL: photo.blurDataURL }
+                                    : {})}
+                            />
+                        </div>
                     ) : (
-                        /* Médias importés avant l'enregistrement des
-                           dimensions : on réserve un ratio par défaut pour ne
-                           pas faire sauter la grille pendant le chargement. */
                         <div className="relative w-full aspect-[4/3]">
                             <Image
                                 src={photo.thumbnailUrl}
@@ -46,7 +41,7 @@ export default function PhotoCard({ photo, liked = false, hideActions = false, p
                                 fill
                                 className="object-cover transform transition-transform duration-700 group-hover:scale-105 cursor-zoom-in"
                                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                                quality={70}
+                                quality={85}
                             />
                         </div>
                     )}

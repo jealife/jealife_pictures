@@ -17,12 +17,13 @@ export default function VideoCard({ video, liked = false }) {
         <div className="relative group">
             <div className="relative w-full overflow-hidden rounded-2xl bg-gray-900 shadow-sm transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
                 <Link href={mediaUrl(video)} className="block">
-                    <div className="relative aspect-video">
+                    <div className="relative w-full" style={video.width && video.height ? { aspectRatio: `${video.width} / ${video.height}` } : { aspectRatio: '16/9' }}>
                         <Image
                             src={poster}
                             alt={video.alt}
                             fill
                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            quality={85}
                             className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-90 group-hover:opacity-100"
                             {...(video.blurDataURL
                                 ? { placeholder: "blur", blurDataURL: video.blurDataURL }
