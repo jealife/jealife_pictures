@@ -1,4 +1,5 @@
 import { supabase, SUPABASE_URL, SUPABASE_KEY } from './supabase';
+import { friendlyErrorMessage } from './errors';
 
 // Connexion avec email et mot de passe
 export async function signInWithEmail(email, password) {
@@ -88,26 +89,9 @@ export async function getEnabledOAuthProviders() {
     }
 }
 
-const ERROR_MESSAGES = [
-    [/invalid login credentials/i, 'Adresse e-mail ou mot de passe incorrect.'],
-    [/email not confirmed/i, "Votre adresse e-mail n'a pas encore été confirmée. Vérifiez votre boîte de réception."],
-    [/user already registered|already been registered/i, 'Un compte existe déjà avec cette adresse e-mail.'],
-    [/password should be at least/i, 'Le mot de passe doit contenir au moins 6 caractères.'],
-    [/unable to validate email|invalid email/i, "Cette adresse e-mail n'est pas valide."],
-    [/only request this after|rate limit|too many requests/i, 'Trop de tentatives. Patientez une minute avant de réessayer.'],
-    [/provider is not enabled|unsupported provider/i, "Ce mode de connexion n'est pas encore activé."],
-    [/failed to fetch|network/i, 'Connexion au serveur impossible. Vérifiez votre connexion internet.'],
-];
-
-/**
- * Traduit les messages d'erreur de Supabase, qui arrivent en anglais et dans
- * un vocabulaire technique, en phrases lisibles par la personne en face.
- */
-export function authErrorMessage(error) {
-    const raw = typeof error === 'string' ? error : error?.message || '';
-    const match = ERROR_MESSAGES.find(([pattern]) => pattern.test(raw));
-    return match ? match[1] : 'Une erreur est survenue. Réessayez dans un instant.';
-}
+// Alias historique : la traduction des messages d'erreur vit désormais dans
+// lib/errors.js, réutilisée par tout le site (pas seulement l'authentification).
+export const authErrorMessage = friendlyErrorMessage;
 
 // Déconnexion
 export async function signOut() {
@@ -117,7 +101,7 @@ export async function signOut() {
         return { success: true };
     } catch (error) {
         console.error('Error signing out:', error);
-        return { success: false, error: error.message };
+        return { success: false, error: authErrorMessage(error) };
     }
 }
 
@@ -180,7 +164,7 @@ export async function updatePassword(newPassword) {
         return { success: true };
     } catch (error) {
         console.error('Error updating password:', error);
-        return { success: false, error: error.message };
+        return { success: false, error: authErrorMessage(error) };
     }
 }
 
@@ -214,6 +198,6 @@ export async function upsertProfile(userId, profileData) {
             code: error.code,
             fullError: error
         });
-        return { success: false, error: error.message || "Erreur inconnue lors de la mise à jour du profil" };
+        return { success: false, error: authErrorMessage(error, "Impossible de mettre à jour le profil. Réessayez.") };
     }
 }

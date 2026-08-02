@@ -14,7 +14,21 @@ import { upsertProfile } from "../lib/auth";
 import { syncTopics, getTopics, getCountries, getPlatformStats } from "../lib/database";
 import { processImage, formatFileSize } from "../lib/images";
 import { slugifyClient } from "../lib/media";
+import { friendlyErrorMessage } from "../lib/errors";
 import Confetti from "../components/Confetti";
+import UploadProgress from "../components/UploadProgress";
+
+// Poids relatif de chaque étape dans la barre de progression : l'original
+// (jusqu'à 50 Mo) domine largement le temps d'envoi, la vignette et la
+// version web sont petites, la vérification qualité et la publication sont
+// des appels réseau courts.
+const UPLOAD_STAGES = {
+    quality: { percent: 15, label: "Vérification de la qualité…" },
+    thumbnail: { percent: 25, label: "Envoi de la vignette…" },
+    display: { percent: 45, label: "Envoi de la version web…" },
+    original: { percent: 90, label: "Envoi du fichier original…" },
+    publish: { percent: 100, label: "Publication…" },
+};
 
 const POPULAR_TAGS = [
     "Nature", "Forêt", "Océan", "Portrait", "Culture", "Faune",
@@ -77,6 +91,7 @@ export default function SubmitPage() {
     const [linkCopied, setLinkCopied] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [uploadStage, setUploadStage] = useState("");
+    const [uploadPercent, setUploadPercent] = useState(0);
     const [dragActive, setDragActive] = useState(false);
     const [formError, setFormError] = useState(null);
     const [isGeneratingMetadata, setIsGeneratingMetadata] = useState(false);
@@ -325,7 +340,7 @@ export default function SubmitPage() {
             }
         } catch (error) {
             console.error("Génération de métadonnées impossible :", error);
-            setFormError(error.message);
+            setFormError(friendlyErrorMessage(error, "La génération automatique a échoué. Réessayez ou remplissez les champs manuellement."));
         } finally {
             setIsGeneratingMetadata(false);
         }
@@ -346,6 +361,11 @@ export default function SubmitPage() {
         }
 
         setUploading(true);
+        setUploadPercent(0);
+        const goToStage = (key) => {
+            setUploadStage(UPLOAD_STAGES[key].label);
+            setUploadPercent(UPLOAD_STAGES[key].percent);
+        };
         try {
             // Filet de sécurité : sans profil, la contrainte de clé étrangère
             // sur `media.user_id` fait échouer la publication.
@@ -369,7 +389,7 @@ export default function SubmitPage() {
             // Porte de qualité : résolution réelle, netteté, doublon et
             // modération de contenu. Tout ce qui est rejeté ici n'atteint
             // jamais le stockage ni la table `media`.
-            setUploadStage("Vérification de la qualité…");
+            goToStage("quality");
             const phash = await runQualityCheck(processed);
 
             const folder = `${user.id}/${Date.now()}`;
@@ -383,13 +403,13 @@ export default function SubmitPage() {
                 return supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
             };
 
-            setUploadStage("Envoi de la vignette…");
+            goToStage("thumbnail");
             const thumbnailUrl = await upload(`${folder}/thumb.${extension}`, processed.thumbnail, mimeType);
 
-            setUploadStage("Envoi de la version web…");
+            goToStage("display");
             const displayUrl = await upload(`${folder}/display.${extension}`, processed.display, mimeType);
 
-            setUploadStage("Envoi du fichier original…");
+            goToStage("original");
             const originalExtension = file.name.split(".").pop()?.toLowerCase() || "jpg";
             const originalUrl = await upload(
                 `${folder}/original.${originalExtension}`,
@@ -397,7 +417,7 @@ export default function SubmitPage() {
                 file.type || "image/jpeg"
             );
 
-            setUploadStage("Publication…");
+            goToStage("publish");
             const { data: mediaRecord, error: insertError } = await supabase
                 .from("media")
                 .insert({
@@ -439,7 +459,7 @@ export default function SubmitPage() {
             setStep(3);
         } catch (err) {
             console.error("Submission error:", err);
-            setFormError(err.message || "La publication a échoué. Réessayez.");
+            setFormError(friendlyErrorMessage(err, "La publication a échoué. Réessayez."));
         } finally {
             setUploading(false);
             setUploadStage("");
@@ -479,6 +499,7 @@ export default function SubmitPage() {
 
     return (
         <div className="min-h-screen bg-white">
+            {uploading && <UploadProgress percent={uploadPercent} label={uploadStage} />}
             <div className="max-w-[1200px] mx-auto px-4 py-12 md:py-20">
                 {step === 1 ? (
                     <div className="max-w-3xl mx-auto">

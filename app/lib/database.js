@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { friendlyErrorMessage } from './errors';
 
 // Nombre d'éléments par page. La grille chargeait 50 médias d'un coup et
 // s'arrêtait là ; on pagine désormais partout.
@@ -534,7 +535,7 @@ export async function updateMedia(mediaId, updates) {
         return { success: true, data };
     } catch (error) {
         console.error('Error updating media:', error.message || error);
-        return { success: false, error: error.message };
+        return { success: false, error: friendlyErrorMessage(error, "Impossible de mettre à jour cette photo.") };
     }
 }
 
@@ -545,7 +546,7 @@ export async function deleteMedia(mediaId) {
         return { success: true };
     } catch (error) {
         console.error('Error deleting media:', error.message || error);
-        return { success: false, error: error.message };
+        return { success: false, error: friendlyErrorMessage(error, "Impossible de supprimer cette photo.") };
     }
 }
 
@@ -730,7 +731,7 @@ export async function createCollection(userId, { title, description = '', isPriv
         return { success: true, collection: data };
     } catch (error) {
         console.error('Error creating collection:', error.message || error);
-        return { success: false, error: error.message };
+        return { success: false, error: friendlyErrorMessage(error, "Impossible de créer la collection.") };
     }
 }
 
@@ -775,7 +776,7 @@ export async function reportMedia(mediaId, { reason, details = '', reporterId = 
         return { success: true };
     } catch (error) {
         console.error('Error reporting media:', error.message || error);
-        return { success: false, error: error.message };
+        return { success: false, error: friendlyErrorMessage(error, "L'envoi du signalement a échoué.") };
     }
 }
 
@@ -855,6 +856,6 @@ export async function syncTopics(mediaId, tags) {
         return { success: true };
     } catch (error) {
         console.error('Error syncing topics:', error.message || error);
-        return { success: false, error: error.message };
+        return { success: false, error: friendlyErrorMessage(error, "Impossible d'enregistrer les mots-clés.") };
     }
 }

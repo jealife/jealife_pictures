@@ -6,6 +6,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
 import { upsertProfile } from "../lib/auth";
 import { getUserProfile } from "../lib/database";
+import { friendlyErrorMessage } from "../lib/errors";
 import { Camera, MapPin, Globe, User, Mail, FileText, CheckCircle2, AlertCircle, Loader2, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
@@ -151,7 +152,7 @@ export default function SettingsPage() {
 
         } catch (error) {
             console.error("Update error:", error);
-            setStatus({ type: "error", message: `Erreur: ${error.message || "Une erreur est survenue"}` });
+            setStatus({ type: "error", message: friendlyErrorMessage(error, "La mise à jour a échoué. Réessayez.") });
         } finally {
             setSaving(false);
         }
