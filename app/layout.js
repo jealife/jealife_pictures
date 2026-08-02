@@ -51,7 +51,10 @@ export const metadata = {
       "Images libres de droits, à télécharger gratuitement.",
   },
   robots: { index: true, follow: true },
-  icons: { apple: "/icons/icon-192x192.png" },
+  icons: { 
+    icon: "/favicon.ico",
+    apple: "/icons/icon-192x192.png" 
+  },
 };
 
 // `themeColor` et `viewport` déclarés dans `metadata` sont ignorés depuis
