@@ -16,42 +16,46 @@ export default function PhotoCard({ photo, liked = false, hideActions = false, p
 
     return (
         <div className="relative group mb-6 break-inside-avoid">
-            <div className="relative w-full overflow-hidden rounded-2xl bg-gray-100 shadow-sm transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
-                <Link href={mediaUrl(photo)} className="block">
-                    {hasDimensions ? (
-                        <div className="relative w-full" style={{ aspectRatio: `${photo.width} / ${photo.height}` }}>
+            <div className="relative w-full rounded-2xl bg-gray-100 shadow-sm transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
+                <div className="relative w-full overflow-hidden rounded-2xl">
+                    <Link href={mediaUrl(photo)} className="block">
+                        {hasDimensions ? (
+                            <div className="relative w-full" style={{ aspectRatio: `${photo.width} / ${photo.height}` }}>
+                                <Image
+                                    src={photo.thumbnailUrl}
+                                    alt={photo.alt}
+                                    fill
+                                    className="object-cover transform transition-transform duration-700 group-hover:scale-105 cursor-zoom-in"
+                                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                                    quality={85}
+                                    priority={priority}
+                                    {...(photo.blurDataURL
+                                        ? { placeholder: "blur", blurDataURL: photo.blurDataURL }
+                                        : {})}
+                                />
+                            </div>
+                        ) : (
                             <Image
                                 src={photo.thumbnailUrl}
                                 alt={photo.alt}
-                                fill
-                                className="object-cover transform transition-transform duration-700 group-hover:scale-105 cursor-zoom-in"
-                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                                width={0}
+                                height={0}
+                                sizes="100vw"
+                                className="w-full h-auto block object-cover transform transition-transform duration-700 group-hover:scale-105 cursor-zoom-in"
                                 quality={85}
-                                priority={priority}
-                                {...(photo.blurDataURL
-                                    ? { placeholder: "blur", blurDataURL: photo.blurDataURL }
-                                    : {})}
+                                loading="lazy"
                             />
-                        </div>
-                    ) : (
-                        <Image
-                            src={photo.thumbnailUrl}
-                            alt={photo.alt}
-                            width={0}
-                            height={0}
-                            sizes="100vw"
-                            className="w-full h-auto block object-cover transform transition-transform duration-700 group-hover:scale-105 cursor-zoom-in"
-                            quality={85}
-                            loading="lazy"
-                        />
-                    )}
-                </Link>
+                        )}
+                    </Link>
+                </div>
 
                 {!hideActions && (
                     <>
-                        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/0 to-black/30 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                        <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+                            <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/0 to-black/30 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                        </div>
 
-                        <div className="absolute top-4 right-4 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 translate-y-0 md:translate-y-2 md:group-hover:translate-y-0 z-20">
+                        <div className="absolute top-4 right-4 flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 translate-y-0 md:translate-y-2 md:group-hover:translate-y-0 z-30">
                             <LikeButton
                                 mediaId={photo.id}
                                 initialLiked={liked}
@@ -61,7 +65,7 @@ export default function PhotoCard({ photo, liked = false, hideActions = false, p
                             <SaveToCollectionButton mediaId={photo.id} />
                         </div>
 
-                        <div className="absolute bottom-0 left-0 right-0 p-5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 translate-y-0 md:translate-y-2 md:group-hover:translate-y-0 z-20">
+                        <div className="absolute bottom-0 left-0 right-0 p-5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 translate-y-0 md:translate-y-2 md:group-hover:translate-y-0 z-40">
                             <div className="flex items-center justify-between gap-3">
                                 <Link
                                     href={`/users/${photo.author.username}`}
