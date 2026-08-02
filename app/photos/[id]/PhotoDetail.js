@@ -513,5 +513,3 @@ function DetailSkeleton() {
         </div>
     );
 }
-
-}
