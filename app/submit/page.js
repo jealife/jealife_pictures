@@ -3,6 +3,7 @@
 import {
     UploadCloud, CheckCircle2, MapPin, Camera, Tag, X, Info,
     Image as ImageIcon, Video, Palette, Globe2, Loader2, Accessibility,
+    PartyPopper, Copy, Check, ArrowRight,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -10,7 +11,7 @@ import ExifReader from "exifreader";
 import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
 import { upsertProfile } from "../lib/auth";
-import { syncTopics, getTopics, getCountries } from "../lib/database";
+import { syncTopics, getTopics, getCountries, getPlatformStats } from "../lib/database";
 import { processImage, formatFileSize } from "../lib/images";
 import { slugifyClient } from "../lib/media";
 
@@ -67,9 +68,12 @@ async function runQualityCheck(processed) {
 
 export default function SubmitPage() {
     const router = useRouter();
-    const { user, loading } = useAuth();
+    const { user, profile, loading } = useAuth();
 
     const [step, setStep] = useState(1);
+    const [publishedMedia, setPublishedMedia] = useState(null);
+    const [platformStats, setPlatformStats] = useState(null);
+    const [linkCopied, setLinkCopied] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [uploadStage, setUploadStage] = useState("");
     const [dragActive, setDragActive] = useState(false);
@@ -259,6 +263,32 @@ export default function SubmitPage() {
         setPreviewUrl("");
     };
 
+    // Repart de zéro après une publication réussie : contrairement à
+    // resetFile (juste changer de fichier en gardant les infos déjà
+    // saisies), ici on efface tout puisqu'il s'agit d'un nouvel envoi.
+    const resetForm = () => {
+        resetFile();
+        setSelectedType("photo");
+        setTitle("");
+        setAltText("");
+        setDescription("");
+        setLocation("");
+        setCity("");
+        setCountryCode("GA");
+        setCamera("");
+        setTagsInput("");
+        setTags([]);
+        setPublishedMedia(null);
+        setLinkCopied(false);
+    };
+
+    const copyPublishedLink = () => {
+        if (!publishedMedia) return;
+        navigator.clipboard.writeText(`${window.location.origin}/photos/${publishedMedia.id}-${publishedMedia.slug}`);
+        setLinkCopied(true);
+        setTimeout(() => setLinkCopied(false), 2000);
+    };
+
     const generateMetadataWithAI = async () => {
         if (!processed || !processed.thumbnail) return;
         setIsGeneratingMetadata(true);
@@ -403,7 +433,9 @@ export default function SubmitPage() {
             if (mediaRecord) await syncTopics(mediaRecord.id, tags);
 
             const slug = slugifyClient(title.trim() || altText.trim() || "photo");
-            router.push(`/photos/${mediaRecord.id}-${slug}`);
+            setPublishedMedia({ id: mediaRecord.id, slug });
+            getPlatformStats().then(setPlatformStats);
+            setStep(3);
         } catch (err) {
             console.error("Submission error:", err);
             setFormError(err.message || "La publication a échoué. Réessayez.");
@@ -503,6 +535,77 @@ export default function SubmitPage() {
                             <span className="flex items-center gap-2">
                                 <CheckCircle2 className="w-4 h-4 text-green-500" /> Retrait possible à tout moment
                             </span>
+                        </div>
+                    </div>
+                ) : step === 3 ? (
+                    <div className="max-w-2xl mx-auto text-center">
+                        <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <PartyPopper className="w-10 h-10 text-green-600" />
+                        </div>
+
+                        <h1 className="text-4xl font-extrabold text-gray-900 mb-4">
+                            Merci pour votre contribution
+                        </h1>
+
+                        <p className="text-lg text-gray-500 mb-2">
+                            Votre image a passé nos contrôles de qualité automatiques et est
+                            déjà visible sur JEaLiFe Stock.
+                        </p>
+                        {platformStats && (
+                            <p className="text-lg text-gray-500 mb-10">
+                                Grâce à vous, la plateforme compte désormais{" "}
+                                <strong className="text-gray-900">
+                                    {(
+                                        (platformStats.total_photos || 0) +
+                                        (platformStats.total_illustrations || 0) +
+                                        (platformStats.total_videos || 0)
+                                    ).toLocaleString("fr-FR")}
+                                </strong>{" "}
+                                médias publiés.
+                            </p>
+                        )}
+
+                        {previewUrl && (
+                            <div className="rounded-2xl overflow-hidden shadow-xl bg-gray-100 ring-1 ring-black/5 mb-10 max-w-sm mx-auto">
+                                <img
+                                    src={previewUrl}
+                                    alt="Aperçu de l'image publiée"
+                                    className="w-full h-auto object-cover max-h-80"
+                                />
+                            </div>
+                        )}
+
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                            <button
+                                type="button"
+                                onClick={() => publishedMedia && router.push(`/photos/${publishedMedia.id}-${publishedMedia.slug}`)}
+                                className="px-6 py-4 bg-black text-white font-bold rounded-2xl hover:bg-gray-800 transition-all shadow-xl hover:shadow-2xl active:scale-95 flex items-center justify-center gap-2"
+                            >
+                                Voir la photo publiée <ArrowRight className="w-4 h-4" />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={resetForm}
+                                className="px-6 py-4 border border-gray-200 text-gray-600 font-bold rounded-2xl hover:bg-gray-50 transition-all active:scale-95"
+                            >
+                                Publier une autre image
+                            </button>
+                        </div>
+
+                        <div className="mt-8 flex items-center justify-center gap-6 text-sm font-medium text-gray-500">
+                            {profile?.username && (
+                                <a href={`/users/${profile.username}`} className="hover:text-black transition-colors">
+                                    Voir mon profil
+                                </a>
+                            )}
+                            <button
+                                type="button"
+                                onClick={copyPublishedLink}
+                                className="flex items-center gap-2 hover:text-black transition-colors"
+                            >
+                                {linkCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                                {linkCopied ? "Lien copié" : "Copier le lien"}
+                            </button>
                         </div>
                     </div>
                 ) : (
