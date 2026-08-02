@@ -1,21 +1,61 @@
 import { ImageResponse } from "next/og";
 import { SITE_URL } from "./lib/site";
+import { supabase } from "./lib/supabase";
 
 export const alt = "JEaLiFe Stock — photos & vidéos libres de droits et gratuites";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
+// Regénérée toutes les heures → nouvelle photo de fond à chaque fois
+export const revalidate = 3600;
+
 /**
  * Image OpenGraph de la page d'accueil — style inspiré d'Unsplash.
+ *
+ * Fond = une photo aléatoire parmi les 20 plus vues du site.
  * Logo en haut à gauche + barre de recherche centrée.
  *
  * Notes Satori :
- * - `inset` n'est pas supporté → utiliser top/right/bottom/left explicitement
- * - Le fond doit être sur l'élément racine, pas sur un enfant absolu
- * - Le logo est chargé via l'URL publique du site (import.meta.url est non fiable en serverless)
+ * - `inset` n'est pas supporté → top/right/bottom/left explicites
+ * - Le fond doit être sur l'élément racine via backgroundImage
+ * - Le logo est chargé via l'URL publique (import.meta.url non fiable en serverless)
  */
 export default async function OpenGraphImage() {
-    // Logo blanc : chargé depuis l'URL publique du site
+    // ── Photo aléatoire parmi les 20 plus vues ──
+    let bgStyle = {
+        background: "linear-gradient(135deg, #0b3d2e 0%, #0f4423 25%, #0f172a 65%, #000 100%)",
+    };
+
+    try {
+        const { data: photos } = await supabase
+            .from("media")
+            .select("url, thumbnail_url")
+            .eq("status", "published")
+            .eq("type", "photo")
+            .order("views_count", { ascending: false })
+            .limit(20);
+
+        if (photos?.length) {
+            const pick = photos[Math.floor(Math.random() * photos.length)];
+            const photoUrl = pick.thumbnail_url || pick.url;
+
+            const res = await fetch(photoUrl);
+            if (res.ok) {
+                const buf = await res.arrayBuffer();
+                const b64 = Buffer.from(buf).toString("base64");
+                const mime = res.headers.get("content-type") || "image/jpeg";
+                bgStyle = {
+                    backgroundImage: `url("data:${mime};base64,${b64}")`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                };
+            }
+        }
+    } catch {
+        // Fallback dégradé de marque
+    }
+
+    // ── Logo blanc depuis l'URL publique du site ──
     let logoData = null;
     try {
         const logoRes = await fetch(`${SITE_URL}/JEaLiFe-Stock-Logo-transparent-blanc.png`);
@@ -35,12 +75,24 @@ export default async function OpenGraphImage() {
                     height: "100%",
                     display: "flex",
                     flexDirection: "column",
-                    // ── Fond dégradé directement sur la racine ──
-                    background: "linear-gradient(135deg, #0b3d2e 0%, #0f4423 25%, #0f172a 65%, #000 100%)",
                     position: "relative",
                     fontFamily: "sans-serif",
+                    // ── Fond : photo aléatoire ou dégradé de marque ──
+                    ...bgStyle,
                 }}
             >
+                {/* ── Overlay sombre pour la lisibilité ── */}
+                <div
+                    style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.18) 45%, rgba(0,0,0,0.60) 100%)",
+                    }}
+                />
+
                 {/* ── Logo en haut à gauche ── */}
                 <div
                     style={{
@@ -60,7 +112,7 @@ export default async function OpenGraphImage() {
                     )}
                 </div>
 
-                {/* ── Contenu centré : barre + sous-titre ── */}
+                {/* ── Barre de recherche + sous-titre, centrés ── */}
                 <div
                     style={{
                         position: "absolute",
@@ -119,7 +171,7 @@ export default async function OpenGraphImage() {
                     <div
                         style={{
                             marginTop: 24,
-                            color: "rgba(255,255,255,0.75)",
+                            color: "rgba(255,255,255,0.85)",
                             fontSize: 22,
                             fontWeight: 400,
                             display: "flex",
