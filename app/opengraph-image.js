@@ -6,8 +6,10 @@ export const alt = "JEaLiFe Stock — photos & vidéos libres de droits et gratu
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-// Regénérée toutes les heures → nouvelle photo de fond à chaque fois
-export const revalidate = 3600;
+// Force-dynamic : jamais pré-rendu au build (Supabase n'est pas disponible
+// pendant le SSG). L'image est générée à la demande, le CDN Vercel la met
+// en cache automatiquement à l'edge.
+export const dynamic = "force-dynamic";
 
 /**
  * Image OpenGraph de la page d'accueil — style inspiré d'Unsplash.
