@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { getMediaById } from "../../lib/database";
 import { parseMediaId } from "../../lib/media";
+import { SITE_URL } from "../../lib/site";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -10,6 +11,11 @@ export const contentType = "image/png";
  *
  * La photo elle-même sert de fond, avec le titre dans une barre de recherche
  * stylisée (style Unsplash). Pour les vidéos, on utilise la miniature.
+ *
+ * Corrections Satori :
+ * - Fond via `backgroundImage` + `backgroundSize/Position` sur l'élément racine
+ * - `inset` remplacé par top/right/bottom/left explicites
+ * - Logo chargé via URL publique du site
  */
 export default async function OpenGraphImage({ params }) {
     const { id } = await params;
@@ -22,10 +28,13 @@ export default async function OpenGraphImage({ params }) {
     const author =
         photo?.profiles?.full_name || photo?.profiles?.username || "";
 
-    // URL de l'image de fond (miniature pour les vidéos, url sinon)
+    // Fond : la photo elle-même (miniature pour les vidéos)
     const bgUrl = photo?.thumbnail_url || photo?.url || null;
 
-    let bgImageData = null;
+    let bgStyle = {
+        background: "linear-gradient(135deg, #0b3d2e 0%, #0f4423 25%, #0f172a 65%, #000 100%)",
+    };
+
     if (bgUrl) {
         try {
             const res = await fetch(bgUrl);
@@ -33,19 +42,21 @@ export default async function OpenGraphImage({ params }) {
                 const buf = await res.arrayBuffer();
                 const b64 = Buffer.from(buf).toString("base64");
                 const mime = res.headers.get("content-type") || "image/jpeg";
-                bgImageData = `data:${mime};base64,${b64}`;
+                bgStyle = {
+                    backgroundImage: `url("data:${mime};base64,${b64}")`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                };
             }
         } catch {
-            // Silencieux
+            // Fallback dégradé
         }
     }
 
-    // Logo blanc
+    // Logo blanc depuis l'URL publique du site
     let logoData = null;
     try {
-        const logoRes = await fetch(
-            new URL("../../../public/JEaLiFe-Stock-Logo-transparent-blanc.png", import.meta.url)
-        );
+        const logoRes = await fetch(`${SITE_URL}/JEaLiFe-Stock-Logo-transparent-blanc.png`);
         if (logoRes.ok) {
             const buf = await logoRes.arrayBuffer();
             logoData = `data:image/png;base64,${Buffer.from(buf).toString("base64")}`;
@@ -61,46 +72,26 @@ export default async function OpenGraphImage({ params }) {
                     width: "100%",
                     height: "100%",
                     display: "flex",
+                    flexDirection: "column",
                     position: "relative",
-                    overflow: "hidden",
                     fontFamily: "sans-serif",
+                    // ── Fond : photo ou dégradé de marque ──
+                    ...bgStyle,
                 }}
             >
-                {/* ── Fond ── */}
-                {bgImageData ? (
-                    <img
-                        src={bgImageData}
-                        style={{
-                            position: "absolute",
-                            inset: 0,
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                            objectPosition: "center",
-                        }}
-                    />
-                ) : (
-                    <div
-                        style={{
-                            position: "absolute",
-                            inset: 0,
-                            background:
-                                "linear-gradient(135deg, #0b3d2e 0%, #0f172a 60%, #000 100%)",
-                        }}
-                    />
-                )}
-
-                {/* ── Overlay ── */}
+                {/* ── Overlay sombre ── */}
                 <div
                     style={{
                         position: "absolute",
-                        inset: 0,
-                        background:
-                            "linear-gradient(to bottom, rgba(0,0,0,0.30) 0%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.55) 100%)",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: "linear-gradient(to bottom, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.12) 45%, rgba(0,0,0,0.55) 100%)",
                     }}
                 />
 
-                {/* ── Logo ── */}
+                {/* ── Logo en haut à gauche ── */}
                 <div
                     style={{
                         position: "absolute",
@@ -119,19 +110,22 @@ export default async function OpenGraphImage({ params }) {
                     )}
                 </div>
 
-                {/* ── Barre de recherche centrale ── */}
+                {/* ── Barre de recherche + auteur, centrés ── */}
                 <div
                     style={{
                         position: "absolute",
-                        inset: 0,
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
                         padding: "0 80px",
-                        gap: 0,
                     }}
                 >
+                    {/* Barre */}
                     <div
                         style={{
                             display: "flex",
@@ -159,7 +153,6 @@ export default async function OpenGraphImage({ params }) {
                             <circle cx="11" cy="11" r="8" />
                             <line x1="21" y1="21" x2="16.65" y2="16.65" />
                         </svg>
-
                         <span
                             style={{
                                 fontSize: 38,
@@ -176,7 +169,7 @@ export default async function OpenGraphImage({ params }) {
                         </span>
                     </div>
 
-                    {/* Auteur en dessous de la barre, si disponible */}
+                    {/* Auteur */}
                     {author && (
                         <div
                             style={{
