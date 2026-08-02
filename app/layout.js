@@ -64,9 +64,36 @@ export const viewport = {
 };
 
 export default function RootLayout({ children }) {
+  // Données structurées WebSite : indiquent à Google le nom exact du site
+  // ("JEaLiFe Stock" et non "JEaLiFe Agency" hérité du domaine parent).
+  // Le SearchAction active la zone de recherche dans les résultats Google
+  // (sitelinks search box).
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: SITE_NAME,
+    alternateName: "JEaLiFe Stock",
+    url: SITE_URL,
+    description:
+      "Banque d'images libres de droits et gratuites. Une sélection soignée, où l'on trouve de belles images du continent.",
+    inLanguage: "fr",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${SITE_URL}/?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
+
   return (
     <html lang="fr">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
         <AuthProvider>
           <ClientLayout>{children}</ClientLayout>
         </AuthProvider>
@@ -77,3 +104,4 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
+
