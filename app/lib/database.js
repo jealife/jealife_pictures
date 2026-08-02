@@ -282,15 +282,15 @@ export async function getTopics({ featuredOnly = false, limit = 60 } = {}) {
                 .from('media_topics')
                 .select('topic_id, media ( thumbnail_url, url )')
                 .in('topic_id', ids)
-                .not('media.thumbnail_url', 'is', null)
-                .limit(needsCover.length * 3); // quelques candidats par topic
+                .limit(needsCover.length * 5);
 
             if (links) {
-                // Indexe la première photo trouvée par topic_id
+                // Indexe la première photo valide trouvée par topic_id
                 const coverMap = {};
                 for (const link of links) {
                     if (link.media && !coverMap[link.topic_id]) {
-                        coverMap[link.topic_id] = link.media.thumbnail_url || link.media.url;
+                        const imgUrl = link.media.thumbnail_url || link.media.url;
+                        if (imgUrl) coverMap[link.topic_id] = imgUrl;
                     }
                 }
                 // Injecte dans les topics
@@ -308,6 +308,8 @@ export async function getTopics({ featuredOnly = false, limit = 60 } = {}) {
         return [];
     }
 }
+
+
 
 
 export async function getTopicBySlug(slug) {

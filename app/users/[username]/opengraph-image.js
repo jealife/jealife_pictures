@@ -1,29 +1,67 @@
 import { ImageResponse } from "next/og";
+import { getUserProfile } from "../../lib/database";
+import { supabase } from "../../lib/supabase";
 
-export const alt = "JEaLiFe Stock — photos & vidéos libres de droits et gratuites";
+export const alt = "Profil photographe — JEaLiFe Stock";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 /**
- * Image OpenGraph de la page d'accueil — style inspiré d'Unsplash.
- *
- * Logo en haut à gauche + barre de recherche centrée sur un dégradé
- * riche aux couleurs de la marque. Chaque partage sur WhatsApp,
- * Facebook ou X affiche désormais une image propre et identifiable.
+ * Récupère la photo la plus vue (views_count) d'un utilisateur.
+ * On trie côté Supabase pour éviter de rapatrier toute la galerie.
  */
-export default async function OpenGraphImage() {
-    // Logo blanc chargé depuis le dossier public
+async function getMostViewedPhoto(userId) {
+    const { data } = await supabase
+        .from("media")
+        .select("url, thumbnail_url")
+        .eq("user_id", userId)
+        .eq("status", "published")
+        .eq("type", "photo")
+        .order("views_count", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+    return data;
+}
+
+export default async function OpenGraphImage({ params }) {
+    const { username } = await params;
+
+    const profile = await getUserProfile(username);
+    const displayName = profile?.full_name || profile?.username || username;
+
+    // Photo la plus vue comme fond ; sinon dégradé de marque
+    let bgImageData = null;
+    if (profile?.id) {
+        const photo = await getMostViewedPhoto(profile.id);
+        const photoUrl = photo?.thumbnail_url || photo?.url;
+        if (photoUrl) {
+            try {
+                const res = await fetch(photoUrl);
+                if (res.ok) {
+                    const buf = await res.arrayBuffer();
+                    const b64 = Buffer.from(buf).toString("base64");
+                    const mime = res.headers.get("content-type") || "image/jpeg";
+                    bgImageData = `data:${mime};base64,${b64}`;
+                }
+            } catch {
+                // Silencieux : on tombe sur le dégradé
+            }
+        }
+    }
+
+    // Logo blanc en base64 (chargé une seule fois au build/runtime)
     let logoData = null;
     try {
         const logoRes = await fetch(
-            new URL("../../public/JEaLiFe-Stock-Logo-transparent-blanc.png", import.meta.url)
+            new URL("../../../public/JEaLiFe-Stock-Logo-transparent-blanc.png", import.meta.url)
         );
         if (logoRes.ok) {
             const buf = await logoRes.arrayBuffer();
             logoData = `data:image/png;base64,${Buffer.from(buf).toString("base64")}`;
         }
     } catch {
-        // Silencieux : on affiche le texte à la place
+        // pas de logo : on affiche le texte à la place
     }
 
     return new ImageResponse(
@@ -38,37 +76,37 @@ export default async function OpenGraphImage() {
                     fontFamily: "sans-serif",
                 }}
             >
-                {/* ── Fond dégradé de marque ── */}
+                {/* ── Fond : photo ou dégradé de marque ── */}
+                {bgImageData ? (
+                    <img
+                        src={bgImageData}
+                        style={{
+                            position: "absolute",
+                            inset: 0,
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            objectPosition: "center",
+                        }}
+                    />
+                ) : (
+                    <div
+                        style={{
+                            position: "absolute",
+                            inset: 0,
+                            background:
+                                "linear-gradient(135deg, #0b3d2e 0%, #0f172a 60%, #000 100%)",
+                        }}
+                    />
+                )}
+
+                {/* ── Overlay sombre pour lisibilité ── */}
                 <div
                     style={{
                         position: "absolute",
                         inset: 0,
                         background:
-                            "linear-gradient(135deg, #0b3d2e 0%, #0f4423 25%, #0f172a 65%, #000 100%)",
-                    }}
-                />
-
-                {/* ── Texture subtile (cercles lumineux) ── */}
-                <div
-                    style={{
-                        position: "absolute",
-                        top: -180,
-                        right: -180,
-                        width: 600,
-                        height: 600,
-                        borderRadius: "50%",
-                        background: "radial-gradient(circle, rgba(110,231,183,0.12) 0%, transparent 70%)",
-                    }}
-                />
-                <div
-                    style={{
-                        position: "absolute",
-                        bottom: -200,
-                        left: -100,
-                        width: 500,
-                        height: 500,
-                        borderRadius: "50%",
-                        background: "radial-gradient(circle, rgba(16,185,129,0.10) 0%, transparent 70%)",
+                            "linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.20) 40%, rgba(0,0,0,0.50) 100%)",
                     }}
                 />
 
@@ -104,11 +142,9 @@ export default async function OpenGraphImage() {
                         position: "absolute",
                         inset: 0,
                         display: "flex",
-                        flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
                         padding: "0 80px",
-                        gap: 0,
                     }}
                 >
                     <div
@@ -119,12 +155,13 @@ export default async function OpenGraphImage() {
                             background: "rgba(255,255,255,0.93)",
                             borderRadius: 999,
                             padding: "22px 44px",
-                            boxShadow: "0 8px 40px rgba(0,0,0,0.40)",
+                            backdropFilter: "blur(12px)",
+                            boxShadow: "0 8px 40px rgba(0,0,0,0.25)",
                             maxWidth: 840,
                             width: "100%",
                         }}
                     >
-                        {/* Loupe */}
+                        {/* Icône loupe */}
                         <svg
                             width="36"
                             height="36"
@@ -141,27 +178,18 @@ export default async function OpenGraphImage() {
 
                         <span
                             style={{
-                                fontSize: 40,
+                                fontSize: 42,
                                 fontWeight: 500,
                                 color: "#111",
                                 letterSpacing: "-0.5px",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                                flex: 1,
                             }}
                         >
-                            Photos &amp; Vidéos libres de droits
+                            {displayName}
                         </span>
-                    </div>
-
-                    {/* Sous-titre */}
-                    <div
-                        style={{
-                            marginTop: 24,
-                            color: "rgba(255,255,255,0.75)",
-                            fontSize: 22,
-                            fontWeight: 400,
-                            display: "flex",
-                        }}
-                    >
-                        Une sélection soignée · De belles images du continent
                     </div>
                 </div>
             </div>
