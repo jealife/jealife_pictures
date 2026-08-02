@@ -14,6 +14,7 @@ import { upsertProfile } from "../lib/auth";
 import { syncTopics, getTopics, getCountries, getPlatformStats } from "../lib/database";
 import { processImage, formatFileSize } from "../lib/images";
 import { slugifyClient } from "../lib/media";
+import Confetti from "../components/Confetti";
 
 const POPULAR_TAGS = [
     "Nature", "Forêt", "Océan", "Portrait", "Culture", "Faune",
@@ -539,6 +540,7 @@ export default function SubmitPage() {
                     </div>
                 ) : step === 3 ? (
                     <div className="max-w-2xl mx-auto text-center">
+                        <Confetti />
                         <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
                             <PartyPopper className="w-10 h-10 text-green-600" />
                         </div>
