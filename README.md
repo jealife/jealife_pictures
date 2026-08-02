@@ -11,13 +11,16 @@ Next.js 16 (App Router) · Supabase (Postgres, Auth, Storage) · Tailwind CSS 4.
 
 ### 1. Base de données
 
-Créez un projet Supabase, puis appliquez les deux migrations **dans l'ordre**,
+Créez un projet Supabase, puis appliquez les migrations **dans l'ordre**,
 depuis le SQL Editor du tableau de bord :
 
 1. `supabase/migrations/0001_init.sql` — tables, politiques RLS, fonctions,
    recherche plein texte et bucket de stockage.
 2. `supabase/migrations/0002_seed.sql` — les pays africains et les thèmes de
    départ.
+3. `supabase/migrations/0003_upload_quality.sql` — empreinte perceptuelle
+   (`phash`) utilisée par le contrôle qualité automatique à l'envoi
+   (`/api/moderate-upload`).
 
 Le bucket `media` et ses politiques sont créés par la migration : il n'y a rien
 à configurer à la main dans l'interface Storage.

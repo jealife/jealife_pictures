@@ -25,6 +25,46 @@ const MEDIA_TYPES = [
     { key: "video", label: "Vidéo", icon: Video },
 ];
 
+function blobToBase64(blob) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result.split(",")[1]);
+        reader.readAsDataURL(blob);
+    });
+}
+
+/**
+ * Porte de qualité automatique, appelée juste avant l'envoi définitif :
+ * résolution réelle, netteté, doublon et modération de contenu, calculés
+ * côté serveur (voir /api/moderate-upload). Rien de rejeté ici n'atteint le
+ * stockage ni la table `media`.
+ */
+async function runQualityCheck(processed) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw new Error("Session expirée, reconnectez-vous.");
+
+    const base64Image = await blobToBase64(processed.display);
+
+    const res = await fetch("/api/moderate-upload", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+            image: base64Image,
+            mimeType: processed.mimeType,
+            originalWidth: processed.width,
+            originalHeight: processed.height,
+        }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Cette image n'a pas passé le contrôle qualité.");
+
+    return data.phash;
+}
+
 export default function SubmitPage() {
     const router = useRouter();
     const { user, loading } = useAuth();
@@ -225,12 +265,7 @@ export default function SubmitPage() {
         setFormError(null);
 
         try {
-            const reader = new FileReader();
-            const base64Promise = new Promise((resolve) => {
-                reader.onloadend = () => resolve(reader.result.split(',')[1]);
-            });
-            reader.readAsDataURL(processed.thumbnail);
-            const base64Image = await base64Promise;
+            const base64Image = await blobToBase64(processed.thumbnail);
 
             const res = await fetch("/api/generate-metadata", {
                 method: "POST",
@@ -300,6 +335,12 @@ export default function SubmitPage() {
                 if (!success) throw new Error(profileError);
             }
 
+            // Porte de qualité : résolution réelle, netteté, doublon et
+            // modération de contenu. Tout ce qui est rejeté ici n'atteint
+            // jamais le stockage ni la table `media`.
+            setUploadStage("Vérification de la qualité…");
+            const phash = await runQualityCheck(processed);
+
             const folder = `${user.id}/${Date.now()}`;
             const { extension, mimeType } = processed;
 
@@ -335,6 +376,7 @@ export default function SubmitPage() {
                     original_url: originalUrl,
                     thumbnail_url: thumbnailUrl,
                     blur_data_url: processed.blurDataURL,
+                    phash,
                     title: title.trim() || null,
                     alt_text: altText.trim(),
                     description: description.trim() || null,
