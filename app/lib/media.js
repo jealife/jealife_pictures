@@ -208,9 +208,14 @@ export async function downloadMedia(media, sizeKey = "original") {
         source = option.key === "original" ? media.originalUrl || media.url : media.url;
     }
 
-    const blob = option.width
-        ? await resizeRemoteImage(source, option.width)
-        : await (await fetch(source)).blob();
+    let blob;
+    if (isVideo && option.key !== "poster") {
+        // On ne touche pas au format des vidéos téléchargées
+        blob = await (await fetch(source)).blob();
+    } else {
+        // Pour toutes les images (ou le poster vidéo), on force la conversion en JPEG
+        blob = await resizeRemoteImage(source, option.width, true);
+    }
 
     const extension = extensionFor(blob, source);
     const filename = `jealife-${slugifyForFilename(media.title || media.author?.username)}-${option.key}.${extension}`;

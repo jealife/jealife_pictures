@@ -209,26 +209,33 @@ export async function processImage(file) {
  * réellement des fichiers différents. Auparavant, les trois options
  * téléchargeaient exactement le même fichier original.
  */
-export async function resizeRemoteImage(url, maxWidth) {
+export async function resizeRemoteImage(url, maxWidth, forceJpeg = false) {
     const response = await fetch(url);
     if (!response.ok) throw new Error("Téléchargement du fichier impossible");
 
     const blob = await response.blob();
-    if (!maxWidth) return blob;
+    
+    // Si pas de redimensionnement demandé et (soit on ne force pas le JPEG, soit c'est déjà un JPEG)
+    if (!maxWidth && (!forceJpeg || blob.type === "image/jpeg")) return blob;
 
     const { source: bitmap } = await loadBitmap(blob);
     const width = bitmap.width || bitmap.naturalWidth;
     const height = bitmap.height || bitmap.naturalHeight;
 
-    if (!width || width <= maxWidth) {
-        bitmap.close?.();
-        return blob;
+    if (!width || (maxWidth && width <= maxWidth)) {
+        // L'image est plus petite que maxWidth, pas besoin de redimensionner.
+        // Mais il faut peut-être quand même la convertir en JPEG si demandé.
+        if (!forceJpeg || blob.type === "image/jpeg") {
+            bitmap.close?.();
+            return blob;
+        }
     }
 
-    const size = targetSize(width, height, Math.max(maxWidth, Math.round((maxWidth * height) / width)));
+    const targetW = maxWidth ? Math.min(width, maxWidth) : width;
+    const size = targetSize(width, height, Math.max(targetW, Math.round((targetW * height) / width)));
     const scaled = {
-        width: maxWidth,
-        height: Math.round((height * maxWidth) / width),
+        width: targetW,
+        height: Math.round((height * targetW) / width),
     };
 
     const canvas = drawResized(bitmap, scaled.width || size.width, scaled.height || size.height);
