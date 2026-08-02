@@ -27,7 +27,6 @@ export default function ClientLayout({ children }) {
         "/help",
         "/licence",
         "/settings",
-        "/submit"
     ];
     const shouldShowFooter = !shouldHideLayout && footerRoutes.some(route => pathname.startsWith(route));
 
