@@ -37,6 +37,7 @@ export default function DownloadButton({ media, variant = "compact", onDownloade
         setError(null);
         try {
             await downloadMedia(media, sizeKey);
+            window.dispatchEvent(new CustomEvent("show-thanks-modal", { detail: media }));
             onDownloaded?.();
         } catch (err) {
             console.error("Download failed:", err);

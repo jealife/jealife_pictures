@@ -4,9 +4,11 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import ThanksModal from "./ThanksModal";
 
 export default function ClientLayout({ children }) {
     const pathname = usePathname();
+    const [thanksPhoto, setThanksPhoto] = useState(null);
 
     const hiddenRoutes = [
         "/login",
@@ -33,6 +35,14 @@ export default function ClientLayout({ children }) {
         window.scrollTo(0, 0);
     }, [pathname]);
 
+    useEffect(() => {
+        const handleShowThanks = (e) => {
+            setThanksPhoto(e.detail);
+        };
+        window.addEventListener("show-thanks-modal", handleShowThanks);
+        return () => window.removeEventListener("show-thanks-modal", handleShowThanks);
+    }, []);
+
     return (
         <>
             {!shouldHideLayout && <Navbar />}
@@ -42,6 +52,12 @@ export default function ClientLayout({ children }) {
                 </div>
                 {shouldShowFooter && <Footer />}
             </div>
+            {thanksPhoto && (
+                <ThanksModal
+                    photo={thanksPhoto}
+                    onClose={() => setThanksPhoto(null)}
+                />
+            )}
         </>
     );
 }
