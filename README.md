@@ -56,6 +56,11 @@ cp .env.local.example .env.local
 Renseignez `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 (Project Settings → API). Les mêmes valeurs doivent être déclarées sur Vercel.
 
+Renseignez aussi les variables `CLOUDFLARE_R2_*` (bucket R2 → Settings pour
+l'Account ID et l'URL publique, Manage API tokens pour les clés) : c'est là
+qu'atterrissent les fichiers envoyés, Supabase ne sert plus que la base de
+données et l'authentification.
+
 ### 3. Connexion Google (optionnel)
 
 Suivez `GOOGLE_OAUTH_SETUP.md`. Dans Supabase → Authentication → URL
@@ -106,6 +111,12 @@ envoyait auparavant le fichier brut, et c'est la vignette — non l'original de
 plusieurs mégaoctets — qui est servie en page d'accueil. Sur une connexion
 mobile facturée au mégaoctet, l'écart est décisif.
 
+Les trois dérivés partent directement du navigateur vers Cloudflare R2 (`app/lib/r2.js`,
+`app/api/r2-upload-url`) via une URL signée à usage unique : Supabase ne
+reçoit jamais le fichier lui-même, seulement l'URL R2 finale à enregistrer en
+base. Les fichiers déjà publiés avant ce changement se reprennent avec
+`scripts/migrate-to-r2.mjs` (voir l'en-tête du script).
+
 ### Recherche
 
 `media.search_vector` est un `tsvector` français **désaccentué** (configuration
@@ -126,6 +137,7 @@ app/
     media.js        forme unique d'un média côté interface + téléchargement
     images.js       préparation des images dans le navigateur
     auth.js         session, OAuth, profils
+    r2.js           client S3/R2, URLs signées pour l'envoi de fichiers
   components/       grille, cartes, filtres, boutons d'action
   admin/            file de modération, réglages, utilisateurs, thèmes
   themes/           pages par thème
@@ -135,6 +147,8 @@ app/
 supabase/
   migrations/       le schéma de référence
   legacy/           anciens fichiers SQL, archivés
+scripts/
+  migrate-to-r2.mjs migration ponctuelle des fichiers déjà sur Supabase Storage
 ```
 
 ## Commandes

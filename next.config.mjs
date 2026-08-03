@@ -20,6 +20,10 @@ const nextConfig = {
       // modifier ce fichier — et de casser toutes les images en production —
       // le jour où le projet change de référence.
       { protocol: "https", hostname: "*.supabase.co" },
+      // Stockage Cloudflare R2 (migration du stockage média, voir app/lib/r2.js).
+      // Le sous-domaine public par défaut est `pub-<id>.r2.dev` ; si un
+      // domaine personnalisé est connecté au bucket, ajoutez-le ici aussi.
+      { protocol: "https", hostname: "*.r2.dev" },
       // Images de vitrine du site, hébergées sur le compte Unsplash de
       // l'auteur (voir app/lib/auth-images.js).
       { protocol: "https", hostname: "images.unsplash.com" },

@@ -397,12 +397,33 @@ export default function SubmitPage() {
             const folder = `${user.id}/${Date.now()}`;
             const { extension, mimeType } = processed;
 
+            // Envoi direct navigateur → Cloudflare R2 via une URL signée à
+            // usage unique : faire transiter un original de plusieurs
+            // dizaines de Mo par une fonction serverless Vercel se heurterait
+            // à sa limite de taille de requête.
             const upload = async (path, body, contentType) => {
-                const { error } = await supabase.storage
-                    .from("media")
-                    .upload(path, body, { contentType, cacheControl: "31536000", upsert: false });
-                if (error) throw error;
-                return supabase.storage.from("media").getPublicUrl(path).data.publicUrl;
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) throw new Error("Session expirée, reconnectez-vous.");
+
+                const res = await fetch("/api/r2-upload-url", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${session.access_token}`,
+                    },
+                    body: JSON.stringify({ path, contentType }),
+                });
+                const { uploadUrl, publicUrl, error } = await res.json();
+                if (!res.ok) throw new Error(error || "Impossible de préparer l'envoi.");
+
+                const putRes = await fetch(uploadUrl, {
+                    method: "PUT",
+                    headers: { "Content-Type": contentType },
+                    body,
+                });
+                if (!putRes.ok) throw new Error("L'envoi du fichier a échoué.");
+
+                return publicUrl;
             };
 
             goToStage("thumbnail");
