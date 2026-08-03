@@ -135,13 +135,13 @@ export default function PhotoDetail() {
             {/* Sticky Bar */}
             <div className="sticky top-0 sm:top-16 z-30 bg-white px-4 h-[72px] flex items-center justify-between gap-3">
                 <div className="flex items-center gap-1 min-w-0">
-                    <button
+                    {/* <button
                         onClick={() => router.back()}
                         className="sm:hidden p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-black shrink-0"
                         aria-label="Revenir en arrière"
                     >
                         <ArrowLeft className="w-5 h-5" />
-                    </button>
+                    </button> */}
 
                     <Link href={`/users/${photo.author.username}`} className="shrink-0 group">
                         <Image
