@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { getTopics } from "../lib/database";
+import { usePathname, useSearchParams } from "next/navigation";
+import { getTopics, getSearchTypeCounts } from "../lib/database";
 import CountryFilter from "./CountryFilter";
+import SortControl from "./SortControl";
+import OrientationFilter from "./OrientationFilter";
 
 /**
  * Barre de navigation par thème.
@@ -22,10 +24,15 @@ import CountryFilter from "./CountryFilter";
  */
 export default function TopicBar({ activeTopic = null }) {
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const scrollRef = useRef(null);
     const [topics, setTopics] = useState([]);
     const [showLeftArrow, setShowLeftArrow] = useState(false);
     const [showRightArrow, setShowRightArrow] = useState(false);
+    const [typeCounts, setTypeCounts] = useState(null);
+
+    const query = searchParams.get("q");
+    const country = searchParams.get("pays");
 
     useEffect(() => {
         // `kind: 'category'` exclut les tags nés d'un envoi (migration 0006) :
@@ -33,6 +40,29 @@ export default function TopicBar({ activeTopic = null }) {
         // avec chaque mot-clé inédit tapé par un contributeur.
         getTopics({ limit: 30, kind: "category" }).then(setTopics);
     }, []);
+
+    // Compteurs par type pendant une recherche : sans eux, rien n'indique
+    // avant de cliquer si l'onglet Illustrations a le moindre résultat.
+    useEffect(() => {
+        let cancelled = false;
+
+        if (!query) {
+            Promise.resolve().then(() => { if (!cancelled) setTypeCounts(null); });
+            return () => { cancelled = true; };
+        }
+
+        getSearchTypeCounts(query, { country }).then((counts) => {
+            if (!cancelled) setTypeCounts(counts);
+        });
+        return () => { cancelled = true; };
+    }, [query, country]);
+
+    // Un changement de type de média ne doit jamais faire perdre la
+    // recherche, le pays ou le tri en cours — seul `type` change.
+    const typeHref = (basePath) => {
+        const queryString = searchParams.toString();
+        return queryString ? `${basePath}?${queryString}` : basePath;
+    };
 
     const checkScroll = () => {
         const element = scrollRef.current;
@@ -62,9 +92,9 @@ export default function TopicBar({ activeTopic = null }) {
     };
 
     const mediaTypes = [
-        { href: "/", label: "Photos" },
-        { href: "/illustrations", label: "Illustrations" },
-        { href: "/videos", label: "Vidéos" },
+        { href: "/", label: "Photos", countKey: "photo" },
+        { href: "/illustrations", label: "Illustrations", countKey: "illustration" },
+        { href: "/videos", label: "Vidéos", countKey: "video" },
     ];
 
     return (
@@ -74,7 +104,7 @@ export default function TopicBar({ activeTopic = null }) {
                     {mediaTypes.map((type) => (
                         <Link
                             key={type.href}
-                            href={type.href}
+                            href={typeHref(type.href)}
                             className={`px-3 py-1.5 text-sm transition-colors ${
                                 pathname === type.href
                                     ? "font-semibold text-black"
@@ -82,10 +112,18 @@ export default function TopicBar({ activeTopic = null }) {
                             }`}
                         >
                             {type.label}
+                            {typeCounts && (
+                                <span className="ml-1 text-gray-400">{typeCounts[type.countKey]}</span>
+                            )}
                         </Link>
                     ))}
                 </nav>
 
+                {/* Pendant une recherche, les catégories n'ajoutent rien —
+                    la requête et les filtres font déjà le travail de
+                    tri, et les deux rangées ensemble surchargeaient la
+                    barre. */}
+                {!query && (
                 <div className="relative flex-1 overflow-hidden">
                     {showLeftArrow && (
                         <div className="absolute left-0 top-0 bottom-0 w-16 bg-linear-to-r from-white via-white to-transparent z-10 flex items-center pl-2">
@@ -141,8 +179,13 @@ export default function TopicBar({ activeTopic = null }) {
                         </div>
                     )}
                 </div>
+                )}
 
-                <CountryFilter />
+                <div className="flex items-center gap-2 shrink-0 ml-auto">
+                    <OrientationFilter />
+                    <SortControl />
+                    <CountryFilter />
+                </div>
             </div>
         </div>
     );

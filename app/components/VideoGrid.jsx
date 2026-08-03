@@ -12,6 +12,7 @@ export default function VideoGrid({ initialItems = null }) {
     const searchParams = useSearchParams();
     const query = searchParams.get("q");
     const country = searchParams.get("pays");
+    const orientation = searchParams.get("orientation");
 
     const [items, setItems] = useState(() => (seeded ? normalizeMediaList(initialItems) : []));
     const [loading, setLoading] = useState(!seeded);
@@ -23,10 +24,10 @@ export default function VideoGrid({ initialItems = null }) {
 
     const fetchPage = useCallback(
         (offset) => {
-            const options = { type: "video", limit: PAGE_SIZE, offset, country };
+            const options = { type: "video", limit: PAGE_SIZE, offset, country, orientation };
             return query ? searchMedia(query, options) : getMedia(options);
         },
-        [query, country]
+        [query, country, orientation]
     );
 
     useEffect(() => {

@@ -48,6 +48,7 @@ export default function MasonryGrid({
     const query = propQuery ?? searchParams.get("q");
     const activeCountry = country ?? searchParams.get("pays");
     const activeSort = sort ?? searchParams.get("tri") ?? "defaut";
+    const activeOrientation = searchParams.get("orientation");
 
     const seeded = Array.isArray(initialItems) && initialItems.length > 0;
 
@@ -82,14 +83,17 @@ export default function MasonryGrid({
 
     const fetchPage = useCallback(
         async (offset) => {
-            const options = { type, limit: PAGE_SIZE, offset, country: activeCountry, sort: activeSort };
+            const options = {
+                type, limit: PAGE_SIZE, offset,
+                country: activeCountry, sort: activeSort, orientation: activeOrientation,
+            };
 
             if (userId) return getUserMedia(userId, { type, limit: PAGE_SIZE, offset });
             if (topic) return getMediaByTopic(topic, options);
             if (query) return searchMedia(query, options);
             return getMedia(options);
         },
-        [type, topic, query, userId, activeCountry, activeSort]
+        [type, topic, query, userId, activeCountry, activeSort, activeOrientation]
     );
 
     // Premier chargement, et rechargement complet à chaque changement de filtre.

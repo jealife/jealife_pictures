@@ -73,6 +73,7 @@ export async function getMedia({
     offset = 0,
     country = null,
     sort = 'defaut',
+    orientation = null,
 } = {}) {
     try {
         let query = supabase
@@ -82,6 +83,7 @@ export async function getMedia({
 
         if (type) query = query.eq('type', type);
         if (country) query = query.eq('country_code', country.toUpperCase());
+        if (orientation) query = query.eq('orientation', orientation);
 
         query = applyPagination(applySort(query, sort), { limit, offset });
 
@@ -122,9 +124,10 @@ export async function searchMedia(query, {
     offset = 0,
     country = null,
     sort = 'defaut',
+    orientation = null,
 } = {}) {
     const term = (query || '').trim();
-    if (!term) return getMedia({ type, limit, offset, country, sort });
+    if (!term) return getMedia({ type, limit, offset, country, sort, orientation });
 
     try {
         let request = supabase
@@ -142,6 +145,7 @@ export async function searchMedia(query, {
 
         if (type) request = request.eq('type', type);
         if (country) request = request.eq('country_code', country.toUpperCase());
+        if (orientation) request = request.eq('orientation', orientation);
 
         const { data, error } = await applyPagination(
             applySort(request, sort),
@@ -151,14 +155,14 @@ export async function searchMedia(query, {
         if (error) throw error;
         if (data && data.length > 0) return data;
 
-        return searchMediaFallback(term, { type, limit, offset, country, sort });
+        return searchMediaFallback(term, { type, limit, offset, country, sort, orientation });
     } catch (error) {
         console.error('Error searching media:', error.message || error);
-        return searchMediaFallback(term, { type, limit, offset, country, sort });
+        return searchMediaFallback(term, { type, limit, offset, country, sort, orientation });
     }
 }
 
-async function searchMediaFallback(term, { type, limit, offset, country, sort }) {
+async function searchMediaFallback(term, { type, limit, offset, country, sort, orientation }) {
     const safe = sanitizeForOr(term);
     if (!safe) return [];
 
@@ -177,6 +181,7 @@ async function searchMediaFallback(term, { type, limit, offset, country, sort })
 
         if (type) request = request.eq('type', type);
         if (country) request = request.eq('country_code', country.toUpperCase());
+        if (orientation) request = request.eq('orientation', orientation);
 
         const { data, error } = await applyPagination(
             applySort(request, sort),
@@ -189,6 +194,77 @@ async function searchMediaFallback(term, { type, limit, offset, country, sort })
         console.error('Error in search fallback:', error.message || error);
         return [];
     }
+}
+
+/**
+ * Compte de résultats, sans les récupérer — pour le "X images" affiché en
+ * tête de page et le nombre par onglet Photos/Illustrations/Vidéos pendant
+ * une recherche. Reprend la même recherche plein texte + repli que
+ * `searchMedia`, mais `head: true` : Postgres ne renvoie que le total.
+ */
+export async function countMedia({ query = '', type = null, country = null, orientation = null } = {}) {
+    const term = (query || '').trim();
+
+    try {
+        let request = supabase
+            .from('media')
+            .select('id', { count: 'exact', head: true })
+            .eq('status', 'published');
+
+        if (type) request = request.eq('type', type);
+        if (country) request = request.eq('country_code', country.toUpperCase());
+        if (orientation) request = request.eq('orientation', orientation);
+
+        if (term) {
+            request = request.textSearch('search_vector', term, { config: 'fr_unaccent', type: 'websearch' });
+        }
+
+        const { count, error } = await request;
+        if (error) throw error;
+
+        if (term && !count) {
+            // Même repli que searchMedia : un mot inhabituel ne doit pas
+            // afficher « 0 résultat » si la correspondance partielle, elle,
+            // en trouve.
+            const safe = sanitizeForOr(term);
+            if (!safe) return 0;
+
+            let fallback = supabase
+                .from('media')
+                .select('id', { count: 'exact', head: true })
+                .eq('status', 'published')
+                .or(
+                    `title.ilike.%${safe}%,` +
+                    `alt_text.ilike.%${safe}%,` +
+                    `description.ilike.%${safe}%,` +
+                    `location.ilike.%${safe}%,` +
+                    `city.ilike.%${safe}%`
+                );
+
+            if (type) fallback = fallback.eq('type', type);
+            if (country) fallback = fallback.eq('country_code', country.toUpperCase());
+            if (orientation) fallback = fallback.eq('orientation', orientation);
+
+            const { count: fallbackCount, error: fallbackError } = await fallback;
+            if (fallbackError) throw fallbackError;
+            return fallbackCount || 0;
+        }
+
+        return count || 0;
+    } catch (error) {
+        console.error('Error counting media:', error.message || error);
+        return 0;
+    }
+}
+
+/** Un comptage par type de contenu (Photos/Illustrations/Vidéos), pour les onglets pendant une recherche. */
+export async function getSearchTypeCounts(query, { country = null } = {}) {
+    const [photo, illustration, video] = await Promise.all([
+        countMedia({ query, type: 'photo', country }),
+        countMedia({ query, type: 'illustration', country }),
+        countMedia({ query, type: 'video', country }),
+    ]);
+    return { photo, illustration, video };
 }
 
 export async function getMediaByTopic(topicSlug, {

@@ -8,18 +8,23 @@ import FeaturedTopics from "./components/FeaturedTopics";
 import DiscoveryPanel from "./components/DiscoveryPanel";
 import GridFallback from "./components/GridFallback";
 import { pickShowcaseImage } from "./lib/auth-images";
-import { getMedia, PAGE_SIZE } from "./lib/database";
+import { getMedia, countMedia, PAGE_SIZE } from "./lib/database";
 
 export default async function Home({ searchParams }) {
   const params = await searchParams;
   const query = params?.q;
+  const orientation = params?.orientation || null;
 
   // Première page rendue par le serveur : sans elle, le HTML servi aux robots
   // ne contenait aucun lien vers une fiche image. Les recherches, elles,
   // restent côté client — elles n'ont pas vocation à être indexées.
   const initialItems = query
     ? null
-    : await getMedia({ type: "photo", limit: PAGE_SIZE, country: params?.pays || null });
+    : await getMedia({ type: "photo", limit: PAGE_SIZE, country: params?.pays || null, orientation });
+
+  const resultsCount = query
+    ? await countMedia({ query, type: "photo", country: params?.pays || null, orientation })
+    : null;
 
   return (
     <main className="min-h-screen bg-white">
@@ -42,7 +47,8 @@ export default async function Home({ searchParams }) {
             Images « {query} »
           </h1>
           <p className="text-gray-500 text-sm mt-1">
-            Images libres de droits, téléchargeables gratuitement.
+            {resultsCount} image{resultsCount > 1 ? "s" : ""} libre{resultsCount > 1 ? "s" : ""} de
+            droits, téléchargeable{resultsCount > 1 ? "s" : ""} gratuitement.
           </p>
         </div>
       ) : (

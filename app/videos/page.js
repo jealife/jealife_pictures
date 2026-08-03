@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import TopicBar from "../components/TopicBar";
 import VideoGrid from "../components/VideoGrid";
-import { getMedia, PAGE_SIZE } from "../lib/database";
+import { getMedia, countMedia, PAGE_SIZE } from "../lib/database";
 
 export const metadata = {
     title: "Vidéos libres de droits",
@@ -16,8 +16,22 @@ export const metadata = {
  */
 export const revalidate = 300;
 
-export default async function VideosPage() {
-    const initialItems = await getMedia({ type: "video", limit: PAGE_SIZE });
+export default async function VideosPage({ searchParams }) {
+    const params = await searchParams;
+    const query = params?.q;
+    const country = params?.pays || null;
+    const orientation = params?.orientation || null;
+
+    // Comme sur l'accueil : une recherche reste côté client (VideoGrid), sans
+    // quoi le HTML servi par le serveur affiche toutes les vidéos le temps
+    // d'un aller-retour, au lieu de celles qui correspondent à la recherche.
+    const initialItems = query
+        ? null
+        : await getMedia({ type: "video", limit: PAGE_SIZE, country, orientation });
+
+    const resultsCount = query
+        ? await countMedia({ query, type: "video", country, orientation })
+        : null;
 
     return (
         <main className="min-h-screen bg-white">
@@ -26,9 +40,13 @@ export default async function VideosPage() {
             </Suspense>
 
             <header className="max-w-[1600px] mx-auto px-4 pt-10 pb-4">
-                <h1 className="text-3xl font-extrabold text-gray-900">Vidéos</h1>
+                <h1 className="text-3xl font-extrabold text-gray-900">
+                    {query ? `Vidéos « ${query} »` : "Vidéos"}
+                </h1>
                 <p className="text-gray-500 mt-2">
-                    Séquences libres de droits, à télécharger gratuitement.
+                    {query
+                        ? `${resultsCount} vidéo${resultsCount > 1 ? "s" : ""} trouvée${resultsCount > 1 ? "s" : ""}.`
+                        : "Séquences libres de droits, à télécharger gratuitement."}
                 </p>
             </header>
 
