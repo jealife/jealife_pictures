@@ -9,6 +9,7 @@ export default function robots() {
                 disallow: [
                     // Espaces privés ou transitoires : les indexer n'apporte
                     // rien et expose des URL à usage unique.
+                    "/admin",
                     "/settings",
                     "/submit",
                     "/auth/",

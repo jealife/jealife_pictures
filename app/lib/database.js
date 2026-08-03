@@ -859,3 +859,242 @@ export async function syncTopics(mediaId, tags) {
         return { success: false, error: friendlyErrorMessage(error, "Impossible d'enregistrer les mots-clés.") };
     }
 }
+
+// ---------------------------------------------------------------------------
+// Administration
+//
+// Tout ce qui suit ne renvoie des données que si l'appelant est admin : la
+// RLS (migration 0004) filtre silencieusement pour tout autre compte, ces
+// fonctions ne sont donc dangereuses à exposer nulle part.
+// ---------------------------------------------------------------------------
+
+/** Réglage public (lisible par tout visiteur, ex. `moderation_mode`). */
+export async function getSetting(key) {
+    try {
+        const { data, error } = await supabase.rpc('get_setting', { setting_key: key });
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('Error fetching setting:', error.message || error);
+        return null;
+    }
+}
+
+export async function setSetting(key, value) {
+    try {
+        const { error } = await supabase.rpc('set_setting', { setting_key: key, setting_value: value });
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error('Error updating setting:', error.message || error);
+        return { success: false, error: friendlyErrorMessage(error, "Impossible d'enregistrer le réglage.") };
+    }
+}
+
+/** Chiffres de la page d'accueil admin : file d'attente, signalements, communauté. */
+export async function getAdminOverview() {
+    const empty = { pendingCount: 0, reportedCount: 0, usersCount: 0, moderationMode: 'auto' };
+
+    try {
+        const [pending, reported, users, mode] = await Promise.all([
+            supabase.from('media').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+            supabase.from('media_reports').select('id', { count: 'exact', head: true }).eq('resolved', false),
+            supabase.from('profiles').select('id', { count: 'exact', head: true }),
+            getSetting('moderation_mode'),
+        ]);
+
+        return {
+            pendingCount: pending.count || 0,
+            reportedCount: reported.count || 0,
+            usersCount: users.count || 0,
+            moderationMode: mode || 'auto',
+        };
+    } catch (error) {
+        console.error('Error fetching admin overview:', error.message || error);
+        return empty;
+    }
+}
+
+/** Médias en attente de publication (mode de modération « manuel »). */
+export async function getPendingMedia({ limit = PAGE_SIZE, offset = 0 } = {}) {
+    try {
+        const { data, error } = await supabase
+            .from('media')
+            .select(`${CARD_SELECT}, description`)
+            .eq('status', 'pending')
+            .order('created_at', { ascending: true })
+            .range(offset, offset + limit - 1);
+
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('Error fetching pending media:', error.message || error);
+        return [];
+    }
+}
+
+/**
+ * Signalements non résolus, avec le média pour juger sur pièces.
+ *
+ * `reporter_id` référence `auth.users`, pas `profiles` : PostgREST ne peut
+ * pas l'imbriquer comme `profiles:user_id` ailleurs dans ce fichier (la
+ * relation directe n'existe pas). On récupère donc les pseudos des
+ * signalants en une seconde requête plutôt que de casser l'embed.
+ */
+export async function getOpenReports({ limit = PAGE_SIZE, offset = 0 } = {}) {
+    try {
+        const { data, error } = await supabase
+            .from('media_reports')
+            .select(`id, reason, details, reporter_id, created_at, media ( ${CARD_SELECT} )`)
+            .eq('resolved', false)
+            .order('created_at', { ascending: true })
+            .range(offset, offset + limit - 1);
+
+        if (error) throw error;
+        const reports = data || [];
+
+        const reporterIds = [...new Set(reports.map((r) => r.reporter_id).filter(Boolean))];
+        if (reporterIds.length === 0) return reports;
+
+        const { data: reporters } = await supabase
+            .from('profiles')
+            .select('id, username, full_name')
+            .in('id', reporterIds);
+
+        const byId = new Map((reporters || []).map((p) => [p.id, p]));
+        return reports.map((r) => ({ ...r, reporter: r.reporter_id ? byId.get(r.reporter_id) || null : null }));
+    } catch (error) {
+        console.error('Error fetching open reports:', error.message || error);
+        return [];
+    }
+}
+
+export async function approveMedia(mediaId) {
+    return updateMedia(mediaId, { status: 'published' });
+}
+
+export async function rejectMedia(mediaId) {
+    return updateMedia(mediaId, { status: 'rejected' });
+}
+
+export async function removeMedia(mediaId) {
+    return updateMedia(mediaId, { status: 'removed' });
+}
+
+export async function resolveReport(reportId) {
+    try {
+        const { error } = await supabase
+            .from('media_reports')
+            .update({ resolved: true })
+            .eq('id', reportId);
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error('Error resolving report:', error.message || error);
+        return { success: false, error: friendlyErrorMessage(error, "Impossible de traiter ce signalement.") };
+    }
+}
+
+/** Liste des membres, du plus récent au plus ancien, avec recherche par nom/pseudo. */
+export async function getAdminUsers({ search = '', limit = 50, offset = 0 } = {}) {
+    try {
+        let query = supabase
+            .from('profiles')
+            .select('id, username, full_name, avatar_url, role, is_verified, is_contributor, total_views, total_downloads, created_at')
+            .order('created_at', { ascending: false });
+
+        const term = search.trim();
+        if (term) {
+            const safe = sanitizeForOr(term);
+            query = query.or(`username.ilike.%${safe}%,full_name.ilike.%${safe}%`);
+        }
+
+        const { data, error } = await applyPagination(query, { limit, offset });
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('Error fetching users:', error.message || error);
+        return [];
+    }
+}
+
+export async function setUserRole(userId, role) {
+    try {
+        const { error } = await supabase.from('profiles').update({ role }).eq('id', userId);
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error('Error updating role:', error.message || error);
+        return { success: false, error: friendlyErrorMessage(error, "Impossible de modifier ce rôle.") };
+    }
+}
+
+export async function setUserFlag(userId, field, value) {
+    if (!['is_verified', 'is_contributor'].includes(field)) {
+        return { success: false, error: 'Champ non autorisé.' };
+    }
+    try {
+        const { error } = await supabase.from('profiles').update({ [field]: value }).eq('id', userId);
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error('Error updating user flag:', error.message || error);
+        return { success: false, error: friendlyErrorMessage(error, "Impossible de mettre à jour ce compte.") };
+    }
+}
+
+/** Tous les thèmes (catégories vitrine comme tags nés d'un envoi), pour l'admin. */
+export async function getAdminTopics() {
+    try {
+        const { data, error } = await supabase
+            .from('topics')
+            .select('id, slug, name, description, cover_image_url, is_featured, total_media, created_at')
+            .order('is_featured', { ascending: false })
+            .order('total_media', { ascending: false });
+
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error('Error fetching admin topics:', error.message || error);
+        return [];
+    }
+}
+
+export async function createTopic({ name, description = '', isFeatured = false }) {
+    try {
+        const slug = slugify(name);
+        const { data, error } = await supabase
+            .from('topics')
+            .insert({ name, slug, description, is_featured: isFeatured })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return { success: true, topic: data };
+    } catch (error) {
+        console.error('Error creating topic:', error.message || error);
+        return { success: false, error: friendlyErrorMessage(error, "Impossible de créer ce thème.") };
+    }
+}
+
+export async function updateTopic(topicId, updates) {
+    try {
+        const { error } = await supabase.from('topics').update(updates).eq('id', topicId);
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error('Error updating topic:', error.message || error);
+        return { success: false, error: friendlyErrorMessage(error, "Impossible de modifier ce thème.") };
+    }
+}
+
+export async function deleteTopic(topicId) {
+    try {
+        const { error } = await supabase.from('topics').delete().eq('id', topicId);
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error('Error deleting topic:', error.message || error);
+        return { success: false, error: friendlyErrorMessage(error, "Impossible de supprimer ce thème.") };
+    }
+}

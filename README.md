@@ -21,6 +21,9 @@ depuis le SQL Editor du tableau de bord :
 3. `supabase/migrations/0003_upload_quality.sql` — empreinte perceptuelle
    (`phash`) utilisée par le contrôle qualité automatique à l'envoi
    (`/api/moderate-upload`).
+4. `supabase/migrations/0004_admin_moderation.sql` — rôle `admin`, réglage
+   `moderation_mode` (`auto`/`manual`), et les policies RLS qui donnent à un
+   admin accès à `/admin` (modération, utilisateurs, thèmes).
 
 Le bucket `media` et ses politiques sont créés par la migration : il n'y a rien
 à configurer à la main dans l'interface Storage.
@@ -29,6 +32,20 @@ Le bucket `media` et ses politiques sont créés par la migration : il n'y a rie
 > `supabase_setup.sql`, `update_*.sql`) sont conservés dans `supabase/legacy/`
 > à titre d'archive. Ils se contredisaient — `media.id` y était tantôt `uuid`,
 > tantôt `bigint` — et ne doivent plus être exécutés.
+
+#### Devenir administrateur
+
+La migration 0004 crée le rôle mais ne nomme personne : le premier admin se
+désigne à la main, une fois inscrit sur le site, depuis le SQL Editor —
+
+```sql
+update public.profiles
+set role = 'admin'
+where id = (select id from auth.users where email = 'votre-email@exemple.com');
+```
+
+Une fois admin, vous pouvez promouvoir les suivants depuis `/admin/users` —
+plus besoin de repasser par SQL.
 
 ### 2. Variables d'environnement
 
@@ -110,6 +127,7 @@ app/
     images.js       préparation des images dans le navigateur
     auth.js         session, OAuth, profils
   components/       grille, cartes, filtres, boutons d'action
+  admin/            file de modération, réglages, utilisateurs, thèmes
   themes/           pages par thème
   pays/             pages par pays
   photos/[id]/      page d'une image

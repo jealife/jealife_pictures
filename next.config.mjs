@@ -9,6 +9,12 @@ const nextConfig = {
     // chemin horodaté) : un cache d'un an évite de les retélécharger.
     minimumCacheTTL: 31536000,
 
+    // Next 16 refuse par défaut toute qualité hors de [75] et le répète en
+    // boucle dans les logs : la liste doit couvrir toutes les valeurs
+    // passées à `quality` sur les <Image> du site (PhotoCard, VideoCard,
+    // Hero, PhotoDetail).
+    qualities: [75, 85, 90],
+
     remotePatterns: [
       // Le stockage du projet Supabase. Le motif générique évite d'avoir à
       // modifier ce fichier — et de casser toutes les images en production —

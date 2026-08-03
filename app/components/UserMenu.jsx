@@ -1,12 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { BarChart3, Download, Settings, LogOut } from "lucide-react";
+import { BarChart3, Download, Settings, LogOut, ShieldCheck } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function UserMenu({ user, onSignOut, onClose }) {
     const router = useRouter();
     const { profile } = useAuth();
+    const isAdmin = profile?.role === "admin";
 
     // Use profile from database if available, otherwise fallback to metadata
     const username = profile?.username || user?.user_metadata?.username || user?.email?.split('@')[0] || 'user';
@@ -38,6 +39,12 @@ export default function UserMenu({ user, onSignOut, onClose }) {
             icon: Settings,
             className: 'text-gray-600 hover:text-black'
         },
+        ...(isAdmin ? [{
+            label: 'Administration',
+            href: '/admin',
+            icon: ShieldCheck,
+            className: 'text-gray-600 hover:text-black'
+        }] : []),
     ];
 
     const handleNavigation = (href) => {

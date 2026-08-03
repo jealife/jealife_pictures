@@ -11,7 +11,7 @@ import ExifReader from "exifreader";
 import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
 import { upsertProfile } from "../lib/auth";
-import { syncTopics, getTopics, getCountries, getPlatformStats } from "../lib/database";
+import { syncTopics, getTopics, getCountries, getPlatformStats, getSetting } from "../lib/database";
 import { processImage, formatFileSize } from "../lib/images";
 import { slugifyClient } from "../lib/media";
 import { friendlyErrorMessage } from "../lib/errors";
@@ -114,6 +114,7 @@ export default function SubmitPage() {
 
     const [countries, setCountries] = useState([]);
     const [dbTopics, setDbTopics] = useState([]);
+    const [moderationMode, setModerationMode] = useState("auto");
     const [locationSuggestions, setLocationSuggestions] = useState([]);
     const [tagSuggestions, setTagSuggestions] = useState([]);
     const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
@@ -128,6 +129,7 @@ export default function SubmitPage() {
     useEffect(() => {
         getTopics({ limit: 200 }).then((data) => setDbTopics(data.map((t) => t.name)));
         getCountries().then(setCountries);
+        getSetting("moderation_mode").then((mode) => { if (mode) setModerationMode(mode); });
     }, []);
 
     useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
@@ -444,9 +446,14 @@ export default function SubmitPage() {
                     duration: processed.duration,
                     file_size: file.size,
                     mime_type: file.type || null,
-                    status: "published",
+                    // Le statut n'est pas décidé ici : un déclencheur côté
+                    // serveur (migration 0004) l'impose selon le réglage
+                    // `moderation_mode` choisi par un admin. L'envoyer en dur
+                    // depuis le navigateur n'aurait de toute façon aucun
+                    // effet — mais autant ne pas prétendre décider de ce
+                    // qu'on ne décide plus.
                 })
-                .select("id")
+                .select("id, status")
                 .single();
 
             if (insertError) throw insertError;
@@ -454,7 +461,7 @@ export default function SubmitPage() {
             if (mediaRecord) await syncTopics(mediaRecord.id, tags);
 
             const slug = slugifyClient(title.trim() || altText.trim() || "photo");
-            setPublishedMedia({ id: mediaRecord.id, slug });
+            setPublishedMedia({ id: mediaRecord.id, slug, status: mediaRecord.status });
             getPlatformStats().then(setPlatformStats);
             setStep(3);
         } catch (err) {
@@ -547,6 +554,13 @@ export default function SubmitPage() {
                             <p className="mt-6 text-center text-sm text-red-600">{formError}</p>
                         )}
 
+                        {moderationMode === "manual" && (
+                            <p className="mt-6 text-center text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+                                Chaque envoi est actuellement vérifié par un membre de l&apos;équipe
+                                avant d&apos;être publié.
+                            </p>
+                        )}
+
                         <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-gray-400 text-sm font-medium">
                             <span className="flex items-center gap-2">
                                 <CheckCircle2 className="w-4 h-4 text-green-500" /> Gratuit
@@ -570,22 +584,32 @@ export default function SubmitPage() {
                             Merci pour votre contribution
                         </h1>
 
-                        <p className="text-lg text-gray-500 mb-2">
-                            Votre image a passé nos contrôles de qualité automatiques et est
-                            déjà visible sur JEaLiFe Stock.
-                        </p>
-                        {platformStats && (
+                        {publishedMedia?.status === "pending" ? (
                             <p className="text-lg text-gray-500 mb-10">
-                                Grâce à vous, la plateforme compte désormais{" "}
-                                <strong className="text-gray-900">
-                                    {(
-                                        (platformStats.total_photos || 0) +
-                                        (platformStats.total_illustrations || 0) +
-                                        (platformStats.total_videos || 0)
-                                    ).toLocaleString("fr-FR")}
-                                </strong>{" "}
-                                médias publiés.
+                                Votre image a passé nos contrôles de qualité automatiques.
+                                Un membre de l&apos;équipe la vérifie avant publication : vous
+                                êtes pour l&apos;instant la seule personne à pouvoir la voir.
                             </p>
+                        ) : (
+                            <>
+                                <p className="text-lg text-gray-500 mb-2">
+                                    Votre image a passé nos contrôles de qualité automatiques et est
+                                    déjà visible sur JEaLiFe Stock.
+                                </p>
+                                {platformStats && (
+                                    <p className="text-lg text-gray-500 mb-10">
+                                        Grâce à vous, la plateforme compte désormais{" "}
+                                        <strong className="text-gray-900">
+                                            {(
+                                                (platformStats.total_photos || 0) +
+                                                (platformStats.total_illustrations || 0) +
+                                                (platformStats.total_videos || 0)
+                                            ).toLocaleString("fr-FR")}
+                                        </strong>{" "}
+                                        médias publiés.
+                                    </p>
+                                )}
+                            </>
                         )}
 
                         {previewUrl && (
@@ -604,7 +628,8 @@ export default function SubmitPage() {
                                 onClick={() => publishedMedia && router.push(`/photos/${publishedMedia.id}-${publishedMedia.slug}`)}
                                 className="px-6 py-4 bg-black text-white font-bold rounded-2xl hover:bg-gray-800 transition-all shadow-xl hover:shadow-2xl active:scale-95 flex items-center justify-center gap-2"
                             >
-                                Voir la photo publiée <ArrowRight className="w-4 h-4" />
+                                {publishedMedia?.status === "pending" ? "Voir mon envoi" : "Voir la photo publiée"}{" "}
+                                <ArrowRight className="w-4 h-4" />
                             </button>
                             <button
                                 type="button"
