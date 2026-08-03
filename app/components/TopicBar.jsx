@@ -182,8 +182,15 @@ export default function TopicBar({ activeTopic = null }) {
                 )}
 
                 <div className="flex items-center gap-2 shrink-0 ml-auto">
-                    <OrientationFilter />
-                    <SortControl />
+                    {/* Tri et orientation n'ont d'intérêt qu'en train de
+                        chercher — les afficher tout le temps surchargeait la
+                        barre sur mobile pour un gain nul en navigation libre. */}
+                    {query && (
+                        <>
+                            <OrientationFilter />
+                            <SortControl />
+                        </>
+                    )}
                     <CountryFilter />
                 </div>
             </div>
