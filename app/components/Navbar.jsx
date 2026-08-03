@@ -394,22 +394,28 @@ export default function Navbar() {
                                 </Link>
                             </div>
 
-                            {/* Footer Buttons */}
+                            {/* Footer Buttons — même logique que les actions bureau :
+                                un membre connecté n'a plus besoin qu'on lui
+                                propose de se connecter ou de s'inscrire. */}
                             <div className="flex gap-3 mb-6">
                                 <Link href="/submit" onClick={() => setMobileMenuOpen(false)} className="flex-1 py-2.5 px-4 bg-white border border-gray-300 rounded text-gray-600 font-medium text-sm text-center shadow-sm hover:border-gray-400 hover:text-black transition-colors">
                                     Soumettre une image
                                 </Link>
-                                <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="flex-1 py-2.5 px-4 bg-white border border-gray-300 rounded text-gray-600 font-medium text-sm text-center shadow-sm hover:border-gray-400 hover:text-black transition-colors">
-                                    Connexion
-                                </Link>
+                                {!user && (
+                                    <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="flex-1 py-2.5 px-4 bg-white border border-gray-300 rounded text-gray-600 font-medium text-sm text-center shadow-sm hover:border-gray-400 hover:text-black transition-colors">
+                                        Connexion
+                                    </Link>
+                                )}
                             </div>
 
                             {/* Sign Up Footer */}
-                            <div className="text-center">
-                                <p className="text-gray-500 text-sm">
-                                    Nouveau sur JEaLiFe ? <Link href="/join" onClick={() => setMobileMenuOpen(false)} className="text-gray-600 underline hover:text-black underline-offset-2">Inscrivez-vous gratuitement</Link>
-                                </p>
-                            </div>
+                            {!user && (
+                                <div className="text-center">
+                                    <p className="text-gray-500 text-sm">
+                                        Nouveau sur JEaLiFe ? <Link href="/join" onClick={() => setMobileMenuOpen(false)} className="text-gray-600 underline hover:text-black underline-offset-2">Inscrivez-vous gratuitement</Link>
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </>
                 )}
