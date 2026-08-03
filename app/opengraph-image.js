@@ -42,10 +42,13 @@ export default async function OpenGraphImage() {
             const photoUrl = pick.thumbnail_url || pick.url;
 
             const res = await fetch(photoUrl);
-            if (res.ok) {
+            const mime = res.headers.get("content-type") || "";
+            // `res.ok` ne suffit pas : un CDN en panne peut répondre 200 avec
+            // une page d'erreur HTML à la place de l'image (vécu en
+            // production lors d'une coupure Supabase/Cloudflare).
+            if (res.ok && mime.startsWith("image/")) {
                 const buf = await res.arrayBuffer();
                 const b64 = Buffer.from(buf).toString("base64");
-                const mime = res.headers.get("content-type") || "image/jpeg";
                 bgStyle = {
                     backgroundImage: `url("data:${mime};base64,${b64}")`,
                     backgroundSize: "cover",
@@ -61,7 +64,8 @@ export default async function OpenGraphImage() {
     let logoData = null;
     try {
         const logoRes = await fetch(`${SITE_URL}/JEaLiFe-Stock-Logo-transparent-blanc.png`);
-        if (logoRes.ok) {
+        const logoMime = logoRes.headers.get("content-type") || "";
+        if (logoRes.ok && logoMime.startsWith("image/")) {
             const buf = await logoRes.arrayBuffer();
             logoData = `data:image/png;base64,${Buffer.from(buf).toString("base64")}`;
         }
@@ -69,7 +73,32 @@ export default async function OpenGraphImage() {
         // Silencieux
     }
 
-    return new ImageResponse(
+    // Filet de sécurité final : si Satori n'arrive pas à décoder l'une des
+    // deux images malgré les vérifications ci-dessus (format exotique,
+    // fichier tronqué), toute la route plantait en 500 — un lien partagé sur
+    // WhatsApp ou X se retrouvait sans aperçu.
+    //
+    // `ImageResponse` diffère son rendu (Satori) au moment où le corps de la
+    // réponse est *streamé* par Next.js, pas à sa construction : un simple
+    // try/catch autour de `new ImageResponse(...)` ne voit donc jamais
+    // l'erreur, qui remonte plus tard dans le pipeline interne de Next
+    // (c'est exactement le « failed to pipe response » observé en
+    // production). `renderImage` force la résolution du flux via
+    // `arrayBuffer()` pour que l'éventuelle erreur Satori soit levée ici, où
+    // elle peut réellement être rattrapée.
+    try {
+        return await renderImage(bgStyle, logoData);
+    } catch (error) {
+        console.error("OpenGraph image (accueil) : rendu impossible, repli sans image.", error?.message || error);
+        return renderImage(
+            { background: "linear-gradient(135deg, #0b3d2e 0%, #0f4423 25%, #0f172a 65%, #000 100%)" },
+            null
+        );
+    }
+}
+
+async function renderImage(bgStyle, logoData) {
+    const response = new ImageResponse(
         (
             <div
                 style={{
@@ -186,4 +215,11 @@ export default async function OpenGraphImage() {
         ),
         size
     );
+
+    // Force le rendu Satori maintenant : c'est cet appel, pas la ligne
+    // au-dessus, qui peut lever l'erreur qu'on veut rattraper.
+    const buffer = await response.arrayBuffer();
+    return new Response(buffer, {
+        headers: { "content-type": "image/png" },
+    });
 }
