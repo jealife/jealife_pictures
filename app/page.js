@@ -5,7 +5,7 @@ import TopicBar from "./components/TopicBar";
 import MasonryGrid from "./components/MasonryGrid";
 import CategorySection from "./components/CategorySection";
 import FeaturedTopics from "./components/FeaturedTopics";
-import FeaturedCollections from "./components/FeaturedCollections";
+import DiscoveryPanel from "./components/DiscoveryPanel";
 import GridFallback from "./components/GridFallback";
 import { pickShowcaseImage } from "./lib/auth-images";
 import { getMedia, PAGE_SIZE } from "./lib/database";
@@ -25,6 +25,12 @@ export default async function Home({ searchParams }) {
     <main className="min-h-screen bg-white">
       {!query && <Hero background={pickShowcaseImage()} />}
       {!query && <CategorySection />}
+
+      {!query && (
+        <Suspense fallback={null}>
+          <DiscoveryPanel />
+        </Suspense>
+      )}
 
       <Suspense fallback={<div className="h-16 border-b border-gray-100" />}>
         <TopicBar />
@@ -57,12 +63,6 @@ export default async function Home({ searchParams }) {
       {!query && (
         <Suspense fallback={null}>
           <FeaturedTopics />
-        </Suspense>
-      )}
-
-      {!query && (
-        <Suspense fallback={null}>
-          <FeaturedCollections />
         </Suspense>
       )}
 

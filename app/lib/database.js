@@ -801,14 +801,21 @@ const EDITORIAL_COLLECTION_SELECT = `
 
 function withEditorialCover(collection) {
     const items = collection.collection_media || [];
+    const thumbs = items.map((item) => item.media?.thumbnail_url || item.media?.url).filter(Boolean);
+    const cover = collection.cover_image_url || thumbs[0] || null;
+
+    // Jusqu'à 3 images pour la mosaïque de couverture (une grande + deux
+    // empilées, façon Unsplash) : la couverture choisie en premier, puis les
+    // suivantes sans doublon.
+    const previewImages = [cover, ...thumbs.filter((url) => url !== cover)]
+        .filter(Boolean)
+        .slice(0, 3);
+
     return {
         ...collection,
         total_photos: items.length,
-        cover:
-            collection.cover_image_url ||
-            items[0]?.media?.thumbnail_url ||
-            items[0]?.media?.url ||
-            null,
+        cover,
+        previewImages,
     };
 }
 

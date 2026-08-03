@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Layers, Loader2, Lock } from "lucide-react";
+import { Layers, Loader2, Lock, Share2, Check } from "lucide-react";
 import PhotoCard from "../../components/PhotoCard";
 import { getCollection } from "../../lib/database";
 import { normalizeMediaList, avatarFallback } from "../../lib/media";
@@ -24,6 +24,13 @@ export default function CollectionDetail() {
     const { id } = useParams();
     const [collection, setCollection] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [copied, setCopied] = useState(false);
+
+    const copyLink = () => {
+        navigator.clipboard.writeText(window.location.href);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
 
     useEffect(() => {
         if (!id) return;
@@ -80,7 +87,7 @@ export default function CollectionDetail() {
                     <p className="text-gray-500 mt-3 max-w-2xl">{collection.description}</p>
                 )}
 
-                <div className="flex items-center gap-4 mt-6">
+                <div className="flex items-center justify-between gap-4 mt-6">
                     {author && (
                         <Link href={`/users/${author.username}`} className="flex items-center gap-3 group">
                             <Image
@@ -101,6 +108,15 @@ export default function CollectionDetail() {
                             </span>
                         </Link>
                     )}
+
+                    <button
+                        type="button"
+                        onClick={copyLink}
+                        className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-full text-sm font-medium text-gray-600 hover:border-gray-400 hover:text-black transition-colors"
+                    >
+                        {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Share2 className="w-4 h-4" />}
+                        {copied ? "Lien copié" : "Partager"}
+                    </button>
                 </div>
             </header>
 

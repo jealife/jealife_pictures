@@ -1,7 +1,7 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Layers } from "lucide-react";
 import { getEditorialCollections } from "../lib/database";
+import CollectionMosaic from "../components/CollectionMosaic";
 
 export const revalidate = 600;
 
@@ -30,33 +30,26 @@ export default async function CollectionsPage() {
                         <p>Aucune collection publiée pour l&apos;instant.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {collections.map((collection) => (
-                            <Link
-                                key={collection.id}
-                                href={`/collections/${collection.id}`}
-                                className="group relative overflow-hidden rounded-2xl aspect-[4/3] flex items-end shadow-sm hover:shadow-xl transition-all duration-300 bg-gray-100"
-                            >
-                                {collection.cover ? (
-                                    <Image
-                                        src={collection.cover}
-                                        alt=""
-                                        fill
-                                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
+                        {collections.map((collection) => {
+                            const author = collection.profiles?.full_name || collection.profiles?.username;
+                            return (
+                                <Link key={collection.id} href={`/collections/${collection.id}`} className="group">
+                                    <CollectionMosaic
+                                        images={collection.previewImages}
+                                        alt={collection.title}
+                                        className="aspect-[4/3] rounded-xl overflow-hidden"
                                     />
-                                ) : (
-                                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-900 to-teal-700" />
-                                )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
-                                <div className="relative z-10 p-5 w-full">
-                                    <h2 className="font-bold text-xl text-white drop-shadow">{collection.title}</h2>
-                                    <p className="text-xs text-white/70 mt-2 font-medium">
+                                    <h2 className="mt-3 font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">
+                                        {collection.title}
+                                    </h2>
+                                    <p className="text-sm text-gray-500 mt-0.5">
                                         {collection.total_photos} image{collection.total_photos > 1 ? "s" : ""}
+                                        {author && <> · Sélection {author}</>}
                                     </p>
-                                </div>
-                            </Link>
-                        ))}
+                                </Link>
+                            );
+                        })}
                     </div>
                 )}
             </div>

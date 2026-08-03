@@ -572,6 +572,35 @@ export default function SubmitPage() {
                                 <CheckCircle2 className="w-4 h-4 text-green-500" /> Retrait possible à tout moment
                             </span>
                         </div>
+
+                        {/* Ce que le contrôle qualité automatique vérifie réellement à
+                            l'envoi (voir /api/moderate-upload) : mieux vaut le dire avant
+                            l'envoi qu'après un rejet. */}
+                        <div className="mt-10 p-6 bg-gray-50 border border-gray-100 rounded-2xl">
+                            <p className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-4">
+                                Avant d&apos;envoyer
+                            </p>
+                            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2.5 text-sm text-gray-600">
+                                <li className="flex gap-2.5">
+                                    <span className="text-gray-300">•</span> Photo nette, 5 mégapixels minimum
+                                </li>
+                                <li className="flex gap-2.5">
+                                    <span className="text-gray-300">•</span> Vous devez être l&apos;auteur et détenir les droits
+                                </li>
+                                <li className="flex gap-2.5">
+                                    <span className="text-gray-300">•</span> Pas de contenu choquant, violent ou à caractère sexuel
+                                </li>
+                                <li className="flex gap-2.5">
+                                    <span className="text-gray-300">•</span> Pas de filigrane, logo ou texte incrusté
+                                </li>
+                                <li className="flex gap-2.5">
+                                    <span className="text-gray-300">•</span> Une photo ou illustration originale, pas une capture d&apos;écran
+                                </li>
+                                <li className="flex gap-2.5">
+                                    <span className="text-gray-300">•</span> 50 Mo maximum
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                 ) : step === 3 ? (
                     <div className="max-w-2xl mx-auto text-center">
