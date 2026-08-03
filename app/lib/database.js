@@ -256,7 +256,7 @@ export async function getRelatedMedia(media, limit = 12) {
 // Thèmes & pays
 // ---------------------------------------------------------------------------
 
-export async function getTopics({ featuredOnly = false, limit = 60 } = {}) {
+export async function getTopics({ featuredOnly = false, kind = null, limit = 60 } = {}) {
     try {
         let query = supabase
             .from('topics')
@@ -266,6 +266,7 @@ export async function getTopics({ featuredOnly = false, limit = 60 } = {}) {
             .limit(limit);
 
         if (featuredOnly) query = query.eq('is_featured', true);
+        if (kind) query = query.eq('kind', kind);
 
         const { data, error } = await query;
         if (error) throw error;
@@ -793,13 +794,13 @@ export async function deleteCollection(collectionId) {
 // admin peut poser `is_editorial = true`.
 // ---------------------------------------------------------------------------
 
-const EDITORIAL_COLLECTION_SELECT = `
-    id, title, description, slug, cover_image_url, is_private, created_at,
+const COLLECTION_CARD_SELECT = `
+    id, title, description, slug, cover_image_url, is_private, is_editorial, is_admin_featured, created_at,
     profiles:user_id ( id, username, full_name, avatar_url ),
-    collection_media ( media ( id, thumbnail_url, url ) )
+    collection_media ( media ( id, thumbnail_url, url, likes_count, downloads_count ) )
 `;
 
-function withEditorialCover(collection) {
+function withCollectionMeta(collection) {
     const items = collection.collection_media || [];
     const thumbs = items.map((item) => item.media?.thumbnail_url || item.media?.url).filter(Boolean);
     const cover = collection.cover_image_url || thumbs[0] || null;
@@ -811,29 +812,62 @@ function withEditorialCover(collection) {
         .filter(Boolean)
         .slice(0, 3);
 
+    // Sert à classer et à qualifier automatiquement les collections de la
+    // communauté (voir getDiscoverableCollections) : la somme des likes et
+    // téléchargements de ses photos, faute d'un compteur propre à la
+    // collection elle-même.
+    const popularity = items.reduce(
+        (sum, item) => sum + (item.media?.likes_count || 0) + (item.media?.downloads_count || 0),
+        0
+    );
+
     return {
         ...collection,
         total_photos: items.length,
         cover,
         previewImages,
+        popularity,
     };
 }
 
-/** Collections publiées par l'équipe JEaLiFe, pour la page publique `/collections`. */
-export async function getEditorialCollections({ limit = 24 } = {}) {
+/**
+ * Collections visibles sur les surfaces publiques (`/collections`, panneau
+ * d'accueil) : les sélections éditoriales de JEaLiFe, puis les collections
+ * de la communauté qui le méritent — soit parce qu'un admin les a mises en
+ * avant depuis `/admin/collections`, soit automatiquement dès qu'elles
+ * comptent au moins 3 photos. En dessous de ce seuil, une collection reste
+ * pleinement fonctionnelle mais visible seulement sur le profil de son
+ * auteur — le temps qu'elle ait de quoi se montrer.
+ */
+const MIN_PHOTOS_TO_SURFACE = 3;
+
+export async function getDiscoverableCollections({ limit = 24 } = {}) {
     try {
         const { data, error } = await supabase
             .from('collections')
-            .select(EDITORIAL_COLLECTION_SELECT)
-            .eq('is_editorial', true)
+            .select(COLLECTION_CARD_SELECT)
             .eq('is_private', false)
-            .order('created_at', { ascending: false })
-            .limit(limit);
+            .order('created_at', { ascending: false });
 
         if (error) throw error;
-        return (data || []).map(withEditorialCover);
+
+        const collections = (data || []).map(withCollectionMeta);
+
+        const editorial = collections
+            .filter((c) => c.is_editorial)
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        const community = collections.filter((c) => !c.is_editorial);
+        const featured = community
+            .filter((c) => c.is_admin_featured)
+            .sort((a, b) => b.popularity - a.popularity);
+        const automatic = community
+            .filter((c) => !c.is_admin_featured && c.total_photos >= MIN_PHOTOS_TO_SURFACE)
+            .sort((a, b) => b.popularity - a.popularity);
+
+        return [...editorial, ...featured, ...automatic].slice(0, limit);
     } catch (error) {
-        console.error('Error fetching editorial collections:', error.message || error);
+        console.error('Error fetching discoverable collections:', error.message || error);
         return [];
     }
 }
@@ -843,14 +877,42 @@ export async function getAdminEditorialCollections() {
     try {
         const { data, error } = await supabase
             .from('collections')
-            .select(EDITORIAL_COLLECTION_SELECT)
+            .select(COLLECTION_CARD_SELECT)
             .eq('is_editorial', true)
             .order('created_at', { ascending: false });
 
         if (error) throw error;
-        return (data || []).map(withEditorialCover);
+        return (data || []).map(withCollectionMeta);
     } catch (error) {
         console.error('Error fetching admin editorial collections:', error.message || error);
+        return [];
+    }
+}
+
+/**
+ * Collections publiques de la communauté, pour la mise en avant manuelle
+ * depuis `/admin/collections`. `total_photos >= 3` est indiqué côté
+ * interface (déjà visible automatiquement) plutôt que filtré ici : un admin
+ * doit pouvoir mettre en avant une collection plus jeune s'il le souhaite.
+ */
+export async function getAdminCommunityCollections({ search = '', limit = 50 } = {}) {
+    try {
+        let query = supabase
+            .from('collections')
+            .select(COLLECTION_CARD_SELECT)
+            .eq('is_editorial', false)
+            .eq('is_private', false)
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        const term = search.trim();
+        if (term) query = query.ilike('title', `%${sanitizeForOr(term)}%`);
+
+        const { data, error } = await query;
+        if (error) throw error;
+        return (data || []).map(withCollectionMeta);
+    } catch (error) {
+        console.error('Error fetching community collections:', error.message || error);
         return [];
     }
 }

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Layers, TrendingUp } from "lucide-react";
-import { getEditorialCollections, getMedia } from "../lib/database";
+import { getDiscoverableCollections, getMedia } from "../lib/database";
 
 /**
  * Panneau de découverte, inspiré de la rangée « Collections / Tendances »
@@ -21,7 +21,7 @@ import { getEditorialCollections, getMedia } from "../lib/database";
  */
 export default async function DiscoveryPanel() {
     const [collections, trending] = await Promise.all([
-        getEditorialCollections({ limit: 4 }),
+        getDiscoverableCollections({ limit: 4 }),
         getMedia({ type: "photo", sort: "populaire", limit: 4 }),
     ]);
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Layers } from "lucide-react";
-import { getEditorialCollections } from "../lib/database";
+import { getDiscoverableCollections } from "../lib/database";
 import CollectionMosaic from "../components/CollectionMosaic";
 
 export const revalidate = 600;
@@ -8,20 +8,21 @@ export const revalidate = 600;
 export const metadata = {
     title: "Collections",
     description:
-        "Des sélections d'images libres de droits construites par JEaLiFe Stock : lieux, thèmes, regards sur le Gabon et l'Afrique.",
+        "Des sélections d'images libres de droits sur JEaLiFe Stock : les choix de l'équipe et les meilleures collections de la communauté.",
     alternates: { canonical: "/collections" },
 };
 
 export default async function CollectionsPage() {
-    const collections = await getEditorialCollections({ limit: 48 });
+    const collections = await getDiscoverableCollections({ limit: 48 });
 
     return (
         <main className="min-h-screen bg-white">
             <div className="max-w-[1200px] mx-auto px-4 py-16">
                 <h1 className="text-4xl font-extrabold text-gray-900 mb-3">Collections</h1>
                 <p className="text-gray-500 mb-12 max-w-2xl">
-                    Des sélections construites par l&apos;équipe JEaLiFe Stock, à parcourir d&apos;un
-                    seul geste plutôt que thème par thème.
+                    Les sélections de l&apos;équipe JEaLiFe Stock, et les meilleures collections
+                    construites par la communauté — à parcourir d&apos;un seul geste plutôt que
+                    thème par thème.
                 </p>
 
                 {collections.length === 0 ? (

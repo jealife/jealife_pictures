@@ -23,7 +23,10 @@ export default function FeaturedTopics() {
         let cancelled = false;
 
         async function load() {
-            const featured = await getTopics({ featuredOnly: true, limit: 8 });
+            // `kind: 'category'` : un tag peut techniquement être mis en avant
+            // depuis /admin/topics sans être promu catégorie — cette vitrine
+            // ne doit montrer que la structure choisie, pas un tag isolé.
+            const featured = await getTopics({ featuredOnly: true, kind: "category", limit: 8 });
             if (cancelled) return;
 
             // On ne montre que les thèmes qui ont réellement du contenu :

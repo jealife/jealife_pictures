@@ -28,7 +28,10 @@ export default function TopicBar({ activeTopic = null }) {
     const [showRightArrow, setShowRightArrow] = useState(false);
 
     useEffect(() => {
-        getTopics({ limit: 30 }).then(setTopics);
+        // `kind: 'category'` exclut les tags nés d'un envoi (migration 0006) :
+        // cette barre doit rester une liste choisie, bornée — pas grossir
+        // avec chaque mot-clé inédit tapé par un contributeur.
+        getTopics({ limit: 30, kind: "category" }).then(setTopics);
     }, []);
 
     const checkScroll = () => {

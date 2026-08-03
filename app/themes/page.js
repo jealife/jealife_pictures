@@ -24,7 +24,10 @@ const FALLBACK_GRADIENTS = [
 ];
 
 export default async function TopicsPage() {
-    const topics = await getTopics({ limit: 200 });
+    // `kind: 'category'` : cette page reste la vitrine choisie par l'équipe
+    // (voir /admin/topics), pas une liste de tous les mots-clés jamais tapés
+    // par un contributeur — sinon elle grossirait sans fin (migration 0006).
+    const topics = await getTopics({ limit: 200, kind: "category" });
     const withMedia = topics.filter((topic) => topic.total_media > 0);
     const empty = topics.filter((topic) => topic.total_media === 0);
 
@@ -33,8 +36,8 @@ export default async function TopicsPage() {
             <div className="max-w-[1200px] mx-auto px-4 py-16">
                 <h1 className="text-4xl font-extrabold text-gray-900 mb-3">Thèmes</h1>
                 <p className="text-gray-500 mb-12 max-w-2xl">
-                    Chaque image publiée rejoint automatiquement un ou plusieurs thèmes
-                    à partir de ses mots-clés.
+                    La structure choisie par JEaLiFe Stock pour parcourir le catalogue —
+                    chaque image publiée y est rattachée selon ses mots-clés.
                 </p>
 
                 {withMedia.length > 0 && (
