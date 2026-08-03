@@ -5,6 +5,7 @@ import TopicBar from "./components/TopicBar";
 import MasonryGrid from "./components/MasonryGrid";
 import CategorySection from "./components/CategorySection";
 import FeaturedTopics from "./components/FeaturedTopics";
+import FeaturedCollections from "./components/FeaturedCollections";
 import GridFallback from "./components/GridFallback";
 import { pickShowcaseImage } from "./lib/auth-images";
 import { getMedia, PAGE_SIZE } from "./lib/database";
@@ -56,6 +57,12 @@ export default async function Home({ searchParams }) {
       {!query && (
         <Suspense fallback={null}>
           <FeaturedTopics />
+        </Suspense>
+      )}
+
+      {!query && (
+        <Suspense fallback={null}>
+          <FeaturedCollections />
         </Suspense>
       )}
 

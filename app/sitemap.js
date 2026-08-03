@@ -24,6 +24,7 @@ export default async function sitemap() {
         { path: "/illustrations", changeFrequency: "daily", priority: 0.8 },
         { path: "/videos", changeFrequency: "daily", priority: 0.8 },
         { path: "/themes", changeFrequency: "daily", priority: 0.8 },
+        { path: "/collections", changeFrequency: "weekly", priority: 0.7 },
         { path: "/pays", changeFrequency: "weekly", priority: 0.8 },
         { path: "/licence", changeFrequency: "monthly", priority: 0.6 },
         { path: "/about", changeFrequency: "monthly", priority: 0.5 },
@@ -46,7 +47,7 @@ export default async function sitemap() {
         }
     };
 
-    const [media, profiles, topics, countries] = await Promise.all([
+    const [media, profiles, topics, countries, collections] = await Promise.all([
         safeQuery(() =>
             supabase
                 .from("media")
@@ -63,6 +64,14 @@ export default async function sitemap() {
         ),
         safeQuery(() =>
             supabase.from("countries").select("slug").eq("is_african", true).limit(100)
+        ),
+        safeQuery(() =>
+            supabase
+                .from("collections")
+                .select("id, updated_at")
+                .eq("is_editorial", true)
+                .eq("is_private", false)
+                .limit(500)
         ),
     ]);
 
@@ -81,6 +90,13 @@ export default async function sitemap() {
             lastModified: now,
             changeFrequency: "weekly",
             priority: 0.7,
+        })),
+
+        ...collections.map((collection) => ({
+            url: absoluteUrl(`/collections/${collection.id}`),
+            lastModified: collection.updated_at ? new Date(collection.updated_at) : now,
+            changeFrequency: "weekly",
+            priority: 0.6,
         })),
 
         ...profiles.map((profile) => ({

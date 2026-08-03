@@ -17,6 +17,7 @@ const SECTIONS = [
             { label: "Illustrations", href: "/illustrations" },
             { label: "Vidéos", href: "/videos" },
             { label: "Thèmes", href: "/themes" },
+            { label: "Collections", href: "/collections" },
             { label: "Parcourir par pays", href: "/pays" },
         ],
     },

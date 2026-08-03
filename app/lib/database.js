@@ -763,6 +763,114 @@ export async function removeMediaFromCollection(collectionId, mediaId) {
     }
 }
 
+export async function updateCollection(collectionId, updates) {
+    try {
+        const { error } = await supabase.from('collections').update(updates).eq('id', collectionId);
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error('Error updating collection:', error.message || error);
+        return { success: false, error: friendlyErrorMessage(error, "Impossible de modifier cette collection.") };
+    }
+}
+
+export async function deleteCollection(collectionId) {
+    try {
+        const { error } = await supabase.from('collections').delete().eq('id', collectionId);
+        if (error) throw error;
+        return { success: true };
+    } catch (error) {
+        console.error('Error deleting collection:', error.message || error);
+        return { success: false, error: friendlyErrorMessage(error, "Impossible de supprimer cette collection.") };
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Collections éditoriales
+//
+// Des collections publiées au nom de JEaLiFe Stock (pas d'un compte
+// contributeur), protégées par le déclencheur de la migration 0006 : seul un
+// admin peut poser `is_editorial = true`.
+// ---------------------------------------------------------------------------
+
+const EDITORIAL_COLLECTION_SELECT = `
+    id, title, description, slug, cover_image_url, is_private, created_at,
+    profiles:user_id ( id, username, full_name, avatar_url ),
+    collection_media ( media ( id, thumbnail_url, url ) )
+`;
+
+function withEditorialCover(collection) {
+    const items = collection.collection_media || [];
+    return {
+        ...collection,
+        total_photos: items.length,
+        cover:
+            collection.cover_image_url ||
+            items[0]?.media?.thumbnail_url ||
+            items[0]?.media?.url ||
+            null,
+    };
+}
+
+/** Collections publiées par l'équipe JEaLiFe, pour la page publique `/collections`. */
+export async function getEditorialCollections({ limit = 24 } = {}) {
+    try {
+        const { data, error } = await supabase
+            .from('collections')
+            .select(EDITORIAL_COLLECTION_SELECT)
+            .eq('is_editorial', true)
+            .eq('is_private', false)
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (error) throw error;
+        return (data || []).map(withEditorialCover);
+    } catch (error) {
+        console.error('Error fetching editorial collections:', error.message || error);
+        return [];
+    }
+}
+
+/** Même chose côté admin, sans filtrer sur `is_private` (une collection éditoriale mise en pause reste visible ici). */
+export async function getAdminEditorialCollections() {
+    try {
+        const { data, error } = await supabase
+            .from('collections')
+            .select(EDITORIAL_COLLECTION_SELECT)
+            .eq('is_editorial', true)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return (data || []).map(withEditorialCover);
+    } catch (error) {
+        console.error('Error fetching admin editorial collections:', error.message || error);
+        return [];
+    }
+}
+
+export async function createEditorialCollection(adminUserId, { title, description = '', coverImageUrl = null }) {
+    try {
+        const { data, error } = await supabase
+            .from('collections')
+            .insert({
+                user_id: adminUserId,
+                title,
+                description,
+                cover_image_url: coverImageUrl,
+                is_editorial: true,
+                is_private: false,
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return { success: true, collection: data };
+    } catch (error) {
+        console.error('Error creating editorial collection:', error.message || error);
+        return { success: false, error: friendlyErrorMessage(error, "Impossible de créer cette collection.") };
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Modération
 // ---------------------------------------------------------------------------
@@ -1048,7 +1156,7 @@ export async function getAdminTopics() {
     try {
         const { data, error } = await supabase
             .from('topics')
-            .select('id, slug, name, description, cover_image_url, is_featured, total_media, created_at')
+            .select('id, slug, name, description, cover_image_url, is_featured, kind, total_media, created_at')
             .order('is_featured', { ascending: false })
             .order('total_media', { ascending: false });
 
@@ -1060,12 +1168,17 @@ export async function getAdminTopics() {
     }
 }
 
-export async function createTopic({ name, description = '', isFeatured = false }) {
+/**
+ * `kind` par défaut à 'category' : cette fonction n'est appelée que depuis
+ * `/admin/topics` (voir migration 0006 pour la distinction avec les tags nés
+ * de `syncTopics()`, qui héritent eux du défaut 'tag' de la colonne).
+ */
+export async function createTopic({ name, description = '', isFeatured = false, kind = 'category' }) {
     try {
         const slug = slugify(name);
         const { data, error } = await supabase
             .from('topics')
-            .insert({ name, slug, description, is_featured: isFeatured })
+            .insert({ name, slug, description, is_featured: isFeatured, kind })
             .select()
             .single();
 

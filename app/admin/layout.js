@@ -4,13 +4,14 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { LayoutDashboard, ShieldAlert, Users, Tag, Settings, Loader2 } from "lucide-react";
+import { LayoutDashboard, ShieldAlert, Users, Tag, Layers, Settings, Loader2 } from "lucide-react";
 
 const NAV = [
     { href: "/admin", label: "Vue d'ensemble", icon: LayoutDashboard },
     { href: "/admin/moderation", label: "Modération", icon: ShieldAlert },
     { href: "/admin/users", label: "Utilisateurs", icon: Users },
     { href: "/admin/topics", label: "Thèmes", icon: Tag },
+    { href: "/admin/collections", label: "Collections", icon: Layers },
     { href: "/admin/settings", label: "Réglages", icon: Settings },
 ];
 
