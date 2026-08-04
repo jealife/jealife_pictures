@@ -51,7 +51,7 @@ export default async function sitemap() {
         safeQuery(() =>
             supabase
                 .from("media")
-                .select("id, type, title, alt_text, url, thumbnail_url, original_url, updated_at")
+                .select("id, type, title, alt_text, url, thumbnail_url, original_url, updated_at, country_code")
                 .eq("status", "published")
                 .order("created_at", { ascending: false })
                 .limit(20000)
@@ -62,8 +62,12 @@ export default async function sitemap() {
         safeQuery(() =>
             supabase.from("topics").select("slug").gt("total_media", 0).limit(500)
         ),
+        // `countries` n'a pas de compteur de médias comme `topics` : contrairement
+        // aux thèmes, rien ici n'empêchait un pays sans la moindre photo de se
+        // retrouver indexé — filtré plus bas contre les pays réellement
+        // représentés dans `media` (déjà chargé ci-dessus).
         safeQuery(() =>
-            supabase.from("countries").select("slug").eq("is_african", true).limit(100)
+            supabase.from("countries").select("code, slug").eq("is_african", true).limit(100)
         ),
         safeQuery(() =>
             supabase
@@ -85,12 +89,19 @@ export default async function sitemap() {
             priority: 0.7,
         })),
 
-        ...countries.map((country) => ({
-            url: absoluteUrl(`/pays/${country.slug}`),
-            lastModified: now,
-            changeFrequency: "weekly",
-            priority: 0.7,
-        })),
+        ...(() => {
+            const activeCountryCodes = new Set(
+                media.map((item) => item.country_code).filter(Boolean)
+            );
+            return countries
+                .filter((country) => activeCountryCodes.has(country.code))
+                .map((country) => ({
+                    url: absoluteUrl(`/pays/${country.slug}`),
+                    lastModified: now,
+                    changeFrequency: "weekly",
+                    priority: 0.7,
+                }));
+        })(),
 
         ...collections.map((collection) => ({
             url: absoluteUrl(`/collections/${collection.id}`),

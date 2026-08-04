@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import MasonryGrid from "../../components/MasonryGrid";
 import GridFallback from "../../components/GridFallback";
-import { getCountryBySlug, getMedia, PAGE_SIZE } from "../../lib/database";
+import { getCountryBySlug, getMedia, countMedia, PAGE_SIZE } from "../../lib/database";
 
 export const revalidate = 300;
 
@@ -13,10 +13,17 @@ export async function generateMetadata({ params }) {
 
     if (!country) return { title: "Pays introuvable" };
 
+    // Une page sans la moindre photo reste utile pour le visiteur (elle invite
+    // à publier la première), mais n'a rien à faire indexée : Google traite
+    // les pages quasi vides comme un signal de mauvaise qualité pour tout le
+    // site, pas seulement pour cette page.
+    const hasMedia = (await countMedia({ type: "photo", country: country.code })) > 0;
+
     return {
         title: `Images du ${country.name_fr}`,
         description: `Photos libres de droits prises au ${country.name_fr}. Téléchargement gratuit sur JEaLiFe Stock.`,
         alternates: { canonical: `/pays/${country.slug}` },
+        ...(hasMedia ? {} : { robots: { index: false, follow: true } }),
     };
 }
 

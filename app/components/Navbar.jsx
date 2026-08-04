@@ -315,8 +315,14 @@ export default function Navbar() {
                         </div>
                     </div>
 
-                    {/* Mobile Only: Secondary row for Search Bar */}
-                    <div className="md:hidden pb-4">
+                    {/* Mobile Only: Secondary row for Search Bar — se réduit dès
+                        qu'on défile (`scrolled`, à 10px déjà) : cette rangée
+                        portait le nav collé à 121px de haut en permanence sur
+                        mobile, contre 65px sur bureau, et masquait la barre de
+                        thèmes juste en dessous (z-index inférieur, décalage
+                        insuffisant). Repliée au scroll, le nav rejoint la même
+                        hauteur que sur bureau dès que ça compte réellement. */}
+                    <div className={`md:hidden overflow-hidden transition-all duration-300 ${scrolled ? 'max-h-0 opacity-0' : 'max-h-20 opacity-100 pb-4'}`}>
                         <div className={`relative flex items-center bg-gray-100 rounded-full transition-all duration-300 ${isSearchFocused ? 'ring-2 ring-black/5 bg-white shadow-md' : ''}`}>
                             <div className="pl-4 text-gray-400">
                                 <Search className="w-4 h-4" />

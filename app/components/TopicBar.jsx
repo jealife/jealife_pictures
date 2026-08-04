@@ -97,8 +97,12 @@ export default function TopicBar({ activeTopic = null }) {
         { href: "/videos", label: "Vidéos", countKey: "video" },
     ];
 
+    // Le nav principal se réduit à 65px dès le premier défilement, y compris
+    // sur mobile (voir Navbar.jsx, la rangée de recherche mobile se replie
+    // sur `scrolled`) : un seul décalage suffit désormais, plus besoin de
+    // distinguer mobile/bureau ici.
     return (
-        <div className="sticky top-16 z-40 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+        <div className="sticky top-16 z-[45] bg-white/95 backdrop-blur-sm border-b border-gray-100">
             <div className="max-w-[1800px] mx-auto px-4 flex items-center gap-6 py-3">
                 <nav className="hidden md:flex items-center gap-1 pr-6 border-r border-gray-200 shrink-0">
                     {mediaTypes.map((type) => (

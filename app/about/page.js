@@ -1,10 +1,29 @@
-
-"use client";
-
 import Link from "next/link";
-import { Camera, Heart, Globe, ArrowRight } from "lucide-react";
+import { Camera, Heart, Globe } from "lucide-react";
+import { getPlatformStats } from "../lib/database";
+import { formatCount } from "../lib/media";
 
-export default function AboutPage() {
+export const metadata = {
+    title: "À propos",
+    description:
+        "JEaLiFe Stock est une banque d'images libres de droits qui met en avant le Gabon et l'Afrique, portée par des photographes qui gardent leurs droits.",
+    alternates: { canonical: "/about" },
+};
+
+export const revalidate = 300;
+
+/**
+ * Cette page affichait « 10k+ Photos », « 54M Téléchargements »,
+ * « 2500+ Contributeurs » — des chiffres inventés, sur un catalogue qui n'en
+ * contenait aucun. Les vrais chiffres viennent de `platform_stats`, la même
+ * source que la page d'accueil (voir CategorySection.jsx) : une catégorie
+ * encore modeste le dit franchement plutôt que de mentir.
+ */
+export default async function AboutPage() {
+    const stats = await getPlatformStats();
+    const totalMedia =
+        (stats.total_photos || 0) + (stats.total_illustrations || 0) + (stats.total_videos || 0);
+
     return (
         <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-black selection:text-white">
             {/* Hero Section */}
@@ -55,7 +74,7 @@ export default function AboutPage() {
                 </div>
             </div>
 
-            {/* Stats Section - Unsplash Style */}
+            {/* Stats Section — chiffres réels, pas une estimation */}
             <div className="bg-black text-white py-32">
                 <div className="max-w-7xl mx-auto px-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
@@ -63,22 +82,34 @@ export default function AboutPage() {
                             <div className="flex justify-center mb-6">
                                 <Camera className="w-10 h-10 text-gray-400" />
                             </div>
-                            <div className="text-5xl font-bold mb-2 tracking-tight">10k+</div>
-                            <div className="text-gray-400 uppercase tracking-widest text-sm font-semibold">Photos Gratuites</div>
+                            <div className="text-5xl font-bold mb-2 tracking-tight">
+                                {totalMedia > 0 ? formatCount(totalMedia) : "0"}
+                            </div>
+                            <div className="text-gray-400 uppercase tracking-widest text-sm font-semibold">
+                                Photos &amp; vidéos publiées
+                            </div>
                         </div>
                         <div className="p-6 border-y md:border-y-0 md:border-x border-gray-800">
                             <div className="flex justify-center mb-6">
                                 <Heart className="w-10 h-10 text-gray-400" />
                             </div>
-                            <div className="text-5xl font-bold mb-2 tracking-tight">54M</div>
-                            <div className="text-gray-400 uppercase tracking-widest text-sm font-semibold">Téléchargements</div>
+                            <div className="text-5xl font-bold mb-2 tracking-tight">
+                                {stats.total_downloads > 0 ? formatCount(stats.total_downloads) : "0"}
+                            </div>
+                            <div className="text-gray-400 uppercase tracking-widest text-sm font-semibold">
+                                Téléchargements
+                            </div>
                         </div>
                         <div className="p-6">
                             <div className="flex justify-center mb-6">
                                 <Globe className="w-10 h-10 text-gray-400" />
                             </div>
-                            <div className="text-5xl font-bold mb-2 tracking-tight">2500+</div>
-                            <div className="text-gray-400 uppercase tracking-widest text-sm font-semibold">Contributeurs</div>
+                            <div className="text-5xl font-bold mb-2 tracking-tight">
+                                {stats.total_contributors > 0 ? formatCount(stats.total_contributors) : "0"}
+                            </div>
+                            <div className="text-gray-400 uppercase tracking-widest text-sm font-semibold">
+                                Contributeur{stats.total_contributors > 1 ? "s" : ""}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -86,12 +117,13 @@ export default function AboutPage() {
 
             {/* Team CTA */}
             <div className="max-w-4xl mx-auto px-6 py-32 text-center">
-                <h2 className="text-4xl md:text-5xl font-bold mb-6">Rejoignez l&apos;équipe</h2>
+                <h2 className="text-4xl md:text-5xl font-bold mb-6">Rejoignez l&apos;aventure</h2>
                 <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
-                    Nous sommes une petite équipe avec de grandes ambitions. Aidez-nous à faire grandir la banque.
+                    JEaLiFe Stock démarre. Chaque photographe qui publie aujourd&apos;hui façonne ce que
+                    la plateforme devient.
                 </p>
-                <Link href="/team" className="inline-flex items-center gap-2 px-8 py-4 bg-black text-white rounded-full font-bold hover:bg-gray-800 transition-all hover:scale-105">
-                    Voir les carrières <ArrowRight className="w-5 h-5" />
+                <Link href="/submit" className="inline-block px-8 py-4 bg-black text-white rounded-full font-bold hover:bg-gray-800 transition-all hover:scale-105">
+                    Publier une image
                 </Link>
             </div>
         </div>
