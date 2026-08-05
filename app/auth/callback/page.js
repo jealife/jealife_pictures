@@ -69,7 +69,13 @@ function AuthCallback() {
                 });
             }
 
-            const redirectTo = searchParams.get("redirect") || "/";
+            // Même garde qu'en page de connexion : sans elle, une URL absolue
+            // glissée dans `?redirect=` transformerait ce retour OAuth en
+            // redirection ouverte vers un site tiers.
+            const rawRedirect = searchParams.get("redirect") || "/";
+            const redirectTo = rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")
+                ? rawRedirect
+                : "/";
             router.replace(redirectTo);
             router.refresh();
         }

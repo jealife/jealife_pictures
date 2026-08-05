@@ -57,7 +57,7 @@ function blobToBase64(blob) {
  * côté serveur (voir /api/moderate-upload). Rien de rejeté ici n'atteint le
  * stockage ni la table `media`.
  */
-async function runQualityCheck(processed) {
+async function runQualityCheck(processed, type) {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error("Session expirée, reconnectez-vous.");
 
@@ -74,6 +74,7 @@ async function runQualityCheck(processed) {
             mimeType: processed.mimeType,
             originalWidth: processed.width,
             originalHeight: processed.height,
+            type,
         }),
     });
 
@@ -261,7 +262,7 @@ export default function SubmitPage() {
         if (event.key !== "Enter" && event.key !== ",") return;
         event.preventDefault();
         const tag = tagsInput.trim().replace(",", "");
-        if (tag && !tags.includes(tag)) {
+        if (tag && !tags.some((t) => t.toLowerCase() === tag.toLowerCase())) {
             setTags([...tags, tag]);
             setTagsInput("");
             setTagSuggestions([]);
@@ -269,7 +270,7 @@ export default function SubmitPage() {
     };
 
     const selectTag = (tag) => {
-        if (!tags.includes(tag)) setTags([...tags, tag]);
+        if (!tags.some((t) => t.toLowerCase() === tag.toLowerCase())) setTags([...tags, tag]);
         setTagsInput("");
         setTagSuggestions([]);
     };
@@ -322,11 +323,17 @@ export default function SubmitPage() {
         setFormError(null);
 
         try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error("Session expirée, reconnectez-vous.");
+
             const base64Image = await blobToBase64(processed.thumbnail);
 
             const res = await fetch("/api/generate-metadata", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${session.access_token}`,
+                },
                 body: JSON.stringify({
                     image: base64Image,
                     mimeType: processed.mimeType,
@@ -346,8 +353,11 @@ export default function SubmitPage() {
                 setDescription(data.description);
             }
             if (data.tags && Array.isArray(data.tags)) {
-                const newTags = data.tags.filter(tag => !tags.includes(tag));
-                setTags(prev => [...prev, ...newTags]);
+                setTags((prev) => {
+                    const seen = new Set(prev.map((t) => t.toLowerCase()));
+                    const newTags = data.tags.filter((tag) => tag && !seen.has(tag.toLowerCase()));
+                    return [...prev, ...newTags];
+                });
             }
         } catch (error) {
             console.error("Génération de métadonnées impossible :", error);
@@ -401,7 +411,7 @@ export default function SubmitPage() {
             // modération de contenu. Tout ce qui est rejeté ici n'atteint
             // jamais le stockage ni la table `media`.
             goToStage("quality");
-            const phash = await runQualityCheck(processed);
+            const phash = await runQualityCheck(processed, selectedType);
 
             const folder = `${user.id}/${Date.now()}`;
             const { extension, mimeType } = processed;
@@ -486,12 +496,50 @@ export default function SubmitPage() {
                 .select("id, status")
                 .single();
 
-            if (insertError) throw insertError;
+            if (insertError) {
+                // Les 3 fichiers sont déjà sur R2 à ce stade : sans ce
+                // nettoyage, ils restent orphelins (aucune ligne `media` ne
+                // les référence, donc invisibles/supprimables nulle part
+                // dans l'admin) — best-effort, ne doit pas masquer l'erreur
+                // d'origine si le nettoyage échoue à son tour.
+                try {
+                    const { data: { session: cleanupSession } } = await supabase.auth.getSession();
+                    if (cleanupSession) {
+                        await fetch("/api/r2-delete", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                Authorization: `Bearer ${cleanupSession.access_token}`,
+                            },
+                            body: JSON.stringify({
+                                paths: [
+                                    `${folder}/thumb.${extension}`,
+                                    `${folder}/display.${extension}`,
+                                    `${folder}/original.${originalExtension}`,
+                                ],
+                            }),
+                        });
+                    }
+                } catch (cleanupErr) {
+                    console.error("Nettoyage R2 après échec de publication impossible :", cleanupErr);
+                }
+                throw insertError;
+            }
 
-            if (mediaRecord) await syncTopics(mediaRecord.id, tags);
+            // Un échec ici n'annule pas la publication (la ligne `media`
+            // existe déjà) mais laisse les tags non rattachés à
+            // `media_topics' — invisible pour l'auteur sans ce signalement,
+            // et la photo n'apparaîtrait alors jamais sur les pages thème
+            // correspondantes.
+            const topicsResult = mediaRecord ? await syncTopics(mediaRecord.id, tags) : { success: true };
 
             const slug = slugifyClient(title.trim() || altText.trim() || "photo");
-            setPublishedMedia({ id: mediaRecord.id, slug, status: mediaRecord.status });
+            setPublishedMedia({
+                id: mediaRecord.id,
+                slug,
+                status: mediaRecord.status,
+                topicsWarning: tags.length > 0 && !topicsResult.success,
+            });
             getPlatformStats().then(setPlatformStats);
             setStep(3);
         } catch (err) {
@@ -669,6 +717,13 @@ export default function SubmitPage() {
                                     </p>
                                 )}
                             </>
+                        )}
+
+                        {publishedMedia?.topicsWarning && (
+                            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 mb-6">
+                                Votre image est publiée, mais vos mots-clés n&apos;ont pas pu être enregistrés.
+                                Vous pouvez les ajouter depuis la page de modification.
+                            </p>
                         )}
 
                         {previewUrl && (

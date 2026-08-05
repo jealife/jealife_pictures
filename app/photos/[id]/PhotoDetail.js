@@ -57,10 +57,16 @@ export default function PhotoDetail() {
 
             const normalized = normalizeMedia(data);
             const canonicalPath = mediaUrl(normalized);
-            
-            // Redirection canonique silencieuse si l'URL ne correspond pas au slug
-            if (pathname !== canonicalPath && !cancelled) {
+
+            // Redirection canonique silencieuse si l'URL ne correspond pas au
+            // slug : on s'arrête là et on laisse cet effet se redéclencher
+            // une fois `pathname` mis à jour (il est dans les dépendances).
+            // Continuer ici en plus de ce second passage comptait chaque vue
+            // deux fois pour toute entrée par une URL non canonique (lien
+            // brut `/photos/123`, ancien lien partagé avant renommage…).
+            if (pathname !== canonicalPath) {
                 router.replace(canonicalPath, { scroll: false });
+                return;
             }
 
             setRaw(data);

@@ -1,15 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { Check, Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Check, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signUpWithEmail, upsertProfile } from "../lib/auth";
 import OAuthButtons from "../components/OAuthButtons";
 import AuthBackground from "../components/AuthBackground";
 
-export default function JoinPage() {
+function JoinForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    // Même garde qu'en page de connexion : /login envoie ici avec
+    // `?redirect=`, sans quoi quelqu'un qui s'inscrit depuis « Publier une
+    // image » retombait sur l'accueil au lieu de reprendre son parcours.
+    const rawRedirect = searchParams.get("redirect") || "/";
+    const redirectPath = rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")
+        ? rawRedirect
+        : "/";
+
     const [firstName, setFirstName] = useState("");
     const [lastName, setLastName] = useState("");
     const [email, setEmail] = useState("");
@@ -19,6 +29,7 @@ export default function JoinPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
+    const [usernameWarning, setUsernameWarning] = useState(false);
     const handleSignUp = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -48,17 +59,26 @@ export default function JoinPage() {
         });
 
         if (result.success) {
-            // Créer le profil utilisateur avec le username choisi
+            // Créer le profil utilisateur avec le username choisi. Un
+            // déclencheur serveur en a déjà créé un par défaut (username de
+            // repli en cas de collision) : si cette tentative échoue à son
+            // tour (ex: le username choisi est déjà pris), le compte reste
+            // fonctionnel mais avec le username de repli — sans ce
+            // signalement, l'utilisateur croyait avoir obtenu celui qu'il
+            // avait tapé.
+            let profileWarning = false;
             if (result.user) {
-                await upsertProfile(result.user.id, {
+                const profileResult = await upsertProfile(result.user.id, {
                     username: username.toLowerCase(),
                     full_name: `${firstName} ${lastName}`.trim(),
                 });
+                profileWarning = !profileResult.success;
             }
 
+            setUsernameWarning(profileWarning);
             setSuccess(true);
             setTimeout(() => {
-                router.push("/");
+                router.push(redirectPath);
                 router.refresh();
             }, 2000);
         } else {
@@ -89,11 +109,17 @@ export default function JoinPage() {
                     <div className="text-center mb-10">
                         <h1 className="text-5xl font-bold text-[#111] mb-4">S&apos;inscrire à JEaLiFe</h1>
                         <p className="text-[#111]">
-                            Vous avez déjà un compte ? <Link href="/login" className="underline text-[#767676] hover:text-[#111] transition-colors">Connexion</Link>
+                            Vous avez déjà un compte ?{" "}
+                            <Link
+                                href={redirectPath === "/" ? "/login" : `/login?redirect=${encodeURIComponent(redirectPath)}`}
+                                className="underline text-[#767676] hover:text-[#111] transition-colors"
+                            >
+                                Connexion
+                            </Link>
                         </p>
                     </div>
 
-                    <OAuthButtons onError={setError} action="S'inscrire" />
+                    <OAuthButtons redirectPath={redirectPath} onError={setError} action="S'inscrire" />
 
                     {error && (
                         <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
@@ -104,6 +130,13 @@ export default function JoinPage() {
                     {success && (
                         <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md text-green-600 text-sm">
                             Compte créé avec succès ! Redirection...
+                        </div>
+                    )}
+
+                    {success && usernameWarning && (
+                        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-md text-amber-700 text-sm">
+                            Le nom d&apos;utilisateur choisi était déjà pris : un autre a été attribué.
+                            Vous pourrez le changer dans vos paramètres.
                         </div>
                     )}
 
@@ -194,5 +227,19 @@ export default function JoinPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function JoinPage() {
+    return (
+        <Suspense
+            fallback={
+                <div className="min-h-screen flex items-center justify-center bg-white">
+                    <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
+                </div>
+            }
+        >
+            <JoinForm />
+        </Suspense>
     );
 }

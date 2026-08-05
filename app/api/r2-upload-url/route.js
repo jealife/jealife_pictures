@@ -43,6 +43,12 @@ export async function POST(request) {
         if (!path.startsWith(`${user.id}/`)) {
             return NextResponse.json({ error: "Chemin non autorisé." }, { status: 403 });
         }
+        // Sans ce contrôle, n'importe quel type MIME pouvait être signé (ex:
+        // text/html) puis servi depuis le domaine public R2 — cette route
+        // n'existe que pour des photos, illustrations et vidéos.
+        if (!/^(image|video)\//.test(contentType)) {
+            return NextResponse.json({ error: "Type de fichier non autorisé." }, { status: 400 });
+        }
 
         const uploadUrl = await getR2UploadUrl(path, contentType);
         return NextResponse.json({ uploadUrl, publicUrl: r2PublicUrl(path) });

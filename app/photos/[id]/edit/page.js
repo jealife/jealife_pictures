@@ -81,8 +81,9 @@ export default function EditPhotoPage() {
     const handleAddTag = (e) => {
         if (e.key === 'Enter' && newTag.trim()) {
             e.preventDefault();
-            if (!formData.tags.includes(newTag.trim())) {
-                setFormData({ ...formData, tags: [...formData.tags, newTag.trim()] });
+            const tag = newTag.trim();
+            if (!formData.tags.some((t) => t.toLowerCase() === tag.toLowerCase())) {
+                setFormData({ ...formData, tags: [...formData.tags, tag] });
             }
             setNewTag("");
         }
@@ -107,9 +108,16 @@ export default function EditPhotoPage() {
 
         if (result.success) {
             // Synchroniser les mots-clés avec la table topics
-            await syncTopics(id, formData.tags);
+            const topicsResult = await syncTopics(id, formData.tags);
 
-            setStatus({ type: "success", message: "Photo mise à jour avec succès !" });
+            setStatus(
+                topicsResult.success
+                    ? { type: "success", message: "Photo mise à jour avec succès !" }
+                    : {
+                        type: "success",
+                        message: "Photo mise à jour, mais les mots-clés n'ont pas pu être enregistrés. Réessayez de les modifier.",
+                    }
+            );
             const slug = slugifyClient(formData.title.trim() || formData.alt_text.trim() || "photo");
             setTimeout(() => router.push(`/photos/${id}-${slug}`), 1500);
         } else {

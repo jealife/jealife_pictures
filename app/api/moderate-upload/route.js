@@ -130,7 +130,7 @@ export async function POST(request) {
             return NextResponse.json({ error: "Session invalide, reconnectez-vous." }, { status: 401 });
         }
 
-        const { image, mimeType, originalWidth, originalHeight } = await request.json();
+        const { image, mimeType, originalWidth, originalHeight, type } = await request.json();
         if (!image) {
             return NextResponse.json({ error: "Aucune image fournie." }, { status: 400 });
         }
@@ -158,8 +158,15 @@ export async function POST(request) {
             return NextResponse.json({ error: "Les dimensions annoncées ne correspondent pas à l'image envoyée." }, { status: 400 });
         }
 
+        // Le seuil de résolution/netteté vise la qualité d'une photo : une
+        // vidéo grand public (1080p ≈ 2 Mpx par image) tombe largement en
+        // dessous sans que cela dise quoi que ce soit de sa qualité réelle —
+        // l'appliquer à la trame extraite d'une vidéo rejetait quasiment
+        // tous les envois vidéo légitimes.
+        const isVideo = type === "video";
+
         const megapixels = (originalWidth * originalHeight) / 1_000_000;
-        if (megapixels < MIN_MEGAPIXELS) {
+        if (!isVideo && megapixels < MIN_MEGAPIXELS) {
             return NextResponse.json(
                 {
                     error: `Image trop petite (${originalWidth}×${originalHeight}px, ${megapixels.toFixed(1)} Mpx) : ${MIN_MEGAPIXELS} Mpx minimum.`,
@@ -168,12 +175,14 @@ export async function POST(request) {
             );
         }
 
-        const sharpness = await measureSharpness(buffer);
-        if (sharpness < MIN_SHARPNESS_VARIANCE) {
-            return NextResponse.json(
-                { error: "Cette image semble floue ou mal mise au point. Essayez une prise plus nette." },
-                { status: 422 }
-            );
+        if (!isVideo) {
+            const sharpness = await measureSharpness(buffer);
+            if (sharpness < MIN_SHARPNESS_VARIANCE) {
+                return NextResponse.json(
+                    { error: "Cette image semble floue ou mal mise au point. Essayez une prise plus nette." },
+                    { status: 422 }
+                );
+            }
         }
 
         const phash = await computeDHash(buffer);

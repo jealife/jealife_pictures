@@ -1,7 +1,13 @@
 import { GoogleGenAI } from "@google/genai";
+import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export async function POST(request) {
     try {
@@ -10,6 +16,23 @@ export async function POST(request) {
                 { error: "La clé GEMINI_API_KEY n'est pas configurée côté serveur." },
                 { status: 500 }
             );
+        }
+        if (!SUPABASE_URL || !SUPABASE_KEY) {
+            return NextResponse.json({ error: "Configuration Supabase manquante." }, { status: 500 });
+        }
+
+        // Sans cette vérification, n'importe quel visiteur non connecté peut
+        // appeler cet endpoint en boucle et consommer indéfiniment le quota
+        // GEMINI_API_KEY (payant) du site.
+        const token = (request.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
+        if (!token) {
+            return NextResponse.json({ error: "Authentification requise." }, { status: 401 });
+        }
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        if (authError || !user) {
+            return NextResponse.json({ error: "Session invalide, reconnectez-vous." }, { status: 401 });
         }
 
         const { image, mimeType, type } = await request.json();

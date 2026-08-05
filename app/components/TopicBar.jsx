@@ -33,6 +33,7 @@ export default function TopicBar({ activeTopic = null }) {
 
     const query = searchParams.get("q");
     const country = searchParams.get("pays");
+    const orientation = searchParams.get("orientation");
 
     useEffect(() => {
         // `kind: 'category'` exclut les tags nés d'un envoi (migration 0006) :
@@ -51,11 +52,11 @@ export default function TopicBar({ activeTopic = null }) {
             return () => { cancelled = true; };
         }
 
-        getSearchTypeCounts(query, { country }).then((counts) => {
+        getSearchTypeCounts(query, { country, orientation }).then((counts) => {
             if (!cancelled) setTypeCounts(counts);
         });
         return () => { cancelled = true; };
-    }, [query, country]);
+    }, [query, country, orientation]);
 
     // Un changement de type de média ne doit jamais faire perdre la
     // recherche, le pays ou le tri en cours — seul `type` change.

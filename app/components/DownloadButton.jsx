@@ -143,6 +143,11 @@ export default function DownloadButton({ media, variant = "compact", onDownloade
                 {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             </button>
             {open && menu}
+            {error && (
+                <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 whitespace-nowrap bg-red-600 text-white text-[11px] font-medium px-2.5 py-1 rounded-md shadow-lg z-50">
+                    {error}
+                </span>
+            )}
         </div>
     );
 }

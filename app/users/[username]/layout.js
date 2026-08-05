@@ -4,13 +4,13 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getUserProfile, getUserStats } from "../../lib/database";
-import { MapPin, Globe, Mail, MoreHorizontal, UserPlus, Image as ImageIcon, Heart, Layers, BarChart3, Edit2 } from "lucide-react";
+import { MapPin, Globe, Mail, Image as ImageIcon, Heart, Layers, BarChart3, Edit2 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function UserProfileLayout({ children }) {
     const params = useParams();
     const pathname = usePathname();
-    const { user: currentUser } = useAuth();
+    const { user: currentUser, loading: authLoading } = useAuth();
     const username = params.username;
 
     const [profileUser, setProfileUser] = useState(null);
@@ -60,7 +60,11 @@ export default function UserProfileLayout({ children }) {
         );
     }
 
-    const isOwnProfile = currentUser?.id === profileUser?.id;
+    // Attend que l'état d'authentification soit résolu : sinon, sur son
+    // propre profil, un premier rendu avec `currentUser` encore `null`
+    // affichait brièvement les boutons publics ("Suivre") réservés aux
+    // visiteurs avant de basculer sur les actions propriétaire.
+    const isOwnProfile = !authLoading && currentUser?.id === profileUser?.id;
 
     // Tab logic with privacy: only public tabs (Photos, Collections) if not authenticated
     const publicTabs = [
@@ -182,16 +186,7 @@ export default function UserProfileLayout({ children }) {
                                             <Edit2 className="w-4 h-4" /> Modifier le profil
                                         </Link>
                                     </>
-                                ) : (
-                                    <>
-                                        <button className="h-10 px-6 border border-gray-300 text-gray-500 rounded-md font-medium hover:border-gray-900 hover:text-gray-900 transition-all text-sm">
-                                            <MoreHorizontal className="w-5 h-5" />
-                                        </button>
-                                        <button className="h-10 px-6 bg-[#007fff] text-white rounded-md font-medium hover:bg-[#006aff] transition-colors text-sm shadow-sm">
-                                            Suivre
-                                        </button>
-                                    </>
-                                )}
+                                ) : null}
                             </div>
                         </div>
                     </div>

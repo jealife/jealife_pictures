@@ -154,10 +154,13 @@ export default function ModerationPage() {
                                     </button>
                                     <button
                                         disabled={busyKey === key}
-                                        onClick={() => runAction(key, async () => {
-                                            await removeMedia(report.media.id);
-                                            await resolveReport(report.id);
-                                        })}
+                                        onClick={() => {
+                                            if (!window.confirm("Retirer ce média de la plateforme ?")) return;
+                                            runAction(key, async () => {
+                                                await removeMedia(report.media.id);
+                                                await resolveReport(report.id);
+                                            });
+                                        }}
                                         className="px-3 py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-1.5"
                                     >
                                         <Trash2 className="w-4 h-4" /> Retirer

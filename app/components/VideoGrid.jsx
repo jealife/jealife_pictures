@@ -13,24 +13,30 @@ export default function VideoGrid({ initialItems = null }) {
     const query = searchParams.get("q");
     const country = searchParams.get("pays");
     const orientation = searchParams.get("orientation");
+    const sort = searchParams.get("tri") ?? "defaut";
 
     const [items, setItems] = useState(() => (seeded ? normalizeMediaList(initialItems) : []));
     const [loading, setLoading] = useState(!seeded);
     const [loadingMore, setLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(!seeded || initialItems.length === PAGE_SIZE);
+    const [error, setError] = useState(null);
     // La première page vient du serveur : la redemander au montage ferait un
     // aller-retour pour rien.
     const useSeedRef = useRef(seeded);
+    // Repère une réponse `loadMore` devenue obsolète (filtre changé pendant
+    // la requête) — même logique que MasonryGrid, voir son commentaire.
+    const requestIdRef = useRef(0);
 
     const fetchPage = useCallback(
         (offset) => {
-            const options = { type: "video", limit: PAGE_SIZE, offset, country, orientation };
+            const options = { type: "video", limit: PAGE_SIZE, offset, country, orientation, sort };
             return query ? searchMedia(query, options) : getMedia(options);
         },
-        [query, country, orientation]
+        [query, country, orientation, sort]
     );
 
     useEffect(() => {
+        const requestId = ++requestIdRef.current;
         let cancelled = false;
 
         if (useSeedRef.current) {
@@ -40,11 +46,19 @@ export default function VideoGrid({ initialItems = null }) {
 
         async function load() {
             setLoading(true);
-            const rows = await fetchPage(0);
-            if (cancelled) return;
-            setItems(normalizeMediaList(rows));
-            setHasMore(rows.length === PAGE_SIZE);
-            setLoading(false);
+            setError(null);
+            try {
+                const rows = await fetchPage(0);
+                if (cancelled || requestId !== requestIdRef.current) return;
+                setItems(normalizeMediaList(rows));
+                setHasMore(rows.length === PAGE_SIZE);
+            } catch (err) {
+                if (cancelled) return;
+                console.error("Error fetching videos:", err);
+                setError("Impossible de charger les vidéos. Vérifiez votre connexion et réessayez.");
+            } finally {
+                if (!cancelled && requestId === requestIdRef.current) setLoading(false);
+            }
         }
 
         load();
@@ -52,21 +66,41 @@ export default function VideoGrid({ initialItems = null }) {
     }, [fetchPage]);
 
     const loadMore = async () => {
-        if (loadingMore) return;
+        if (loadingMore || !hasMore) return;
+
+        const requestId = requestIdRef.current;
         setLoadingMore(true);
-        const rows = await fetchPage(items.length);
-        setItems((previous) => {
-            const seen = new Set(previous.map((item) => item.id));
-            return [...previous, ...normalizeMediaList(rows).filter((item) => !seen.has(item.id))];
-        });
-        setHasMore(rows.length === PAGE_SIZE);
-        setLoadingMore(false);
+        try {
+            const rows = await fetchPage(items.length);
+            if (requestId !== requestIdRef.current) return;
+
+            setItems((previous) => {
+                const seen = new Set(previous.map((item) => item.id));
+                return [...previous, ...normalizeMediaList(rows).filter((item) => !seen.has(item.id))];
+            });
+            setHasMore(rows.length === PAGE_SIZE);
+        } catch (err) {
+            if (requestId === requestIdRef.current) {
+                console.error("Error loading more videos:", err);
+                setHasMore(false);
+            }
+        } finally {
+            setLoadingMore(false);
+        }
     };
 
     if (loading) {
         return (
             <div className="flex justify-center py-24">
                 <Loader2 className="w-6 h-6 animate-spin text-gray-300" />
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="max-w-[1600px] mx-auto px-4 py-20 text-center">
+                <p className="text-red-600 text-lg">{error}</p>
             </div>
         );
     }

@@ -6,6 +6,17 @@ import { getProfileById } from '../lib/database';
 
 const AuthContext = createContext({});
 
+// `AuthRetryableFetchError` est le nom que supabase-js donne à un échec
+// réseau pendant l'appel (offline, timeout…), par opposition à une réponse
+// du serveur qui rejette vraiment la session (ex: 401). Confondre les deux
+// dans `handleVisibilityChange`/`handleOnline` — deux handlers censés
+// justement absorber une coupure réseau — déconnectait l'utilisateur à
+// cause du réseau qu'ils sont censés gérer, alors que sa session restait
+// valide.
+function isNetworkAuthError(error) {
+    return error?.name === 'AuthRetryableFetchError';
+}
+
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
@@ -117,6 +128,7 @@ export function AuthProvider({ children }) {
             if (document.visibilityState === 'visible') {
                 supabase.auth.getUser().then(({ data: { user: freshUser }, error }) => {
                     if (isCancelled) return;
+                    if (isNetworkAuthError(error)) return;
                     if (error || !freshUser) {
                         setUser(null);
                         setProfile(null);
@@ -132,6 +144,7 @@ export function AuthProvider({ children }) {
         function handleOnline() {
             supabase.auth.getUser().then(({ data: { user: freshUser }, error }) => {
                 if (isCancelled) return;
+                if (isNetworkAuthError(error)) return;
                 if (error || !freshUser) {
                     setUser(null);
                     setProfile(null);

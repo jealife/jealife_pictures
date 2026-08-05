@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /**
@@ -45,4 +45,31 @@ export async function getR2UploadUrl(key, contentType) {
 /** URL publique définitive d'un fichier une fois envoyé. */
 export function r2PublicUrl(key) {
     return `${R2_PUBLIC_URL}/${key}`;
+}
+
+/** Chemin objet R2 à partir d'une URL publique renvoyée par `r2PublicUrl`. */
+export function r2KeyFromUrl(url) {
+    if (!url || !url.startsWith(`${R2_PUBLIC_URL}/`)) return null;
+    return url.slice(R2_PUBLIC_URL.length + 1);
+}
+
+/**
+ * Supprime un lot d'objets R2, en continuant même si l'un d'eux échoue
+ * (fichier déjà absent, etc.) : un seul objet manquant ne doit pas empêcher
+ * de nettoyer les autres.
+ */
+export async function deleteR2Objects(keys) {
+    if (!r2Client) throw new Error("Cloudflare R2 n'est pas configuré.");
+
+    const results = await Promise.allSettled(
+        keys.filter(Boolean).map((key) =>
+            r2Client.send(new DeleteObjectCommand({ Bucket: R2_BUCKET_NAME, Key: key }))
+        )
+    );
+
+    results.forEach((result, index) => {
+        if (result.status === "rejected") {
+            console.error(`Échec de suppression R2 pour "${keys[index]}" :`, result.reason);
+        }
+    });
 }

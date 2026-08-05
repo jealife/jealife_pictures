@@ -27,8 +27,15 @@ export default function AdminUsersPage() {
     }, [search]);
 
     const toggleRole = async (user) => {
-        setBusyId(user.id);
         const nextRole = user.role === "admin" ? "user" : "admin";
+        const confirmed = window.confirm(
+            nextRole === "admin"
+                ? `Donner les droits admin à @${user.username} ?`
+                : `Retirer les droits admin de @${user.username} ?`
+        );
+        if (!confirmed) return;
+
+        setBusyId(user.id);
         await setUserRole(user.id, nextRole);
         setBusyId(null);
         load(search);

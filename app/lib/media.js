@@ -212,8 +212,15 @@ export async function downloadMedia(media, sizeKey = "original") {
     if (isVideo && option.key !== "poster") {
         // On ne touche pas au format des vidéos téléchargées
         blob = await (await fetch(source)).blob();
+    } else if (!isVideo && option.key === "original") {
+        // « Format original » doit livrer le fichier tel qu'envoyé : le
+        // reconvertir en JPEG romprait la transparence d'un PNG/WebP tout
+        // en contredisant le libellé du bouton.
+        const response = await fetch(source);
+        if (!response.ok) throw new Error("Téléchargement du fichier impossible");
+        blob = await response.blob();
     } else {
-        // Pour toutes les images (ou le poster vidéo), on force la conversion en JPEG
+        // Petit / Moyen / aperçu vidéo : taille prévisible, on force le JPEG.
         blob = await resizeRemoteImage(source, option.width, true);
     }
 

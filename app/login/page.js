@@ -55,6 +55,10 @@ function LoginForm() {
         if (result.success) {
             router.push(redirectPath);
             router.refresh();
+            // Navigation normalement immédiate, mais si elle est lente ou
+            // interrompue (retour arrière, connexion capricieuse), le
+            // bouton ne doit pas rester bloqué en "Connexion…" indéfiniment.
+            setSubmitting(false);
         } else {
             setError(result.error);
             setSubmitting(false);

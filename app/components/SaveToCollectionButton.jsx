@@ -27,6 +27,7 @@ export default function SaveToCollectionButton({ mediaId, variant = "overlay", c
     const [savedIn, setSavedIn] = useState(new Set());
     const [creating, setCreating] = useState(false);
     const [newTitle, setNewTitle] = useState("");
+    const [error, setError] = useState(null);
     const containerRef = useRef(null);
 
     useEffect(() => {
@@ -60,8 +61,10 @@ export default function SaveToCollectionButton({ mediaId, variant = "overlay", c
     };
 
     const save = async (collectionId) => {
+        setError(null);
         const ok = await addMediaToCollection(collectionId, mediaId);
         if (ok) setSavedIn((prev) => new Set(prev).add(collectionId));
+        else setError("Impossible d'enregistrer dans cette collection.");
     };
 
     const handleCreate = async (event) => {
@@ -69,12 +72,15 @@ export default function SaveToCollectionButton({ mediaId, variant = "overlay", c
         const title = newTitle.trim();
         if (!title) return;
 
+        setError(null);
         const { success, collection } = await createCollection(user.id, { title });
         if (success && collection) {
             setCollections((prev) => [collection, ...prev]);
             setNewTitle("");
             setCreating(false);
             await save(collection.id);
+        } else {
+            setError("Impossible de créer cette collection.");
         }
     };
 
@@ -100,6 +106,10 @@ export default function SaveToCollectionButton({ mediaId, variant = "overlay", c
                     <p className="px-4 pt-3 pb-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                         Enregistrer dans
                     </p>
+
+                    {error && (
+                        <p className="px-4 pb-2 text-xs text-red-600">{error}</p>
+                    )}
 
                     {loading ? (
                         <div className="flex justify-center py-6">

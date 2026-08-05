@@ -258,11 +258,11 @@ export async function countMedia({ query = '', type = null, country = null, orie
 }
 
 /** Un comptage par type de contenu (Photos/Illustrations/Vidéos), pour les onglets pendant une recherche. */
-export async function getSearchTypeCounts(query, { country = null } = {}) {
+export async function getSearchTypeCounts(query, { country = null, orientation = null } = {}) {
     const [photo, illustration, video] = await Promise.all([
-        countMedia({ query, type: 'photo', country }),
-        countMedia({ query, type: 'illustration', country }),
-        countMedia({ query, type: 'video', country }),
+        countMedia({ query, type: 'photo', country, orientation }),
+        countMedia({ query, type: 'illustration', country, orientation }),
+        countMedia({ query, type: 'video', country, orientation }),
     ]);
     return { photo, illustration, video };
 }
@@ -272,6 +272,8 @@ export async function getMediaByTopic(topicSlug, {
     limit = PAGE_SIZE,
     offset = 0,
     sort = 'defaut',
+    country = null,
+    orientation = null,
 } = {}) {
     try {
         let query = supabase
@@ -281,6 +283,8 @@ export async function getMediaByTopic(topicSlug, {
             .eq('media_topics.topics.slug', topicSlug);
 
         if (type) query = query.eq('type', type);
+        if (country) query = query.eq('country_code', country.toUpperCase());
+        if (orientation) query = query.eq('orientation', orientation);
 
         const { data, error } = await applyPagination(
             applySort(query, sort),
@@ -618,8 +622,25 @@ export async function updateMedia(mediaId, updates) {
 
 export async function deleteMedia(mediaId) {
     try {
-        const { error } = await supabase.from('media').delete().eq('id', mediaId);
-        if (error) throw error;
+        // Passe par une route serveur plutôt qu'un DELETE direct : elle seule
+        // a les identifiants Cloudflare R2 nécessaires pour retirer aussi les
+        // fichiers (vignette, version web, original), sans quoi une photo
+        // "supprimée" restait accessible indéfiniment à son URL.
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("Session expirée, reconnectez-vous.");
+
+        const res = await fetch('/api/delete-media', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ mediaId }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Impossible de supprimer cette photo.");
+
         return { success: true };
     } catch (error) {
         console.error('Error deleting media:', error.message || error);

@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Layers, Loader2, Lock, Share2, Check } from "lucide-react";
 import PhotoCard from "../../components/PhotoCard";
+import VideoCard from "../../components/VideoCard";
 import { getCollection } from "../../lib/database";
 import { normalizeMediaList, avatarFallback } from "../../lib/media";
 
@@ -127,7 +128,21 @@ export default function CollectionDetail() {
                     </p>
                 ) : (
                     <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6">
-                        {items.map((item) => <PhotoCard key={item.id} photo={item} />)}
+                        {items.map((item) =>
+                            item.type === "video" ? (
+                                // VideoCard n'a pas ces classes par défaut : dans
+                                // MasonryGrid, la colonne flex qui l'entoure s'en
+                                // charge déjà, mais ici la mise en page est en
+                                // colonnes CSS (comme PhotoCard.jsx), donc il les
+                                // faut explicitement pour ne pas couper la carte
+                                // entre deux colonnes.
+                                <div key={item.id} className="mb-6 break-inside-avoid">
+                                    <VideoCard video={item} />
+                                </div>
+                            ) : (
+                                <PhotoCard key={item.id} photo={item} />
+                            )
+                        )}
                     </div>
                 )}
             </div>

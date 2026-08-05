@@ -136,11 +136,18 @@ export default function MasonryGrid({
     const loadMore = useCallback(async () => {
         if (loadingMore || loading || !hasMore) return;
 
+        // Capturé avant l'attente réseau : si un changement de filtre
+        // survient pendant le chargement, le rechargement complet qu'il
+        // déclenche incrémente ce compteur, ce qui permet ici de repérer
+        // une réponse devenue obsolète et de ne pas la fusionner avec les
+        // résultats du nouveau filtre.
+        const requestId = requestIdRef.current;
         setLoadingMore(true);
         try {
             const rows = await fetchPage(items.length);
-            const normalized = normalizeMediaList(rows);
+            if (requestId !== requestIdRef.current) return;
 
+            const normalized = normalizeMediaList(rows);
             setItems((previous) => {
                 // Le classement peut faire réapparaître un média déjà chargé ;
                 // on déduplique plutôt que d'afficher deux fois la même photo.
@@ -149,12 +156,24 @@ export default function MasonryGrid({
             });
             setHasMore(rows.length === PAGE_SIZE);
         } catch (err) {
-            console.error("Error loading more media:", err);
-            setHasMore(false);
+            if (requestId === requestIdRef.current) {
+                console.error("Error loading more media:", err);
+                setHasMore(false);
+            }
         } finally {
             setLoadingMore(false);
         }
     }, [fetchPage, hasMore, items.length, loading, loadingMore]);
+
+    // Le callback observé doit toujours voir la dernière version de
+    // `loadMore` sans que cela force à reconstruire l'observer : recréer
+    // l'observer à chaque page chargée (loadMore change d'identité avec
+    // items.length) fait que `observe()` réévalue aussitôt la sentinelle,
+    // et si elle est encore dans la marge de 600px (écrans hauts, cartes
+    // courtes), redéclenche un chargement en cascade sans scroll de
+    // l'utilisateur.
+    const loadMoreRef = useRef(loadMore);
+    useEffect(() => { loadMoreRef.current = loadMore; }, [loadMore]);
 
     // Chargement à l'approche du bas de page.
     useEffect(() => {
@@ -162,23 +181,42 @@ export default function MasonryGrid({
         if (!sentinel || !hasMore || loading) return;
 
         const observer = new IntersectionObserver(
-            (entries) => { if (entries[0].isIntersecting) loadMore(); },
+            (entries) => { if (entries[0].isIntersecting) loadMoreRef.current(); },
             { rootMargin: "600px" }
         );
 
         observer.observe(sentinel);
         return () => observer.disconnect();
-    }, [hasMore, loading, loadMore]);
+    }, [hasMore, loading]);
 
     // Cœurs déjà donnés par l'utilisateur connecté.
+    //
+    // Ne requête que les médias pas encore vus (`queriedLikeIdsRef`) et
+    // fusionne le résultat au lieu de remplacer tout le Set : cet effet
+    // dépend de `items`, donc se redéclenche à chaque page chargée par
+    // `loadMore`. Sans ces deux garde-fous, un like posé pendant qu'une de
+    // ces requêtes est en vol se faisait écraser par une réponse qui ne le
+    // connaissait pas encore, faisant revenir le cœur à vide alors que le
+    // like était bien enregistré (voir LikeButton, bascule optimiste).
+    const queriedLikeIdsRef = useRef(new Set());
     useEffect(() => {
-        if (!user || items.length === 0) {
-            setLikedIds(new Set());
-            return;
-        }
+        queriedLikeIdsRef.current = new Set();
+        setLikedIds(new Set());
+    }, [user]);
+
+    useEffect(() => {
+        if (!user || items.length === 0) return;
+
+        const unqueried = items
+            .map((item) => item.id)
+            .filter((id) => !queriedLikeIdsRef.current.has(id));
+        if (unqueried.length === 0) return;
+
+        unqueried.forEach((id) => queriedLikeIdsRef.current.add(id));
+
         let cancelled = false;
-        getLikedMediaIds(user.id, items.map((item) => item.id)).then((ids) => {
-            if (!cancelled) setLikedIds(ids);
+        getLikedMediaIds(user.id, unqueried).then((ids) => {
+            if (!cancelled) setLikedIds((previous) => new Set([...previous, ...ids]));
         });
         return () => { cancelled = true; };
     }, [user, items]);

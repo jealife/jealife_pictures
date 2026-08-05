@@ -416,7 +416,7 @@ export default function SettingsPage() {
 
                                 <div className="pt-10 border-t border-gray-100 italic">
                                     <p className="text-xs text-gray-400 text-center">
-                                        Membre depuis : {new Date(user?.createdAt || Date.now()).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+                                        Membre depuis : {new Date(user?.created_at || Date.now()).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
                                     </p>
                                 </div>
                             </form>

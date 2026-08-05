@@ -23,13 +23,21 @@ export async function generateMetadata({ params }) {
     };
 }
 
-export default async function TopicPage({ params }) {
+export default async function TopicPage({ params, searchParams }) {
     const { slug } = await params;
+    const query = await searchParams;
     const topic = await getTopicBySlug(slug);
 
     if (!topic) notFound();
 
-    const initialItems = await getMediaByTopic(topic.slug, { limit: PAGE_SIZE });
+    // Sans ces deux filtres, une entrée directe sur une URL déjà filtrée
+    // (lien partagé, retour en arrière) affichait toutes les images du
+    // thème le temps d'un aller-retour client, alors que TopicBar affiche
+    // aussitôt le filtre comme actif — voir MasonryGrid/CountryFilter.
+    const country = query?.pays || null;
+    const orientation = query?.orientation || null;
+
+    const initialItems = await getMediaByTopic(topic.slug, { limit: PAGE_SIZE, country, orientation });
 
     return (
         <main className="min-h-screen bg-white">
