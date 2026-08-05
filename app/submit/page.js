@@ -30,6 +30,8 @@ const UPLOAD_STAGES = {
     publish: { percent: 100, label: "Publication…" },
 };
 
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 Mo, annoncé dans l'UI (voir zone de dépôt)
+
 const POPULAR_TAGS = [
     "Nature", "Forêt", "Océan", "Portrait", "Culture", "Faune",
     "Architecture", "Plage", "Marché", "Vie quotidienne", "Voyage",
@@ -192,6 +194,13 @@ export default function SubmitPage() {
             detectedType = "illustration";
         } else if (!selected.type.startsWith("image/")) {
             setFormError("Format de fichier non supporté. Seules les images et les vidéos sont acceptées.");
+            return;
+        }
+
+        if (selected.size > MAX_FILE_SIZE) {
+            setFormError(
+                `Ce fichier est trop volumineux (${formatFileSize(selected.size)}). La taille maximale acceptée est de 50 Mo.`
+            );
             return;
         }
 
