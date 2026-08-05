@@ -733,6 +733,40 @@ export async function getUserLikedMedia(userId, { limit = PAGE_SIZE, offset = 0 
     }
 }
 
+/**
+ * Historique des téléchargements (table `media_downloads`, migration 0009).
+ *
+ * Un même média peut avoir été téléchargé plusieurs fois (tailles
+ * différentes, essais…) : on demande davantage de lignes que `limit` et on
+ * déduplique ici par média, en gardant l'occurrence la plus récente, pour ne
+ * pas répéter la même image dans la grille.
+ */
+export async function getUserDownloadHistory(userId, { limit = PAGE_SIZE } = {}) {
+    try {
+        const { data, error } = await supabase
+            .from('media_downloads')
+            .select(`created_at, media ( ${CARD_SELECT} )`)
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(limit * 3);
+
+        if (error) throw error;
+
+        const seen = new Set();
+        const unique = [];
+        for (const row of data || []) {
+            if (!row.media || seen.has(row.media.id)) continue;
+            seen.add(row.media.id);
+            unique.push(row.media);
+            if (unique.length >= limit) break;
+        }
+        return unique;
+    } catch (error) {
+        console.error('Error fetching download history:', error.message || error);
+        return [];
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Compteurs — via RPC SECURITY DEFINER. L'ancienne version tentait un UPDATE
 // direct depuis le navigateur, que la RLS refusait à tout visiteur non
