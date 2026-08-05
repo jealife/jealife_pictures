@@ -133,7 +133,7 @@ export default function PhotoDetail() {
         <div className="min-h-screen bg-white">
 
             {/* Sticky Bar */}
-            <div className="sticky top-0 sm:top-16 z-30 bg-white px-4 h-[72px] flex items-center justify-between gap-3">
+            <div className="sticky top-16 z-30 bg-white px-4 h-[72px] flex items-center justify-between gap-3">
                 <div className="flex items-center gap-1 min-w-0">
                     {/* <button
                         onClick={() => router.back()}
@@ -393,7 +393,7 @@ export default function PhotoDetail() {
                 <section className="mt-10 border-t border-gray-100 bg-gray-50/50">
                     <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-16">
                         <h2 className="text-2xl font-black text-gray-900 mb-8">Images similaires</h2>
-                        <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6">
+                        <div className="columns-2 lg:columns-3 xl:columns-4 gap-3 sm:gap-6">
                             {related.map((item) => (
                                 <PhotoCard key={item.id} photo={item} hideActions />
                             ))}
@@ -480,7 +480,7 @@ function ShareModal({ photo, copied, onCopy, onClose }) {
 function DetailSkeleton() {
     return (
         <div className="min-h-screen bg-white">
-            <div className="sticky top-0 sm:top-16 z-30 bg-white border-b border-gray-100 px-4 h-[72px] flex items-center justify-between animate-pulse">
+            <div className="sticky top-16 z-30 bg-white border-b border-gray-100 px-4 h-[72px] flex items-center justify-between animate-pulse">
                 <div className="flex items-center gap-4">
                     <div className="w-9 h-9 bg-gray-100 rounded-full" />
                     <div className="w-10 h-10 bg-gray-100 rounded-full" />
