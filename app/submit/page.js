@@ -533,7 +533,7 @@ export default function SubmitPage() {
                     <div className="max-w-3xl mx-auto">
                         <div className="text-center mb-12">
                             <h1 className="text-4xl font-extrabold text-gray-900 mb-4">
-                                Contribuez à JEaLiFe
+                                Contribuez à JEaLiFe Stock
                             </h1>
                             <p className="text-lg text-gray-500">
                                 Partagez votre regard, gardez vos droits.
