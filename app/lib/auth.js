@@ -189,6 +189,17 @@ export async function upsertProfile(userId, profileData) {
             .single();
 
         if (error) throw error;
+
+        // Synchroniser également user_metadata dans Supabase Auth
+        if (profileData.avatar_url || profileData.full_name) {
+            await supabase.auth.updateUser({
+                data: {
+                    ...(profileData.avatar_url ? { avatar_url: profileData.avatar_url } : {}),
+                    ...(profileData.full_name ? { full_name: profileData.full_name } : {}),
+                }
+            }).catch(() => {});
+        }
+
         return { success: true, profile: data };
     } catch (error) {
         console.error('Error upserting profile:', {
@@ -201,3 +212,4 @@ export async function upsertProfile(userId, profileData) {
         return { success: false, error: authErrorMessage(error, "Impossible de mettre à jour le profil. Réessayez.") };
     }
 }
+
