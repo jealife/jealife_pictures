@@ -72,8 +72,7 @@ export default function MasonryGrid({
             const width = window.innerWidth;
             if (width < 640) setColumnCount(mobileColumns || 1);
             else if (width < 1024) setColumnCount(2);
-            else if (width < 1280) setColumnCount(3);
-            else setColumnCount(4);
+            else setColumnCount(3);
         };
 
         updateColumns();
