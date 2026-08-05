@@ -1,14 +1,23 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { BadgeCheck, MapPin } from "lucide-react";
 import LikeButton from "./LikeButton";
 import DownloadButton from "./DownloadButton";
 import SaveToCollectionButton from "./SaveToCollectionButton";
+import ImageLoader from "./ImageLoader";
 import { locationLabel, mediaUrl } from "../lib/media";
 
 export default function PhotoCard({ photo, liked = false, hideActions = false, priority = false }) {
+    // Chargement progressif : sans cet état, les images d'une même page
+    // "popaient" toutes en même temps dès qu'elles franchissaient le seuil
+    // de lazy-loading, ce qui donnait l'impression que tout s'affichait
+    // d'un bloc. Chacune garde désormais son propre skeleton et ne
+    // s'affiche qu'une fois réellement prête.
+    const [loaded, setLoaded] = useState(false);
+
     if (!photo) return null;
 
     const place = locationLabel(photo);
@@ -21,30 +30,42 @@ export default function PhotoCard({ photo, liked = false, hideActions = false, p
                     <Link href={mediaUrl(photo)} className="block">
                         {hasDimensions ? (
                             <div className="relative w-full" style={{ aspectRatio: `${photo.width} / ${photo.height}` }}>
+                                {!loaded && <ImageLoader />}
                                 <Image
                                     src={photo.thumbnailUrl}
                                     alt={photo.alt}
                                     fill
-                                    className="object-cover transform transition-transform duration-700 group-hover:scale-105 cursor-zoom-in"
+                                    className={`object-cover transform transition-all duration-700 group-hover:scale-105 cursor-zoom-in ${
+                                        loaded ? "opacity-100" : "opacity-0"
+                                    }`}
                                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
                                     quality={85}
                                     priority={priority}
+                                    onLoad={() => setLoaded(true)}
+                                    onError={() => setLoaded(true)}
                                     {...(photo.blurDataURL
                                         ? { placeholder: "blur", blurDataURL: photo.blurDataURL }
                                         : {})}
                                 />
                             </div>
                         ) : (
-                            <Image
-                                src={photo.thumbnailUrl}
-                                alt={photo.alt}
-                                width={0}
-                                height={0}
-                                sizes="100vw"
-                                className="w-full h-auto block object-cover transform transition-transform duration-700 group-hover:scale-105 cursor-zoom-in"
-                                quality={85}
-                                loading="lazy"
-                            />
+                            <div className="relative w-full min-h-[220px]">
+                                {!loaded && <ImageLoader />}
+                                <Image
+                                    src={photo.thumbnailUrl}
+                                    alt={photo.alt}
+                                    width={0}
+                                    height={0}
+                                    sizes="100vw"
+                                    className={`w-full h-auto block object-cover transform transition-all duration-700 group-hover:scale-105 cursor-zoom-in ${
+                                        loaded ? "opacity-100" : "opacity-0"
+                                    }`}
+                                    quality={85}
+                                    loading="lazy"
+                                    onLoad={() => setLoaded(true)}
+                                    onError={() => setLoaded(true)}
+                                />
+                            </div>
                         )}
                     </Link>
                 </div>

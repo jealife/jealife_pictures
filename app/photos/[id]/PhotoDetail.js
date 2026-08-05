@@ -250,6 +250,12 @@ export default function PhotoDetail() {
                             alt={photo.alt}
                             width={photo.width || 1200}
                             height={photo.height || 800}
+                            // Borne la taille réellement demandée à l'optimiseur d'images
+                            // (lui-même adossé à R2 via next.config.js) : sans cet indice,
+                            // Next suppose par défaut une image sur 100 % de la largeur de
+                            // l'écran et va chercher une variante inutilement grande sur
+                            // desktop, alors que `max-height` limite déjà l'affichage réel.
+                            sizes="(max-width: 768px) 100vw, (max-width: 1536px) 90vw, 1600px"
                             className="w-auto h-auto max-w-full object-contain"
                             style={{ maxHeight: "calc(100vh - 140px)" }}
                             priority

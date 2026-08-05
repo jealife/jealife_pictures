@@ -1,13 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Play, MapPin } from "lucide-react";
 import LikeButton from "./LikeButton";
 import SaveToCollectionButton from "./SaveToCollectionButton";
+import ImageLoader from "./ImageLoader";
 import { locationLabel, mediaUrl } from "../lib/media";
 
 export default function VideoCard({ video, liked = false }) {
+    const [loaded, setLoaded] = useState(false);
+
     if (!video) return null;
 
     const place = locationLabel(video);
@@ -18,13 +22,18 @@ export default function VideoCard({ video, liked = false }) {
             <div className="relative w-full overflow-hidden rounded-2xl bg-gray-900 shadow-sm transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
                 <Link href={mediaUrl(video)} className="block">
                     <div className="relative w-full" style={video.width && video.height ? { aspectRatio: `${video.width} / ${video.height}` } : { aspectRatio: '16/9' }}>
+                        {!loaded && <ImageLoader />}
                         <Image
                             src={poster}
                             alt={video.alt}
                             fill
                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                             quality={85}
-                            className="object-cover transition-transform duration-700 group-hover:scale-105 opacity-90 group-hover:opacity-100"
+                            className={`object-cover transition-all duration-700 group-hover:scale-105 ${
+                                loaded ? "opacity-90 group-hover:opacity-100" : "opacity-0"
+                            }`}
+                            onLoad={() => setLoaded(true)}
+                            onError={() => setLoaded(true)}
                             {...(video.blurDataURL
                                 ? { placeholder: "blur", blurDataURL: video.blurDataURL }
                                 : {})}
