@@ -93,7 +93,7 @@ async function checkContentWithAI(buffer, mimeType) {
     `;
 
     const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-flash-latest",
         contents: [
             prompt,
             { inlineData: { data: buffer.toString("base64"), mimeType } },
