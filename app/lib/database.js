@@ -96,6 +96,41 @@ export async function getMedia({
     }
 }
 
+/**
+ * Image de fond du hero d'accueil. Utilisait auparavant une photo Unsplash
+ * de décor (le même pool que les pages de connexion) créditée « JEaLiFe
+ * Stock » avec un lien sortant vers un compte Unsplash externe — trompeur,
+ * et sans rapport avec le catalogue réel. On tire maintenant une vraie photo
+ * publiée, au format paysage, parmi les plus populaires, et son crédit
+ * renvoie vers la fiche du photographe sur le site.
+ */
+export async function getHeroBackground() {
+    try {
+        const { data, error } = await supabase
+            .from('media')
+            .select('url, title, alt_text, profiles:user_id ( username, full_name )')
+            .eq('status', 'published')
+            .eq('type', 'photo')
+            .eq('orientation', 'paysage')
+            .order('downloads_count', { ascending: false })
+            .order('likes_count', { ascending: false })
+            .limit(10);
+
+        if (error) throw error;
+        if (data && data.length > 0) {
+            const pick = data[Math.floor(Math.random() * data.length)];
+            return {
+                url: pick.url,
+                photographer: pick.profiles?.full_name || 'JEaLiFe Stock',
+                photographer_url: pick.profiles?.username ? `/users/${pick.profiles.username}` : null,
+            };
+        }
+    } catch (error) {
+        console.error('Error fetching hero background:', error.message || error);
+    }
+    return null;
+}
+
 export async function getMediaById(id) {
     try {
         const { data, error } = await supabase

@@ -68,7 +68,7 @@ export default function UploadProgress({ percent = 0, label }) {
     const isVerySlow = elapsed >= VERY_SLOW_HINT_DELAY_MS;
 
     const hint = isVerySlow
-        ? "Ça prend beaucoup plus de temps que prévu. Votre connexion semble très lente — merci de patienter encore un peu."
+        ? "Ça prend beaucoup plus de temps que prévu. Votre connexion semble très lente, merci de patienter encore un peu."
         : isSlow
         ? "Cela prend plus de temps que d'habitude, votre connexion semble lente. Continuez de patienter."
         : connectionHint;

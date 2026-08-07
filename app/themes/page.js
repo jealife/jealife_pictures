@@ -36,7 +36,7 @@ export default async function TopicsPage() {
             <div className="max-w-[1200px] mx-auto px-4 py-16">
                 <h1 className="text-4xl font-extrabold text-gray-900 mb-3">Thèmes</h1>
                 <p className="text-gray-500 mb-12 max-w-2xl">
-                    La structure choisie par JEaLiFe Stock pour parcourir le catalogue —
+                    La structure choisie par JEaLiFe Stock pour parcourir le catalogue :
                     chaque image publiée y est rattachée selon ses mots-clés.
                 </p>
 

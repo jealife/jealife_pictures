@@ -8,7 +8,7 @@ import FeaturedTopics from "./components/FeaturedTopics";
 import DiscoveryPanel from "./components/DiscoveryPanel";
 import GridFallback from "./components/GridFallback";
 import { pickShowcaseImage } from "./lib/auth-images";
-import { getMedia, countMedia, PAGE_SIZE } from "./lib/database";
+import { getMedia, getHeroBackground, countMedia, PAGE_SIZE } from "./lib/database";
 
 export default async function Home({ searchParams }) {
   const params = await searchParams;
@@ -26,9 +26,14 @@ export default async function Home({ searchParams }) {
     ? await countMedia({ query, type: "photo", country: params?.pays || null, orientation })
     : null;
 
+  // Une vraie photo du catalogue plutôt qu'un visuel de décor Unsplash : le
+  // hero d'accueil doit montrer ce que la plateforme publie réellement, pas
+  // une image d'emprunt créditée sous le nom de la marque.
+  const heroBackground = query ? null : (await getHeroBackground()) || pickShowcaseImage();
+
   return (
     <main className="min-h-screen bg-white">
-      {!query && <Hero background={pickShowcaseImage()} />}
+      {!query && <Hero background={heroBackground} />}
       {!query && <CategorySection />}
 
       {!query && (

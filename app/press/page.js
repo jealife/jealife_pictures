@@ -76,7 +76,7 @@ export default function PressPage() {
             <div className="max-w-7xl mx-auto px-6 py-24">
                 <h2 className="text-3xl font-bold mb-6 border-b border-gray-200 pb-4">Dernières Annonces</h2>
                 <p className="text-gray-500">
-                    Rien à annoncer pour l&apos;instant — revenez bientôt, ou écrivez-nous si vous
+                    Rien à annoncer pour l&apos;instant. Revenez bientôt, ou écrivez-nous si vous
                     préparez un article et avez besoin d&apos;informations.
                 </p>
             </div>

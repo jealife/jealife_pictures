@@ -127,7 +127,7 @@ export default function CollectionDetail() {
                         Cette collection est encore vide.
                     </p>
                 ) : (
-                    <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6">
+                    <div className="columns-2 sm:columns-2 lg:columns-3 gap-3 sm:gap-6">
                         {items.map((item) =>
                             item.type === "video" ? (
                                 // VideoCard n'a pas ces classes par défaut : dans

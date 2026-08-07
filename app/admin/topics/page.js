@@ -111,7 +111,7 @@ export default function AdminTopicsPage() {
             <section>
                 <h2 className="text-2xl font-bold text-gray-900 mb-1">Tags</h2>
                 <p className="text-gray-500 text-sm mb-6">
-                    Nés des mots-clés saisis par les contributeurs à l&apos;envoi — pas créés depuis
+                    Nés des mots-clés saisis par les contributeurs à l&apos;envoi, pas créés depuis
                     l&apos;admin. Supprimez les tags de spam, ou promouvez-en un en catégorie s&apos;il
                     mérite une place fixe dans la structure du site.
                 </p>
@@ -128,7 +128,7 @@ export default function AdminTopicsPage() {
                     onCancelEdit={() => setEditingId(null)}
                     onRemove={remove}
                     onPromote={promoteToCategory}
-                    emptyLabel="Aucun tag pour l'instant — ils apparaissent au premier envoi qui en utilise un nouveau."
+                    emptyLabel="Aucun tag pour l'instant. Ils apparaissent au premier envoi qui en utilise un nouveau."
                 />
             </section>
         </div>

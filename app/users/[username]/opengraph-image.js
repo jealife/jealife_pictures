@@ -3,7 +3,7 @@ import { getUserProfile } from "../../lib/database";
 import { supabase } from "../../lib/supabase";
 import { SITE_URL } from "../../lib/site";
 
-export const alt = "Profil photographe — JEaLiFe Stock";
+export const alt = "Profil photographe sur JEaLiFe Stock";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

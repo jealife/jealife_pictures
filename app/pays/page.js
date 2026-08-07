@@ -51,7 +51,13 @@ export default async function CountriesPage() {
                                 {label}
                             </h2>
                             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                                {countries.map((country) => {
+                                {/* Les pays déjà représentés d'abord : sur 54 pays, un
+                                    seul en a — les noyer dans une liste alphabétique
+                                    de destinations vides laissait croire que tout le
+                                    monde était cliquable pour de vraies photos. */}
+                                {[...countries]
+                                    .sort((a, b) => (counts.get(b.code) || 0) - (counts.get(a.code) || 0))
+                                    .map((country) => {
                                     const count = counts.get(country.code) || 0;
                                     return (
                                         <Link
@@ -60,7 +66,7 @@ export default async function CountriesPage() {
                                             className={`flex items-center justify-between gap-2 px-4 py-3 border rounded-xl transition-all ${
                                                 count > 0
                                                     ? "border-gray-200 hover:border-black hover:shadow-sm"
-                                                    : "border-gray-100 opacity-60 hover:opacity-100"
+                                                    : "border-gray-100 opacity-50 hover:opacity-100"
                                             }`}
                                         >
                                             <span className="flex items-center gap-2 min-w-0">
@@ -68,11 +74,9 @@ export default async function CountriesPage() {
                                                     {country.name_fr}
                                                 </span>
                                             </span>
-                                            {count > 0 && (
-                                                <span className="text-[10px] font-bold text-gray-400 shrink-0">
-                                                    {count}
-                                                </span>
-                                            )}
+                                            <span className={`text-[10px] font-bold shrink-0 ${count > 0 ? "text-gray-400" : "text-gray-300"}`}>
+                                                {count > 0 ? count : "Bientôt"}
+                                            </span>
                                         </Link>
                                     );
                                 })}

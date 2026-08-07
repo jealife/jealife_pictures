@@ -131,14 +131,13 @@ export default function Hero({ background }) {
 
             <div className="absolute bottom-6 left-6 text-xs text-white/70 z-10 hidden md:flex items-center gap-2">
                 <span>Photo par</span>
-                <a
-                    href={background.photographer_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-white hover:underline font-medium"
-                >
-                    {background.photographer}
-                </a>
+                {background.photographer_url ? (
+                    <Link href={background.photographer_url} className="text-white hover:underline font-medium">
+                        {background.photographer}
+                    </Link>
+                ) : (
+                    <span className="text-white font-medium">{background.photographer}</span>
+                )}
             </div>
         </div>
     );

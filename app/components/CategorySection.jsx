@@ -45,7 +45,7 @@ export default function CategorySection() {
 
     const label = (count) => {
         if (stats === null) return "Chargement…";
-        if (!count) return "Rien encore — soyez le premier";
+        if (!count) return "Rien encore, soyez le premier";
         return `${formatCount(count)} disponible${count > 1 ? "s" : ""}`;
     };
 

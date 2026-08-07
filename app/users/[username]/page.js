@@ -33,7 +33,7 @@ export async function generateMetadata({ params }) {
         `Photos libres de droits, à télécharger gratuitement.`;
 
     return {
-        title: `${name} — photographe`,
+        title: `${name}, photographe`,
         description: description.replace(/\s+/g, " ").trim(),
         alternates: { canonical: `/users/${profile.username}` },
         openGraph: {

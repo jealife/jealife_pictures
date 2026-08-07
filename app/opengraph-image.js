@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { SITE_URL } from "./lib/site";
 import { supabase } from "./lib/supabase";
 
-export const alt = "JEaLiFe Stock — photos & vidéos libres de droits et gratuites";
+export const alt = "JEaLiFe Stock : photos et vidéos libres de droits et gratuites";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

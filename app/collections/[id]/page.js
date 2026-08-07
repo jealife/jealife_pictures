@@ -30,7 +30,7 @@ export async function generateMetadata({ params }) {
         description,
         alternates: { canonical: `/collections/${collection.id}` },
         openGraph: {
-            title: `${collection.title} — ${SITE_NAME}`,
+            title: `${collection.title} | ${SITE_NAME}`,
             description,
             type: "website",
             images: cover ? [{ url: cover, width: 1200, height: 630, alt: collection.title }] : undefined,

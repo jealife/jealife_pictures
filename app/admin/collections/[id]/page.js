@@ -124,7 +124,7 @@ export default function AdminCollectionDetailPage() {
                 </div>
                 <div>
                     <label className="block text-sm font-bold text-gray-900 mb-2">
-                        URL de couverture <span className="font-normal text-gray-400">(facultatif — sinon la première image sert de couverture)</span>
+                        URL de couverture <span className="font-normal text-gray-400">(facultatif, sinon la première image sert de couverture)</span>
                     </label>
                     <input
                         value={draft.cover_image_url}

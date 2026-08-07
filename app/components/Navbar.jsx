@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { Search, Menu, X, User as UserIcon, LogIn, Image as ImageIcon, Video, Palette, ChevronDown, Building2, LayoutGrid, Users, Compass, RotateCcw, PenTool, LogOut, BarChart3, Download, Settings } from "lucide-react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { signOut } from "../lib/auth";
@@ -19,6 +19,7 @@ const MENU_SECTIONS = [
             { label: "Illustrations", href: "/illustrations" },
             { label: "Vidéos", href: "/videos" },
             { label: "Thèmes", href: "/themes" },
+            { label: "Collections", href: "/collections" },
             { label: "Parcourir par pays", href: "/pays" },
         ],
     },
@@ -47,8 +48,10 @@ const MENU_SECTIONS = [
 export default function Navbar() {
     const router = useRouter();
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const { user, profile, loading } = useAuth();
     const [isSearchFocused, setIsSearchFocused] = useState(false);
+    const [term, setTerm] = useState(() => searchParams.get("q") || "");
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [typeMenuOpen, setTypeMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
@@ -73,6 +76,13 @@ export default function Navbar() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
+    // Garde le champ synchronisé avec la recherche active (Hero, tendances,
+    // navigation arrière) : sans ça, affiner une recherche en cours obligeait
+    // à tout retaper, le champ restant vide alors qu'une requête est active.
+    useEffect(() => {
+        setTerm(searchParams.get("q") || "");
+    }, [searchParams]);
+
     // Close user menu when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -93,12 +103,14 @@ export default function Navbar() {
         };
     }, [userMenuOpen]);
 
+    const submitSearch = () => {
+        const value = term.trim();
+        router.push(value ? `/?q=${encodeURIComponent(value)}` : "/");
+        setIsSearchFocused(false);
+    };
+
     const handleSearch = (e) => {
-        if (e.key === 'Enter') {
-            router.push(`/?q=${e.target.value}`);
-            setIsSearchFocused(false);
-            // Reset focus on mobile could be annoying if multiple searches, but fine for now
-        }
+        if (e.key === 'Enter') submitSearch();
     };
 
     const getCurrentType = () => {
@@ -172,14 +184,17 @@ export default function Navbar() {
 
                 {/* Main Nav Icons */}
                 <div className="flex flex-col gap-6 w-full items-center">
-                    <Link href="/" title="Photos" className={`p-2 rounded-lg transition-colors ${pathname === '/' ? 'text-black' : 'text-gray-400 hover:text-black hover:bg-gray-50'}`}>
+                    <Link href="/" title="Photos" aria-label="Photos" className={`p-2 rounded-lg transition-colors ${pathname === '/' ? 'text-black' : 'text-gray-400 hover:text-black hover:bg-gray-50'}`}>
                         <ImageIcon size={24} />
                     </Link>
-                    <Link href="/illustrations" title="Illustrations" className={`p-2 rounded-lg transition-colors ${pathname === '/illustrations' ? 'text-black' : 'text-gray-400 hover:text-black hover:bg-gray-50'}`}>
+                    <Link href="/illustrations" title="Illustrations" aria-label="Illustrations" className={`p-2 rounded-lg transition-colors ${pathname === '/illustrations' ? 'text-black' : 'text-gray-400 hover:text-black hover:bg-gray-50'}`}>
                         <PenTool size={24} />
                     </Link>
-                    <Link href="/videos" title="Videos" className={`p-2 rounded-lg transition-colors ${pathname === '/videos' ? 'text-black' : 'text-gray-400 hover:text-black hover:bg-gray-50'}`}>
+                    <Link href="/videos" title="Vidéos" aria-label="Vidéos" className={`p-2 rounded-lg transition-colors ${pathname === '/videos' ? 'text-black' : 'text-gray-400 hover:text-black hover:bg-gray-50'}`}>
                         <Video size={24} />
+                    </Link>
+                    <Link href="/collections" title="Collections" aria-label="Collections" className={`p-2 rounded-lg transition-colors ${pathname.startsWith('/collections') ? 'text-black' : 'text-gray-400 hover:text-black hover:bg-gray-50'}`}>
+                        <LayoutGrid size={24} />
                     </Link>
 
                     <div className="w-8 h-px bg-gray-100"></div>
@@ -197,6 +212,7 @@ export default function Navbar() {
                                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                                 className="p-1 hover:opacity-80 transition-opacity"
                                 title="Profil"
+                                aria-label="Profil"
                             >
                                 <img
                                     src={profile?.avatar_url || user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`}
@@ -217,7 +233,7 @@ export default function Navbar() {
                             )}
                         </div>
                     ) : (
-                        <Link href="/login" title="Connexion" className="p-2 rounded-lg text-gray-400 hover:text-black hover:bg-gray-50 transition-colors">
+                        <Link href="/login" title="Connexion" aria-label="Connexion" className="p-2 rounded-lg text-gray-400 hover:text-black hover:bg-gray-50 transition-colors">
                             <UserIcon size={24} />
                         </Link>
                     )}
@@ -226,6 +242,7 @@ export default function Navbar() {
                         onClick={() => setDesktopSidebarOpen(true)}
                         className="p-2 rounded-lg text-gray-400 hover:text-black hover:bg-gray-50 transition-colors"
                         title="Menu"
+                        aria-label="Menu"
                     >
                         <Menu size={24} />
                     </button>
@@ -253,24 +270,28 @@ export default function Navbar() {
                             <div className={`relative flex items-center bg-gray-100 rounded-full transition-all duration-300 ${isSearchFocused ? 'ring-2 ring-black/5 bg-white shadow-lg' : 'hover:bg-gray-200/70'}`}>
                                 <SearchDropdown currentType={currentType} setTypeMenuOpen={setTypeMenuOpen} typeMenuOpen={typeMenuOpen} ImageIconSizeIcon={ImageIconSizeIcon} PaletteSizeIcon={PaletteSizeIcon} VideoSizeIcon={VideoSizeIcon} />
                                 <input
-                                    type="text"
+                                    type="search"
+                                    value={term}
+                                    onChange={(e) => setTerm(e.target.value)}
                                     placeholder={`Rechercher des ${currentType.label.toLowerCase()}...`}
                                     className="w-full h-10 pl-3 pr-4 bg-transparent border-none outline-none text-sm font-medium text-gray-800 placeholder-gray-500"
                                     onFocus={() => setIsSearchFocused(true)}
                                     onBlur={() => setIsSearchFocused(false)}
                                     onKeyDown={handleSearch}
                                 />
-                                <div className="flex items-center pr-4 text-gray-400">
+                                <button
+                                    type="button"
+                                    onClick={submitSearch}
+                                    aria-label="Rechercher"
+                                    className="flex items-center pr-4 text-gray-400 hover:text-gray-700 transition-colors"
+                                >
                                     <Search className="w-5 h-5" />
-                                </div>
+                                </button>
                             </div>
                         </div>
 
                         {/* Desktop Actions */}
                         <div className="hidden md:flex items-center gap-1 shrink-0">
-                            <Link href="/" className="text-sm font-medium text-gray-500 hover:text-black px-4 py-2 rounded-full hover:bg-gray-100 transition-all">
-                                Explorer
-                            </Link>
                             {user ? (
                                 <Link href="/submit" className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-gray-800 active:scale-95 transition-all shadow-md hover:shadow-lg ml-2">
                                     Soumettre
@@ -324,11 +345,18 @@ export default function Navbar() {
                         hauteur que sur bureau dès que ça compte réellement. */}
                     <div className={`md:hidden overflow-hidden transition-all duration-300 ${scrolled ? 'max-h-0 opacity-0' : 'max-h-20 opacity-100 pb-4'}`}>
                         <div className={`relative flex items-center bg-gray-100 rounded-full transition-all duration-300 ${isSearchFocused ? 'ring-2 ring-black/5 bg-white shadow-md' : ''}`}>
-                            <div className="pl-4 text-gray-400">
+                            <button
+                                type="button"
+                                onClick={submitSearch}
+                                aria-label="Rechercher"
+                                className="pl-4 text-gray-400"
+                            >
                                 <Search className="w-4 h-4" />
-                            </div>
+                            </button>
                             <input
-                                type="text"
+                                type="search"
+                                value={term}
+                                onChange={(e) => setTerm(e.target.value)}
                                 placeholder={`Explorer des ${currentType.label.toLowerCase()}...`}
                                 className="w-full h-10 pl-3 pr-4 bg-transparent border-none outline-none text-sm font-medium text-gray-800 placeholder-gray-500"
                                 onFocus={() => setIsSearchFocused(true)}
@@ -390,14 +418,6 @@ export default function Navbar() {
                                         </div>
                                     );
                                 })}
-
-                                {/* Static Links */}
-                                <Link href="/" className="w-full flex items-center justify-between py-4 group border-b border-gray-100 hover:text-black text-gray-600 transition-colors" onClick={() => setMobileMenuOpen(false)}>
-                                    <div className="flex items-center gap-4">
-                                        <Compass className="w-5 h-5 text-gray-900" />
-                                        <span className="font-bold text-base text-gray-900">Explorer</span>
-                                    </div>
-                                </Link>
                             </div>
 
                             {/* Footer Buttons — même logique que les actions bureau :

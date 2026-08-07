@@ -81,7 +81,7 @@ export default function TeamPage() {
                     <h2 className="text-3xl md:text-4xl font-bold mb-4">Aucun poste ouvert pour l&apos;instant</h2>
                     <p className="text-gray-500 mb-10 max-w-xl mx-auto">
                         JEaLiFe Stock est encore une petite équipe. Si vous voulez contribuer autrement
-                        qu&apos;en publiant vos photos — développement, design, écriture — dites-nous-le,
+                        qu&apos;en publiant vos photos (développement, design, écriture), dites-nous-le,
                         on lit chaque message.
                     </p>
                     <a

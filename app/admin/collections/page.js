@@ -60,7 +60,7 @@ export default function AdminCollectionsPage() {
         <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-1">Collections éditoriales</h2>
             <p className="text-gray-500 text-sm mb-6">
-                Des sélections publiées au nom de JEaLiFe Stock — « Libreville en images », « Le
+                Des sélections publiées au nom de JEaLiFe Stock, comme « Libreville en images » ou « Le
                 Gabon »… Visibles sur <Link href="/collections" className="underline hover:text-black">/collections</Link>.
             </p>
 

@@ -7,7 +7,7 @@ import Image from "next/image";
 import {
     MapPin, Camera, Eye, Download, ArrowLeft, Edit2, Check, Copy,
     Share2, Flag, Globe2, X, MoreHorizontal, ShieldCheck, Calendar, Info,
-    Mail, Twitter, Instagram
+    Mail, Twitter, Instagram, ChevronDown
 } from "lucide-react";
 import LikeButton from "../../components/LikeButton";
 import DownloadButton from "../../components/DownloadButton";
@@ -167,10 +167,12 @@ export default function PhotoDetail() {
                         <div className="relative">
                             <button
                                 onClick={(e) => { e.preventDefault(); setShowConnect(!showConnect); }}
+                                aria-expanded={showConnect}
+                                title="Contacter le photographe"
                                 className="flex text-[13px] text-blue-500 hover:text-blue-600 font-medium truncate items-center gap-1 transition-colors"
                             >
                                 Disponible
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="mt-0.5 shrink-0"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-2 15l-5-5 1.4-1.4 3.6 3.6 7.6-7.6L19 8l-9 9z"/></svg>
+                                <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${showConnect ? "rotate-180" : ""}`} />
                             </button>
 
                             {showConnect && (
@@ -405,7 +407,7 @@ export default function PhotoDetail() {
                 <section className="mt-10 border-t border-gray-100 bg-gray-50/50">
                     <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-16">
                         <h2 className="text-2xl font-black text-gray-900 mb-8">Images similaires</h2>
-                        <div className="columns-2 lg:columns-3 xl:columns-4 gap-3 sm:gap-6">
+                        <div className="columns-2 lg:columns-3 gap-3 sm:gap-6">
                             {related.map((item) => (
                                 <PhotoCard key={item.id} photo={item} hideActions />
                             ))}
