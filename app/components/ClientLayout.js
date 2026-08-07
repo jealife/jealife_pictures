@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
@@ -44,7 +44,11 @@ export default function ClientLayout({ children }) {
 
     return (
         <>
-            {!shouldHideLayout && <Navbar />}
+            {!shouldHideLayout && (
+                <Suspense fallback={null}>
+                    <Navbar />
+                </Suspense>
+            )}
             <div className={!shouldHideLayout ? "md:pl-[64px] transition-all duration-300 flex flex-col min-h-screen" : "flex flex-col min-h-screen"}>
                 <div className="flex-1">
                     {children}

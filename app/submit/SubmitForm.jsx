@@ -756,7 +756,7 @@ export default function SubmitForm() {
 
                         <div className="mt-8 flex items-center justify-center gap-6 text-sm font-medium text-gray-500">
                             {profile?.username && (
-                                <a href={`/users/${profile.username}`} className="hover:text-black transition-colors">
+                                <a href={`/@${profile.username}`} className="hover:text-black transition-colors">
                                     Voir mon profil
                                 </a>
                             )}

@@ -17,19 +17,19 @@ export default function UserMenu({ user, onSignOut, onClose }) {
     const menuItems = [
         {
             label: 'Afficher le profil',
-            href: `/users/${username}`,
+            href: `/@${username}`,
             icon: null,
             className: 'font-medium text-gray-600 hover:text-black'
         },
         {
             label: 'Statistiques',
-            href: `/users/${username}/stats`,
+            href: `/@${username}/stats`,
             icon: BarChart3,
             className: 'text-gray-600 hover:text-black'
         },
         {
             label: 'Historique téléchargements',
-            href: `/users/${username}/downloads`,
+            href: `/@${username}/downloads`,
             icon: Download,
             className: 'text-gray-600 hover:text-black'
         },

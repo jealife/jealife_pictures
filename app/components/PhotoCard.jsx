@@ -89,7 +89,7 @@ export default function PhotoCard({ photo, liked = false, hideActions = false, p
                         <div className="absolute bottom-0 left-0 right-0 p-5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 translate-y-0 md:translate-y-2 md:group-hover:translate-y-0 z-40">
                             <div className="flex items-center justify-between gap-3">
                                 <Link
-                                    href={`/users/${photo.author.username}`}
+                                    href={`/@${photo.author.username}`}
                                     className="flex items-center gap-3 group/author min-w-0"
                                 >
                                     <Image

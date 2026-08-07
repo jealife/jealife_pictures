@@ -97,7 +97,7 @@ function buildJsonLd(photo) {
         creator: {
             "@type": "Person",
             name: author,
-            ...(username ? { url: absoluteUrl(`/users/${username}`) } : {}),
+            ...(username ? { url: absoluteUrl(`/@${username}`) } : {}),
         },
         ...(place ? { contentLocation: { "@type": "Place", name: place } } : {}),
         ...(photo.tags?.length ? { keywords: photo.tags.join(", ") } : {}),

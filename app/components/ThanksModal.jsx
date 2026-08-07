@@ -17,8 +17,8 @@ export default function ThanksModal({ photo, onClose }) {
         : `${SITE_URL}${mediaUrl(photo)}`;
 
     const authorUrl = typeof window !== "undefined"
-        ? `${window.location.origin}/users/${photo.author.username}`
-        : `${SITE_URL}/users/${photo.author.username}`;
+        ? `${window.location.origin}/@${photo.author.username}`
+        : `${SITE_URL}/@${photo.author.username}`;
 
     const authorUrlWithUtm = `${authorUrl}?utm_source=jealife_stock&utm_medium=referral&utm_content=creditCopyText`;
     const photoUrlWithUtm = `${photoUrl}?utm_source=jealife_stock&utm_medium=referral&utm_content=creditCopyText`;
@@ -95,7 +95,7 @@ export default function ThanksModal({ photo, onClose }) {
                 <div className="p-6 sm:p-8 flex-1 flex flex-col justify-center">
                     <h3 className="text-xl font-black text-gray-900 mb-2">Exprimez vos remerciements !</h3>
                     <p className="text-[14px] text-gray-500 mb-6 leading-relaxed">
-                        Remerciez <Link href={`/users/${photo.author.username}`} onClick={onClose} className="font-semibold text-gray-700 underline underline-offset-2 hover:text-gray-900">{photo.author.name}</Link> sur les réseaux sociaux ou copiez le texte ci-dessous pour l&apos;attribuer à l&apos;artiste.
+                        Remerciez <Link href={`/@${photo.author.username}`} onClick={onClose} className="font-semibold text-gray-700 underline underline-offset-2 hover:text-gray-900">{photo.author.name}</Link> sur les réseaux sociaux ou copiez le texte ci-dessous pour l&apos;attribuer à l&apos;artiste.
                     </p>
                     
                     <div className="flex items-center gap-2 mb-6">

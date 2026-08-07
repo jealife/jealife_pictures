@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Layers, Loader2, Lock } from "lucide-react";
-import { getUserCollections, getUserProfile } from "../../../lib/database";
+import { getUserCollections, getUserProfile } from "../../lib/database";
 
 /**
  * Onglet « Collections ».
@@ -15,7 +15,9 @@ import { getUserCollections, getUserProfile } from "../../../lib/database";
  * données n'existaient pas. Elle lit maintenant les vraies collections.
  */
 export default function UserCollectionsPage() {
-    const { username } = useParams();
+    const { handle } = useParams();
+    const decodedHandle = handle ? decodeURIComponent(handle) : "";
+    const username = decodedHandle.startsWith("@") ? decodedHandle.slice(1) : null;
     const [collections, setCollections] = useState([]);
     const [loading, setLoading] = useState(true);
 

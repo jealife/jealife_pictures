@@ -111,7 +111,7 @@ export default async function sitemap() {
         })),
 
         ...profiles.map((profile) => ({
-            url: absoluteUrl(`/users/${profile.username}`),
+            url: absoluteUrl(`/@${profile.username}`),
             lastModified: profile.updated_at ? new Date(profile.updated_at) : now,
             changeFrequency: "weekly",
             priority: 0.6,

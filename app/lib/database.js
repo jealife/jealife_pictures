@@ -122,7 +122,7 @@ export async function getHeroBackground() {
             return {
                 url: pick.url,
                 photographer: pick.profiles?.full_name || 'JEaLiFe Stock',
-                photographer_url: pick.profiles?.username ? `/users/${pick.profiles.username}` : null,
+                photographer_url: pick.profiles?.username ? `/@${pick.profiles.username}` : null,
             };
         }
     } catch (error) {

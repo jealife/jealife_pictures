@@ -83,7 +83,7 @@ export default function AdminUsersPage() {
                             />
                             <div className="min-w-0 flex-1">
                                 <Link
-                                    href={`/users/${u.username}`}
+                                    href={`/@${u.username}`}
                                     target="_blank"
                                     className="font-semibold text-gray-900 hover:underline truncate block"
                                 >

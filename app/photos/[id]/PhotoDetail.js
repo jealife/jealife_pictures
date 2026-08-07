@@ -149,7 +149,7 @@ export default function PhotoDetail() {
                         <ArrowLeft className="w-5 h-5" />
                     </button> */}
 
-                    <Link href={`/users/${photo.author.username}`} className="shrink-0 group">
+                    <Link href={`/@${photo.author.username}`} className="shrink-0 group">
                         <Image
                             src={photo.author.avatar}
                             alt=""
@@ -160,7 +160,7 @@ export default function PhotoDetail() {
                         />
                     </Link>
                     <div className="flex flex-col min-w-0">
-                        <Link href={`/users/${photo.author.username}`} className="group">
+                        <Link href={`/@${photo.author.username}`} className="group">
                             <span className="font-bold text-[15px] text-gray-900 truncate leading-tight group-hover:underline">{photo.author.name}</span>
                         </Link>
                         {/* Menu "Connectez-vous avec" */}

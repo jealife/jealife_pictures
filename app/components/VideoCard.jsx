@@ -66,7 +66,7 @@ export default function VideoCard({ video, liked = false }) {
                 </div>
 
                 <div className="absolute bottom-0 left-0 right-0 p-5 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 z-20">
-                    <Link href={`/users/${video.author.username}`} className="flex items-center gap-3 min-w-0">
+                    <Link href={`/@${video.author.username}`} className="flex items-center gap-3 min-w-0">
                         <Image
                             src={video.author.avatar}
                             alt=""

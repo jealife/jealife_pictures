@@ -3,19 +3,16 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
-import MasonryGrid from "../../components/MasonryGrid";
-import { getUserProfile } from "../../lib/database";
+import MasonryGrid from "../components/MasonryGrid";
+import { getUserProfile } from "../lib/database";
 
 /**
  * Photos d'un profil.
- *
- * Le profil était cherché ici avec `.eq('username', …)` alors que le layout
- * parent utilisait `.ilike(…)` : sur une URL dont la casse différait du pseudo
- * enregistré, l'en-tête du profil s'affichait correctement mais la galerie
- * restait obstinément vide. Les deux passent désormais par la même fonction.
  */
 export default function UserPhotos() {
-    const { username } = useParams();
+    const { handle } = useParams();
+    const decodedHandle = handle ? decodeURIComponent(handle) : "";
+    const username = decodedHandle.startsWith("@") ? decodedHandle.slice(1) : null;
     const [userId, setUserId] = useState(null);
     const [loading, setLoading] = useState(true);
 

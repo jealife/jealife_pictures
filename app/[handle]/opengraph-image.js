@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
-import { getUserProfile } from "../../lib/database";
-import { supabase } from "../../lib/supabase";
-import { SITE_URL } from "../../lib/site";
+import { getUserProfile } from "../lib/database";
+import { supabase } from "../lib/supabase";
+import { SITE_URL } from "../lib/site";
 
 export const alt = "Profil photographe sur JEaLiFe Stock";
 export const size = { width: 1200, height: 630 };
@@ -36,7 +36,9 @@ async function getMostViewedPhoto(userId) {
  * - Logo chargé via URL publique du site (import.meta.url non fiable en serverless)
  */
 export default async function OpenGraphImage({ params }) {
-    const { username } = await params;
+    const { handle: rawHandle } = await params;
+    const handle = rawHandle ? decodeURIComponent(rawHandle) : "";
+    const username = handle.startsWith("@") ? handle.slice(1) : handle;
 
     const profile = await getUserProfile(username);
     const displayName = profile?.full_name || profile?.username || username;

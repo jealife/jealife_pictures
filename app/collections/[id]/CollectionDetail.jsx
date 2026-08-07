@@ -90,7 +90,7 @@ export default function CollectionDetail() {
 
                 <div className="flex items-center justify-between gap-4 mt-6">
                     {author && (
-                        <Link href={`/users/${author.username}`} className="flex items-center gap-3 group">
+                        <Link href={`/@${author.username}`} className="flex items-center gap-3 group">
                             <Image
                                 src={author.avatar_url || avatarFallback(author.id)}
                                 alt=""

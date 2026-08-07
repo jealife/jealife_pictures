@@ -3,15 +3,18 @@
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import { getUserProfile, getUserStats } from "../../lib/database";
+import { getUserProfile, getUserStats } from "../lib/database";
 import { MapPin, Globe, Mail, Image as ImageIcon, Heart, Layers, BarChart3, Edit2 } from "lucide-react";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function UserProfileLayout({ children }) {
     const params = useParams();
     const pathname = usePathname();
     const { user: currentUser, loading: authLoading } = useAuth();
-    const username = params.username;
+    // `useParams()` renvoie le segment encodé côté client (`%40handle`, pas
+    // `@handle`) — contrairement à `params` côté serveur, déjà décodé.
+    const decodedHandle = params.handle ? decodeURIComponent(params.handle) : "";
+    const username = decodedHandle.startsWith("@") ? decodedHandle.slice(1) : null;
 
     const [profileUser, setProfileUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -68,26 +71,25 @@ export default function UserProfileLayout({ children }) {
 
     // Tab logic with privacy: only public tabs (Photos, Collections) if not authenticated
     const publicTabs = [
-        { id: '', label: 'Photos', icon: ImageIcon, count: profileUser.total_photos || 0, path: `/users/${username}` },
-        { id: 'collections', label: 'Collections', icon: Layers, count: profileUser.total_collections || 0, path: `/users/${username}/collections` },
+        { id: '', label: 'Photos', icon: ImageIcon, count: profileUser.total_photos || 0, path: `/@${username}` },
+        { id: 'collections', label: 'Collections', icon: Layers, count: profileUser.total_collections || 0, path: `/@${username}/collections` },
     ];
 
     const privateTabs = [
         // `total_likes` était ambigu : il comptait les j'aime *donnés* par
         // l'utilisateur, alors qu'affiché sur un profil public il se lisait
         // comme les j'aime reçus. Les deux sont désormais distincts.
-        { id: 'likes', label: 'J\'aime', icon: Heart, count: profileUser.total_likes_given || 0, path: `/users/${username}/likes` },
-        { id: 'stats', label: 'Statistiques', icon: BarChart3, count: null, path: `/users/${username}/stats` },
+        { id: 'likes', label: 'J\'aime', icon: Heart, count: profileUser.total_likes_given || 0, path: `/@${username}/likes` },
+        { id: 'stats', label: 'Statistiques', icon: BarChart3, count: null, path: `/@${username}/stats` },
     ];
 
     const tabs = isOwnProfile ? [...publicTabs, ...privateTabs] : publicTabs;
 
-    // Determine active tab
-    // Exact match for root, prefix match for others?
-    // Actually simpler: 
-    // - /users/foo -> active ''
-    // - /users/foo/stats -> active 'stats'
-    const currentTabId = pathname.split('/').pop() === username ? '' : pathname.split('/').pop();
+    // Determine active tab:
+    // - /@foo -> active ''
+    // - /@foo/stats -> active 'stats'
+    const lastSegment = pathname.split('/').pop();
+    const currentTabId = lastSegment === `@${username}` ? '' : lastSegment;
 
     return (
         <div className="min-h-screen bg-white">

@@ -2,21 +2,24 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Heart, Loader2 } from "lucide-react";
-import PhotoCard from "../../../components/PhotoCard";
-import { useAuth } from "../../../contexts/AuthContext";
-import { getUserLikedMedia, getUserProfile } from "../../../lib/database";
-import { normalizeMediaList } from "../../../lib/media";
+import { Download, Loader2 } from "lucide-react";
+import PhotoCard from "../../components/PhotoCard";
+import VideoCard from "../../components/VideoCard";
+import { useAuth } from "../../contexts/AuthContext";
+import { getUserDownloadHistory, getUserProfile } from "../../lib/database";
+import { normalizeMediaList } from "../../lib/media";
 
 /**
- * Onglet « J'aime ».
- *
- * Cette page affichait des photos de démonstration tirées d'un fichier
- * statique, dupliquées pour remplir la grille — aucun lien avec les j'aime
- * réels de l'utilisateur. Elle lit maintenant la table `media_likes`.
+ * Onglet « Historique téléchargements », lié depuis le menu utilisateur
+ * (UserMenu.jsx) mais jusqu'ici sans page derrière : aucune route
+ * `/users/[username]/downloads` n'existait. Lit la table `media_downloads`
+ * (migration 0009) — avant elle, seuls des compteurs agrégés existaient,
+ * sans trace de qui avait téléchargé quoi.
  */
-export default function UserLikesPage() {
-    const { username } = useParams();
+export default function UserDownloadsPage() {
+    const { handle } = useParams();
+    const decodedHandle = handle ? decodeURIComponent(handle) : "";
+    const username = decodedHandle.startsWith("@") ? decodedHandle.slice(1) : null;
     const { user: currentUser } = useAuth();
 
     const [isOwner, setIsOwner] = useState(false);
@@ -33,12 +36,13 @@ export default function UserLikesPage() {
 
             if (cancelled) return;
 
-            // Les j'aime restent privés : on ne les montre qu'à leur auteur.
+            // Privé : ce qu'on télécharge ne regarde que soi (voir la policy
+            // RLS de la migration 0009).
             const owner = !!(profile && currentUser && profile.id === currentUser.id);
             setIsOwner(owner);
 
             if (owner) {
-                const rows = await getUserLikedMedia(profile.id, { limit: 48 });
+                const rows = await getUserDownloadHistory(profile.id, { limit: 48 });
                 if (!cancelled) setItems(normalizeMediaList(rows));
             }
 
@@ -61,7 +65,7 @@ export default function UserLikesPage() {
         return (
             <EmptyState
                 title="Accès restreint"
-                message="Les mentions J'aime sont privées. Vous ne voyez que les vôtres."
+                message="L'historique des téléchargements est privé. Vous ne voyez que le vôtre."
             />
         );
     }
@@ -69,17 +73,23 @@ export default function UserLikesPage() {
     if (items.length === 0) {
         return (
             <EmptyState
-                title="Aucune image aimée"
-                message="Le cœur sur une image la met de côté ici."
+                title="Aucun téléchargement"
+                message="Les images et vidéos que vous téléchargez apparaissent ici."
             />
         );
     }
 
     return (
         <div className="columns-1 sm:columns-2 lg:columns-3 gap-6">
-            {items.map((item) => (
-                <PhotoCard key={item.id} photo={item} liked />
-            ))}
+            {items.map((item) =>
+                item.type === "video" ? (
+                    <div key={item.id} className="mb-6 break-inside-avoid">
+                        <VideoCard video={item} />
+                    </div>
+                ) : (
+                    <PhotoCard key={item.id} photo={item} />
+                )
+            )}
         </div>
     );
 }
@@ -88,7 +98,7 @@ function EmptyState({ title, message }) {
     return (
         <div className="py-24 text-center flex flex-col items-center">
             <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-                <Heart className="w-8 h-8 text-gray-300" />
+                <Download className="w-8 h-8 text-gray-300" />
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
             <p className="text-gray-500 max-w-sm">{message}</p>

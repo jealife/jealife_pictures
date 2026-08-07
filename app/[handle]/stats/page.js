@@ -2,14 +2,16 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getUserProfile, getUserStats } from "../../../lib/database";
-import { supabase } from "../../../lib/supabase";
-import { useAuth } from "../../../contexts/AuthContext";
+import { getUserProfile, getUserStats } from "../../lib/database";
+import { supabase } from "../../lib/supabase";
+import { useAuth } from "../../contexts/AuthContext";
 import Link from "next/link";
 import { BarChart3, Download, Info, TrendingUp, Globe } from "lucide-react";
 
 export default function UserStatsPage() {
-    const { username } = useParams();
+    const { handle } = useParams();
+    const decodedHandle = handle ? decodeURIComponent(handle) : "";
+    const username = decodedHandle.startsWith("@") ? decodedHandle.slice(1) : null;
     const router = useRouter();
     const { user: currentUser } = useAuth();
     const [isOwner, setIsOwner] = useState(false);
