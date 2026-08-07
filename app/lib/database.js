@@ -63,6 +63,32 @@ function applyPagination(query, { limit = PAGE_SIZE, offset = 0 } = {}) {
     return query.range(offset, offset + limit - 1);
 }
 
+// En dev, Fast Refresh / Strict Mode peut démonter puis remonter un composant
+// pendant qu'une requête est en vol : le navigateur l'annule, sans que ce
+// soit un vrai échec — le composant remonté relance de toute façon la même
+// requête. Sans ce filtre, chaque rechargement à chaud loggue une « erreur »
+// alarmante qui n'en est pas une (ça n'existe pas en production, où rien ne
+// démonte les composants ainsi).
+function isAbortError(error) {
+    if (error?.name === 'AbortError') return true;
+    // Selon ce qui l'a levée, l'info d'annulation atterrit parfois dans
+    // `.message` plutôt que dans `.name` (ex: "AbortError: signal is
+    // aborted without reason" comme message complet) — d'où la vérification
+    // textuelle en complément du nom.
+    const message = typeof error === 'string' ? error : error?.message;
+    return typeof message === 'string' && /abort/i.test(message);
+}
+
+// Chaque fonction de lecture de ce fichier suit le même patron : essayer,
+// journaliser en cas d'échec, renvoyer une valeur de repli plutôt que de
+// laisser planter l'appelant. Centraliser la journalisation ici évite de
+// reproduire le filtre anti-abort (voir `isAbortError`) dans chacune des
+// cinquante et quelques fonctions concernées.
+function logQueryError(message, error) {
+    if (isAbortError(error)) return;
+    console.error(message, error?.message || error);
+}
+
 // ---------------------------------------------------------------------------
 // Lecture des médias
 // ---------------------------------------------------------------------------
@@ -91,7 +117,7 @@ export async function getMedia({
         if (error) throw error;
         return data || [];
     } catch (error) {
-        console.error('Error fetching media:', error.message || error);
+        logQueryError('Error fetching media:', error);
         return [];
     }
 }
@@ -126,7 +152,7 @@ export async function getHeroBackground() {
             };
         }
     } catch (error) {
-        console.error('Error fetching hero background:', error.message || error);
+        logQueryError('Error fetching hero background:', error);
     }
     return null;
 }
@@ -142,7 +168,7 @@ export async function getMediaById(id) {
         if (error) throw error;
         return data;
     } catch (error) {
-        console.error('Error fetching media by id:', error.message || error);
+        logQueryError('Error fetching media by id:', error);
         return null;
     }
 }
@@ -192,7 +218,7 @@ export async function searchMedia(query, {
 
         return searchMediaFallback(term, { type, limit, offset, country, sort, orientation });
     } catch (error) {
-        console.error('Error searching media:', error.message || error);
+        logQueryError('Error searching media:', error);
         return searchMediaFallback(term, { type, limit, offset, country, sort, orientation });
     }
 }
@@ -226,7 +252,7 @@ async function searchMediaFallback(term, { type, limit, offset, country, sort, o
         if (error) throw error;
         return data || [];
     } catch (error) {
-        console.error('Error in search fallback:', error.message || error);
+        logQueryError('Error in search fallback:', error);
         return [];
     }
 }
@@ -287,7 +313,7 @@ export async function countMedia({ query = '', type = null, country = null, orie
 
         return count || 0;
     } catch (error) {
-        console.error('Error counting media:', error.message || error);
+        logQueryError('Error counting media:', error);
         return 0;
     }
 }
@@ -329,7 +355,7 @@ export async function getMediaByTopic(topicSlug, {
         if (error) throw error;
         return data || [];
     } catch (error) {
-        console.error('Error fetching media by topic:', error.message || error);
+        logQueryError('Error fetching media by topic:', error);
         return [];
     }
 }
@@ -361,7 +387,7 @@ export async function getRelatedMedia(media, limit = 12) {
         if (error) throw error;
         if (data?.length) return data;
     } catch (error) {
-        console.error('Error fetching related media:', error.message || error);
+        logQueryError('Error fetching related media:', error);
     }
 
     return getMedia({ type: media.type || 'photo', limit });
@@ -421,7 +447,7 @@ export async function getTopics({ featuredOnly = false, kind = null, limit = 60 
 
         return topics;
     } catch (error) {
-        console.error('Error fetching topics:', error.message || error);
+        logQueryError('Error fetching topics:', error);
         return [];
     }
 }
@@ -440,7 +466,7 @@ export async function getTopicBySlug(slug) {
         if (error) throw error;
         return data;
     } catch (error) {
-        console.error('Error fetching topic:', error.message || error);
+        logQueryError('Error fetching topic:', error);
         return null;
     }
 }
@@ -458,7 +484,7 @@ export async function getCountries({ africanOnly = false } = {}) {
         if (error) throw error;
         return data || [];
     } catch (error) {
-        console.error('Error fetching countries:', error.message || error);
+        logQueryError('Error fetching countries:', error);
         return [];
     }
 }
@@ -474,7 +500,7 @@ export async function getCountryBySlug(slug) {
         if (error) throw error;
         return data;
     } catch (error) {
-        console.error('Error fetching country:', error.message || error);
+        logQueryError('Error fetching country:', error);
         return null;
     }
 }
@@ -501,7 +527,7 @@ export async function getActiveCountries() {
 
         return [...counts.values()].sort((a, b) => b.count - a.count);
     } catch (error) {
-        console.error('Error fetching active countries:', error.message || error);
+        logQueryError('Error fetching active countries:', error);
         return [];
     }
 }
@@ -526,7 +552,7 @@ export async function getPlatformStats() {
         if (error) throw error;
         return data || empty;
     } catch (error) {
-        console.error('Error fetching platform stats:', error.message || error);
+        logQueryError('Error fetching platform stats:', error);
         return empty;
     }
 }
@@ -534,22 +560,6 @@ export async function getPlatformStats() {
 // ---------------------------------------------------------------------------
 // Profils
 // ---------------------------------------------------------------------------
-
-// En dev, Fast Refresh / Strict Mode peut démonter puis remonter un composant
-// pendant qu'une requête est en vol : le navigateur l'annule, sans que ce
-// soit un vrai échec — le composant remonté relance de toute façon la même
-// requête. Sans ce filtre, chaque rechargement à chaud loggue une « erreur »
-// alarmante qui n'en est pas une (ça n'existe pas en production, où rien ne
-// démonte les composants ainsi).
-function isAbortError(error) {
-    if (error?.name === 'AbortError') return true;
-    // Selon ce qui l'a levée, l'info d'annulation atterrit parfois dans
-    // `.message` plutôt que dans `.name` (ex: "AbortError: signal is
-    // aborted without reason" comme message complet) — d'où la vérification
-    // textuelle en complément du nom.
-    const message = typeof error === 'string' ? error : error?.message;
-    return typeof message === 'string' && /abort/i.test(message);
-}
 
 export async function getUserProfile(username) {
     try {
@@ -562,8 +572,7 @@ export async function getUserProfile(username) {
         if (error) throw error;
         return data;
     } catch (error) {
-        if (isAbortError(error)) return null;
-        console.error('Error fetching user profile:', error.message || error);
+        logQueryError('Error fetching user profile:', error);
         return null;
     }
 }
@@ -579,8 +588,7 @@ export async function getProfileById(id) {
         if (error) throw error;
         return data;
     } catch (error) {
-        if (isAbortError(error)) return null;
-        console.error('Error fetching profile by id:', error.message || error);
+        logQueryError('Error fetching profile by id:', error);
         return null;
     }
 }
@@ -605,7 +613,7 @@ export async function getUserMedia(userId, {
         if (error) throw error;
         return data || [];
     } catch (error) {
-        console.error('Error fetching user media:', error.message || error);
+        logQueryError('Error fetching user media:', error);
         return [];
     }
 }
@@ -647,7 +655,7 @@ export async function getUserStats(userId) {
             total_downloads: sum('downloads_count'),
         };
     } catch (error) {
-        console.error('Error fetching user stats:', error.message || error);
+        logQueryError('Error fetching user stats:', error);
         return empty;
     }
 }
@@ -668,7 +676,7 @@ export async function updateMedia(mediaId, updates) {
         if (error) throw error;
         return { success: true, data };
     } catch (error) {
-        console.error('Error updating media:', error.message || error);
+        logQueryError('Error updating media:', error);
         return { success: false, error: friendlyErrorMessage(error, "Impossible de mettre à jour cette photo.") };
     }
 }
@@ -696,7 +704,7 @@ export async function deleteMedia(mediaId) {
 
         return { success: true };
     } catch (error) {
-        console.error('Error deleting media:', error.message || error);
+        logQueryError('Error deleting media:', error);
         return { success: false, error: friendlyErrorMessage(error, "Impossible de supprimer cette photo.") };
     }
 }
@@ -713,7 +721,7 @@ export async function likeMedia(mediaId, userId) {
         if (error) throw error;
         return true;
     } catch (error) {
-        console.error('Error liking media:', error.message || error);
+        logQueryError('Error liking media:', error);
         return false;
     }
 }
@@ -728,7 +736,7 @@ export async function unlikeMedia(mediaId, userId) {
         if (error) throw error;
         return true;
     } catch (error) {
-        console.error('Error unliking media:', error.message || error);
+        logQueryError('Error unliking media:', error);
         return false;
     }
 }
@@ -746,7 +754,7 @@ export async function hasUserLikedMedia(mediaId, userId) {
         if (error) throw error;
         return !!data;
     } catch (error) {
-        console.error('Error checking like status:', error.message || error);
+        logQueryError('Error checking like status:', error);
         return false;
     }
 }
@@ -764,7 +772,7 @@ export async function getLikedMediaIds(userId, mediaIds = []) {
         if (error) throw error;
         return new Set((data || []).map((row) => row.media_id));
     } catch (error) {
-        console.error('Error fetching liked ids:', error.message || error);
+        logQueryError('Error fetching liked ids:', error);
         return new Set();
     }
 }
@@ -781,7 +789,7 @@ export async function getUserLikedMedia(userId, { limit = PAGE_SIZE, offset = 0 
         if (error) throw error;
         return (data || []).map((row) => row.media).filter(Boolean);
     } catch (error) {
-        console.error('Error fetching liked media:', error.message || error);
+        logQueryError('Error fetching liked media:', error);
         return [];
     }
 }
@@ -815,7 +823,7 @@ export async function getUserDownloadHistory(userId, { limit = PAGE_SIZE } = {})
         }
         return unique;
     } catch (error) {
-        console.error('Error fetching download history:', error.message || error);
+        logQueryError('Error fetching download history:', error);
         return [];
     }
 }
@@ -832,7 +840,7 @@ export async function incrementViews(mediaId) {
         if (error) throw error;
         return true;
     } catch (error) {
-        console.error('Error incrementing views:', error.message || error);
+        logQueryError('Error incrementing views:', error);
         return false;
     }
 }
@@ -843,7 +851,7 @@ export async function incrementDownloads(mediaId) {
         if (error) throw error;
         return true;
     } catch (error) {
-        console.error('Error incrementing downloads:', error.message || error);
+        logQueryError('Error incrementing downloads:', error);
         return false;
     }
 }
@@ -874,7 +882,7 @@ export async function getUserCollections(userId) {
                 .filter(Boolean),
         }));
     } catch (error) {
-        console.error('Error fetching user collections:', error.message || error);
+        logQueryError('Error fetching user collections:', error);
         return [];
     }
 }
@@ -899,7 +907,7 @@ export async function getCollection(collectionId) {
             media: (data.collection_media || []).map((item) => item.media).filter(Boolean),
         };
     } catch (error) {
-        console.error('Error fetching collection:', error.message || error);
+        logQueryError('Error fetching collection:', error);
         return null;
     }
 }
@@ -915,7 +923,7 @@ export async function createCollection(userId, { title, description = '', isPriv
         if (error) throw error;
         return { success: true, collection: data };
     } catch (error) {
-        console.error('Error creating collection:', error.message || error);
+        logQueryError('Error creating collection:', error);
         return { success: false, error: friendlyErrorMessage(error, "Impossible de créer la collection.") };
     }
 }
@@ -928,7 +936,7 @@ export async function addMediaToCollection(collectionId, mediaId) {
         if (error) throw error;
         return true;
     } catch (error) {
-        console.error('Error adding media to collection:', error.message || error);
+        logQueryError('Error adding media to collection:', error);
         return false;
     }
 }
@@ -943,7 +951,7 @@ export async function removeMediaFromCollection(collectionId, mediaId) {
         if (error) throw error;
         return true;
     } catch (error) {
-        console.error('Error removing media from collection:', error.message || error);
+        logQueryError('Error removing media from collection:', error);
         return false;
     }
 }
@@ -954,7 +962,7 @@ export async function updateCollection(collectionId, updates) {
         if (error) throw error;
         return { success: true };
     } catch (error) {
-        console.error('Error updating collection:', error.message || error);
+        logQueryError('Error updating collection:', error);
         return { success: false, error: friendlyErrorMessage(error, "Impossible de modifier cette collection.") };
     }
 }
@@ -965,7 +973,7 @@ export async function deleteCollection(collectionId) {
         if (error) throw error;
         return { success: true };
     } catch (error) {
-        console.error('Error deleting collection:', error.message || error);
+        logQueryError('Error deleting collection:', error);
         return { success: false, error: friendlyErrorMessage(error, "Impossible de supprimer cette collection.") };
     }
 }
@@ -1051,7 +1059,7 @@ export async function getDiscoverableCollections({ limit = 24 } = {}) {
 
         return [...editorial, ...featured, ...automatic].slice(0, limit);
     } catch (error) {
-        console.error('Error fetching discoverable collections:', error.message || error);
+        logQueryError('Error fetching discoverable collections:', error);
         return [];
     }
 }
@@ -1068,7 +1076,7 @@ export async function getAdminEditorialCollections() {
         if (error) throw error;
         return (data || []).map(withCollectionMeta);
     } catch (error) {
-        console.error('Error fetching admin editorial collections:', error.message || error);
+        logQueryError('Error fetching admin editorial collections:', error);
         return [];
     }
 }
@@ -1096,7 +1104,7 @@ export async function getAdminCommunityCollections({ search = '', limit = 50 } =
         if (error) throw error;
         return (data || []).map(withCollectionMeta);
     } catch (error) {
-        console.error('Error fetching community collections:', error.message || error);
+        logQueryError('Error fetching community collections:', error);
         return [];
     }
 }
@@ -1119,7 +1127,7 @@ export async function createEditorialCollection(adminUserId, { title, descriptio
         if (error) throw error;
         return { success: true, collection: data };
     } catch (error) {
-        console.error('Error creating editorial collection:', error.message || error);
+        logQueryError('Error creating editorial collection:', error);
         return { success: false, error: friendlyErrorMessage(error, "Impossible de créer cette collection.") };
     }
 }
@@ -1151,7 +1159,7 @@ export async function reportMedia(mediaId, { reason, details = '', reporterId = 
         }
         return { success: true };
     } catch (error) {
-        console.error('Error reporting media:', error.message || error);
+        logQueryError('Error reporting media:', error);
         return { success: false, error: friendlyErrorMessage(error, "L'envoi du signalement a échoué.") };
     }
 }
@@ -1231,7 +1239,7 @@ export async function syncTopics(mediaId, tags) {
 
         return { success: true };
     } catch (error) {
-        console.error('Error syncing topics:', error.message || error);
+        logQueryError('Error syncing topics:', error);
         return { success: false, error: friendlyErrorMessage(error, "Impossible d'enregistrer les mots-clés.") };
     }
 }
@@ -1251,7 +1259,7 @@ export async function getSetting(key) {
         if (error) throw error;
         return data;
     } catch (error) {
-        console.error('Error fetching setting:', error.message || error);
+        logQueryError('Error fetching setting:', error);
         return null;
     }
 }
@@ -1263,7 +1271,7 @@ export async function setSetting(key, value) {
         await logAdminAction('setting.update', 'setting', key, { value });
         return { success: true };
     } catch (error) {
-        console.error('Error updating setting:', error.message || error);
+        logQueryError('Error updating setting:', error);
         return { success: false, error: friendlyErrorMessage(error, "Impossible d'enregistrer le réglage.") };
     }
 }
@@ -1283,7 +1291,7 @@ async function logAdminAction(action, targetType, targetId, details = null) {
         });
         if (error) throw error;
     } catch (error) {
-        console.error('Error logging admin action:', error.message || error);
+        logQueryError('Error logging admin action:', error);
     }
 }
 
@@ -1310,7 +1318,7 @@ export async function getAdminAuditLog({ limit = 50, offset = 0 } = {}) {
         const byId = new Map((admins || []).map((p) => [p.id, p]));
         return rows.map((r) => ({ ...r, admin: r.admin_id ? byId.get(r.admin_id) || null : null }));
     } catch (error) {
-        console.error('Error fetching admin audit log:', error.message || error);
+        logQueryError('Error fetching admin audit log:', error);
         return [];
     }
 }
@@ -1334,7 +1342,7 @@ export async function getAdminOverview() {
             moderationMode: mode || 'auto',
         };
     } catch (error) {
-        console.error('Error fetching admin overview:', error.message || error);
+        logQueryError('Error fetching admin overview:', error);
         return empty;
     }
 }
@@ -1352,7 +1360,7 @@ export async function getPendingMedia({ limit = PAGE_SIZE, offset = 0 } = {}) {
         if (error) throw error;
         return data || [];
     } catch (error) {
-        console.error('Error fetching pending media:', error.message || error);
+        logQueryError('Error fetching pending media:', error);
         return [];
     }
 }
@@ -1388,7 +1396,7 @@ export async function getOpenReports({ limit = PAGE_SIZE, offset = 0 } = {}) {
         const byId = new Map((reporters || []).map((p) => [p.id, p]));
         return reports.map((r) => ({ ...r, reporter: r.reporter_id ? byId.get(r.reporter_id) || null : null }));
     } catch (error) {
-        console.error('Error fetching open reports:', error.message || error);
+        logQueryError('Error fetching open reports:', error);
         return [];
     }
 }
@@ -1421,7 +1429,7 @@ export async function resolveReport(reportId) {
         await logAdminAction('report.resolve', 'report', reportId);
         return { success: true };
     } catch (error) {
-        console.error('Error resolving report:', error.message || error);
+        logQueryError('Error resolving report:', error);
         return { success: false, error: friendlyErrorMessage(error, "Impossible de traiter ce signalement.") };
     }
 }
@@ -1444,7 +1452,7 @@ export async function getAdminUsers({ search = '', limit = 50, offset = 0 } = {}
         if (error) throw error;
         return data || [];
     } catch (error) {
-        console.error('Error fetching users:', error.message || error);
+        logQueryError('Error fetching users:', error);
         return [];
     }
 }
@@ -1456,7 +1464,7 @@ export async function setUserRole(userId, role) {
         await logAdminAction('user.role', 'user', userId, { role });
         return { success: true };
     } catch (error) {
-        console.error('Error updating role:', error.message || error);
+        logQueryError('Error updating role:', error);
         return { success: false, error: friendlyErrorMessage(error, "Impossible de modifier ce rôle.") };
     }
 }
@@ -1471,7 +1479,7 @@ export async function setUserFlag(userId, field, value) {
         await logAdminAction(`user.${field}`, 'user', userId, { value });
         return { success: true };
     } catch (error) {
-        console.error('Error updating user flag:', error.message || error);
+        logQueryError('Error updating user flag:', error);
         return { success: false, error: friendlyErrorMessage(error, "Impossible de mettre à jour ce compte.") };
     }
 }
@@ -1488,7 +1496,7 @@ export async function getAdminTopics() {
         if (error) throw error;
         return data || [];
     } catch (error) {
-        console.error('Error fetching admin topics:', error.message || error);
+        logQueryError('Error fetching admin topics:', error);
         return [];
     }
 }
@@ -1510,7 +1518,7 @@ export async function createTopic({ name, description = '', isFeatured = false, 
         if (error) throw error;
         return { success: true, topic: data };
     } catch (error) {
-        console.error('Error creating topic:', error.message || error);
+        logQueryError('Error creating topic:', error);
         return { success: false, error: friendlyErrorMessage(error, "Impossible de créer ce thème.") };
     }
 }
@@ -1521,7 +1529,7 @@ export async function updateTopic(topicId, updates) {
         if (error) throw error;
         return { success: true };
     } catch (error) {
-        console.error('Error updating topic:', error.message || error);
+        logQueryError('Error updating topic:', error);
         return { success: false, error: friendlyErrorMessage(error, "Impossible de modifier ce thème.") };
     }
 }
@@ -1532,7 +1540,7 @@ export async function deleteTopic(topicId) {
         if (error) throw error;
         return { success: true };
     } catch (error) {
-        console.error('Error deleting topic:', error.message || error);
+        logQueryError('Error deleting topic:', error);
         return { success: false, error: friendlyErrorMessage(error, "Impossible de supprimer ce thème.") };
     }
 }
