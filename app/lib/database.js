@@ -535,6 +535,22 @@ export async function getPlatformStats() {
 // Profils
 // ---------------------------------------------------------------------------
 
+// En dev, Fast Refresh / Strict Mode peut démonter puis remonter un composant
+// pendant qu'une requête est en vol : le navigateur l'annule, sans que ce
+// soit un vrai échec — le composant remonté relance de toute façon la même
+// requête. Sans ce filtre, chaque rechargement à chaud loggue une « erreur »
+// alarmante qui n'en est pas une (ça n'existe pas en production, où rien ne
+// démonte les composants ainsi).
+function isAbortError(error) {
+    if (error?.name === 'AbortError') return true;
+    // Selon ce qui l'a levée, l'info d'annulation atterrit parfois dans
+    // `.message` plutôt que dans `.name` (ex: "AbortError: signal is
+    // aborted without reason" comme message complet) — d'où la vérification
+    // textuelle en complément du nom.
+    const message = typeof error === 'string' ? error : error?.message;
+    return typeof message === 'string' && /abort/i.test(message);
+}
+
 export async function getUserProfile(username) {
     try {
         const { data, error } = await supabase
@@ -546,6 +562,7 @@ export async function getUserProfile(username) {
         if (error) throw error;
         return data;
     } catch (error) {
+        if (isAbortError(error)) return null;
         console.error('Error fetching user profile:', error.message || error);
         return null;
     }
@@ -562,6 +579,7 @@ export async function getProfileById(id) {
         if (error) throw error;
         return data;
     } catch (error) {
+        if (isAbortError(error)) return null;
         console.error('Error fetching profile by id:', error.message || error);
         return null;
     }
