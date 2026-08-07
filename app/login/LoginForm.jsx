@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { signInWithEmail } from "../lib/auth";
 import { useAuth } from "../contexts/AuthContext";
 import AuthBackground from "../components/AuthBackground";
 import OAuthButtons from "../components/OAuthButtons";
+import Turnstile from "../components/Turnstile";
 
 /**
  * Page de connexion.
@@ -32,6 +33,8 @@ function LoginForm() {
     const [showPassword, setShowPassword] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
+    const [turnstileToken, setTurnstileToken] = useState(null);
+    const turnstileRef = useRef(null);
 
     // On n'accepte qu'un chemin interne : une URL absolue transformerait la
     // page de connexion en redirection ouverte vers un site tiers.
@@ -50,7 +53,13 @@ function LoginForm() {
         setSubmitting(true);
         setError("");
 
-        const result = await signInWithEmail(email.trim(), password);
+        if (!turnstileToken) {
+            setError("Merci de valider la vérification anti-bot avant de continuer.");
+            setSubmitting(false);
+            return;
+        }
+
+        const result = await signInWithEmail(email.trim(), password, turnstileToken);
 
         if (result.success) {
             router.push(redirectPath);
@@ -61,6 +70,12 @@ function LoginForm() {
             setSubmitting(false);
         } else {
             setError(result.error);
+            // Le jeton Turnstile est à usage unique : qu'il ait été
+            // consommé par une tentative refusée par Supabase (mauvais mot
+            // de passe) ou rejeté par Cloudflare, il faut en redemander un
+            // avant de pouvoir réessayer.
+            setTurnstileToken(null);
+            turnstileRef.current?.reset();
             setSubmitting(false);
         }
     };
@@ -154,9 +169,18 @@ function LoginForm() {
                             </div>
                         </div>
 
+                        <div className="flex justify-center">
+                            <Turnstile
+                                ref={turnstileRef}
+                                onVerify={setTurnstileToken}
+                                onExpire={() => setTurnstileToken(null)}
+                                onError={() => setTurnstileToken(null)}
+                            />
+                        </div>
+
                         <button
                             type="submit"
-                            disabled={submitting}
+                            disabled={submitting || !turnstileToken}
                             className="w-full bg-[#111] text-white h-11 rounded-[4px] font-medium hover:bg-black transition-all active:scale-[0.99] mt-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             {submitting && <Loader2 className="w-4 h-4 animate-spin" />}

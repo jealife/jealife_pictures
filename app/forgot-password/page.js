@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Loader2, MailCheck, ArrowLeft } from "lucide-react";
 import { resetPassword } from "../lib/auth";
 import AuthBackground from "../components/AuthBackground";
+import Turnstile from "../components/Turnstile";
 
 /**
  * Demande de réinitialisation du mot de passe.
@@ -21,19 +22,32 @@ export default function ForgotPasswordPage() {
     const [sending, setSending] = useState(false);
     const [sent, setSent] = useState(false);
     const [error, setError] = useState("");
+    const [turnstileToken, setTurnstileToken] = useState(null);
+    const turnstileRef = useRef(null);
 
     const handleSubmit = async (event) => {
         event.preventDefault();
         setSending(true);
         setError("");
 
-        const result = await resetPassword(email.trim());
+        if (!turnstileToken) {
+            setError("Merci de valider la vérification anti-bot avant de continuer.");
+            setSending(false);
+            return;
+        }
+
+        const result = await resetPassword(email.trim(), turnstileToken);
         setSending(false);
 
         // On confirme même si l'adresse est inconnue : répondre différemment
         // permettrait de savoir qui possède un compte ici.
-        if (result.success) setSent(true);
-        else setError(result.error);
+        if (result.success) {
+            setSent(true);
+        } else {
+            setError(result.error);
+            setTurnstileToken(null);
+            turnstileRef.current?.reset();
+        }
     };
 
     return (
@@ -111,9 +125,18 @@ export default function ForgotPasswordPage() {
                                     />
                                 </div>
 
+                                <div className="flex justify-center">
+                                    <Turnstile
+                                        ref={turnstileRef}
+                                        onVerify={setTurnstileToken}
+                                        onExpire={() => setTurnstileToken(null)}
+                                        onError={() => setTurnstileToken(null)}
+                                    />
+                                </div>
+
                                 <button
                                     type="submit"
-                                    disabled={sending}
+                                    disabled={sending || !turnstileToken}
                                     className="w-full bg-[#111] text-white h-11 rounded-[4px] font-medium hover:bg-black transition-all active:scale-[0.99] disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
                                     {sending && <Loader2 className="w-4 h-4 animate-spin" />}

@@ -31,12 +31,13 @@ function loadTurnstileScript() {
 }
 
 /**
- * Widget Turnstile (protection anti-bot du formulaire d'inscription).
+ * Widget Turnstile (protection anti-bot des formulaires d'authentification).
  *
  * Le jeton renvoyé par `onVerify` est à usage unique : une fois envoyé à
- * `/api/verify-turnstile`, il ne peut pas être réutilisé si l'inscription
- * échoue ensuite pour une autre raison (email déjà pris, etc.). `reset()`
- * (exposé via ref) redemande un jeton frais avant une nouvelle tentative.
+ * Supabase (options.captchaToken), il ne peut pas être réutilisé si la
+ * requête échoue ensuite pour une autre raison (email déjà pris, mauvais
+ * mot de passe, etc.). `reset()` (exposé via ref) redemande un jeton frais
+ * avant une nouvelle tentative.
  */
 const Turnstile = forwardRef(function Turnstile({ onVerify, onExpire, onError }, ref) {
     const containerId = useId().replace(/:/g, "");

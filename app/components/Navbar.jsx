@@ -471,17 +471,23 @@ export default function Navbar() {
                 `sticky` sert de bloc de confinement à ses descendants `fixed`
                 une fois « collé » — `bottom-6` s'y calculait donc par rapport
                 au nav (~65px de haut), pas par rapport à la fenêtre. */}
+            {/* Calque de fermeture rendu hors de la bulle elle-même (et non
+                imbriqué dedans) : un `fixed` imbriqué dans un ancêtre déjà
+                `fixed` s'y confine plutôt que de couvrir tout l'écran — même
+                défaut de conteneur que celui déjà rencontré avec le `<nav>`
+                sticky, ici entre deux `fixed` cette fois. */}
+            {mobileSearchExpanded && (
+                <div
+                    className="md:hidden fixed inset-0 z-[46]"
+                    onClick={() => setMobileSearchExpanded(false)}
+                />
+            )}
             <div
-                className={`md:hidden fixed inset-x-0 bottom-6 z-40 flex justify-center pointer-events-none transition-all duration-300 ${
+                className={`md:hidden fixed inset-x-0 z-[46] flex justify-center pointer-events-none transition-all duration-300 ${
                     scrolled && !mobileMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                 }`}
+                style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}
             >
-                {mobileSearchExpanded && (
-                    <div
-                        className="fixed inset-0 pointer-events-auto"
-                        onClick={() => setMobileSearchExpanded(false)}
-                    />
-                )}
                 <div
                     className={`pointer-events-auto relative flex items-center bg-black/45 backdrop-blur-xl backdrop-saturate-150 border border-white/15 text-white rounded-full shadow-2xl transition-all duration-300 overflow-hidden ${
                         mobileSearchExpanded ? 'w-[calc(100vw-3rem)] max-w-sm h-14 pl-4 pr-2' : 'w-14 h-14 justify-center'
