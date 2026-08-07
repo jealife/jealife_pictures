@@ -46,8 +46,17 @@ export async function generateMetadata({ params }) {
         `Découvrez les ${stats.total_photos || ""} images de ${name} sur ${SITE_NAME}. ` +
         `Photos libres de droits, à télécharger gratuitement.`;
 
+    // `(@identifiant)` reprend le motif qu'utilise Unsplash pour ses pages de
+    // profil — utile pour qui cherche directement un pseudo. Google tronque
+    // l'affichage autour de 60 caractères ; le modèle "%s | JEaLiFe Stock" du
+    // site en consomme déjà 16, il reste donc ~44 caractères pour ce titre.
+    // Au-delà, on abandonne l'identifiant plutôt que de risquer un titre
+    // coupé au milieu d'un mot.
+    const titleWithHandle = `${name} (@${profile.username}), photographe`;
+    const title = titleWithHandle.length <= 44 ? titleWithHandle : `${name}, photographe`;
+
     return {
-        title: `${name}, photographe`,
+        title,
         description: description.replace(/\s+/g, " ").trim(),
         alternates: { canonical: `/@${profile.username}` },
         openGraph: {

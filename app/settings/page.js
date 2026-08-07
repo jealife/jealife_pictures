@@ -24,7 +24,8 @@ export default function SettingsPage() {
         website: "",
         instagram_username: "",
         twitter_username: "",
-        avatar_url: ""
+        avatar_url: "",
+        is_available_for_hire: false
     });
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -66,7 +67,8 @@ export default function SettingsPage() {
                     website: data.website || "",
                     instagram_username: data.instagram_username || "",
                     twitter_username: data.twitter_username || "",
-                    avatar_url: data.avatar_url || ""
+                    avatar_url: data.avatar_url || "",
+                    is_available_for_hire: data.is_available_for_hire || false
                 });
                 setAvatarPreview(data.avatar_url);
             }
@@ -132,7 +134,8 @@ export default function SettingsPage() {
                 website: profile.website,
                 instagram_username: profile.instagram_username,
                 twitter_username: profile.twitter_username,
-                avatar_url: finalAvatarUrl
+                avatar_url: finalAvatarUrl,
+                is_available_for_hire: profile.is_available_for_hire
             };
 
             const { success, error: updateError } = await upsertProfile(user.id, profileToUpdate);
@@ -316,6 +319,31 @@ export default function SettingsPage() {
                                             />
                                         </div>
                                     </div>
+                                </div>
+
+                                <div className="flex items-center justify-between gap-4 p-4 border border-gray-200 rounded-lg">
+                                    <div>
+                                        <p className="text-sm font-semibold text-gray-900">Disponible à l&apos;embauche</p>
+                                        <p className="text-xs text-gray-500 mt-0.5">
+                                            Affiche un badge sur votre profil public. Les visiteurs pourront vous
+                                            contacter directement via les liens renseignés dans l&apos;onglet Réseaux.
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        role="switch"
+                                        aria-checked={profile.is_available_for_hire}
+                                        onClick={() => setProfile({ ...profile, is_available_for_hire: !profile.is_available_for_hire })}
+                                        className={`shrink-0 relative w-11 h-6 rounded-full transition-colors ${
+                                            profile.is_available_for_hire ? "bg-black" : "bg-gray-200"
+                                        }`}
+                                    >
+                                        <span
+                                            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                                                profile.is_available_for_hire ? "translate-x-5" : "translate-x-0"
+                                            }`}
+                                        />
+                                    </button>
                                 </div>
                                 </>
                                 )}

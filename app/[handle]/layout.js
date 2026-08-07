@@ -120,10 +120,17 @@ export default function UserProfileLayout({ children }) {
                                     </p>
                                 </div>
                                 <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-3 text-sm text-gray-500">
-                                    {profileUser.status !== 'unavailable' && (
-                                        <span className="flex items-center gap-1.5 text-blue-600 font-medium">
+                                    {/* Ne concerne que les contributeurs qui l'ont explicitement activé
+                                        dans leurs réglages — jamais le compte JEaLiFe Stock lui-même, qui
+                                        est le compte de l'entreprise, pas un photographe indépendant. */}
+                                    {profileUser.is_available_for_hire && profileUser.role !== 'admin' && (
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.preventDefault(); setShowConnect(!showConnect); }}
+                                            className="flex items-center gap-1.5 text-blue-600 font-medium hover:text-blue-700 transition-colors"
+                                        >
                                             <CheckBadgeIcon className="w-4 h-4" /> Disponible à l&apos;embauche
-                                        </span>
+                                        </button>
                                     )}
                                     {profileUser.location && (
                                         <span className="flex items-center gap-1.5">
