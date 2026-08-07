@@ -1,12 +1,16 @@
 import { supabase, SUPABASE_URL, SUPABASE_KEY } from './supabase';
 import { friendlyErrorMessage } from './errors';
 
-// Connexion avec email et mot de passe
-export async function signInWithEmail(email, password) {
+// Connexion avec email et mot de passe.
+// `captchaToken` (jeton Turnstile) est requis dès que la protection anti-bot
+// est activée côté Supabase (Authentication > Attack Protection) : sans lui,
+// Supabase refuse la requête avec "captcha protection: request disallowed".
+export async function signInWithEmail(email, password, captchaToken) {
     try {
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
+            options: captchaToken ? { captchaToken } : undefined,
         });
 
         if (error) throw error;
@@ -17,14 +21,15 @@ export async function signInWithEmail(email, password) {
     }
 }
 
-// Inscription avec email et mot de passe
-export async function signUpWithEmail(email, password, metadata = {}) {
+// Inscription avec email et mot de passe (voir signInWithEmail pour captchaToken)
+export async function signUpWithEmail(email, password, metadata = {}, captchaToken) {
     try {
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
                 data: metadata, // firstName, lastName, etc.
+                ...(captchaToken ? { captchaToken } : {}),
             },
         });
 
@@ -138,11 +143,12 @@ export async function getSession() {
     }
 }
 
-// Réinitialiser le mot de passe
-export async function resetPassword(email) {
+// Réinitialiser le mot de passe (voir signInWithEmail pour captchaToken)
+export async function resetPassword(email, captchaToken) {
     try {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
             redirectTo: `${window.location.origin}/reset-password`,
+            ...(captchaToken ? { captchaToken } : {}),
         });
 
         if (error) throw error;

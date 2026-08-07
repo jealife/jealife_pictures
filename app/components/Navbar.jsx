@@ -58,8 +58,10 @@ export default function Navbar() {
     const [openMenuSection, setOpenMenuSection] = useState(null);
     const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const [mobileSearchExpanded, setMobileSearchExpanded] = useState(false);
     const desktopUserMenuRef = useRef(null);
     const mobileUserMenuRef = useRef(null);
+    const mobileFloatingSearchRef = useRef(null);
 
     const handleSignOut = async () => {
         setUserMenuOpen(false);
@@ -75,6 +77,18 @@ export default function Navbar() {
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
+
+    // La bulle de recherche flottante mobile ne doit exister que pendant
+    // qu'on a défilé (voir plus bas) : de retour en haut, on la replie plutôt
+    // que de la laisser en attente, invisible mais dépliée, pour la prochaine
+    // fois qu'elle réapparaît.
+    useEffect(() => {
+        if (!scrolled) setMobileSearchExpanded(false);
+    }, [scrolled]);
+
+    useEffect(() => {
+        if (mobileSearchExpanded) mobileFloatingSearchRef.current?.focus();
+    }, [mobileSearchExpanded]);
 
     // Garde le champ synchronisé avec la recherche active (Hero, tendances,
     // navigation arrière) : sans ça, affiner une recherche en cours obligeait
@@ -446,6 +460,69 @@ export default function Navbar() {
                     </>
                 )}
             </nav>
+
+            {/* Bulle de recherche flottante mobile — la rangée de recherche
+                du nav ci-dessus se replie au défilement (voir plus haut) ;
+                sans repli, il n'y a plus aucun moyen de lancer une recherche
+                en scrollant. Discrète en bas au centre plutôt qu'un plein
+                écran, elle s'étend au clic et disparaît dès qu'on revient en
+                haut de page.
+                Rendue hors du <nav> (au lieu d'y être imbriquée) : un `<nav>`
+                `sticky` sert de bloc de confinement à ses descendants `fixed`
+                une fois « collé » — `bottom-6` s'y calculait donc par rapport
+                au nav (~65px de haut), pas par rapport à la fenêtre. */}
+            <div
+                className={`md:hidden fixed inset-x-0 bottom-6 z-40 flex justify-center pointer-events-none transition-all duration-300 ${
+                    scrolled && !mobileMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+                }`}
+            >
+                {mobileSearchExpanded && (
+                    <div
+                        className="fixed inset-0 pointer-events-auto"
+                        onClick={() => setMobileSearchExpanded(false)}
+                    />
+                )}
+                <div
+                    className={`pointer-events-auto relative flex items-center bg-black/45 backdrop-blur-xl backdrop-saturate-150 border border-white/15 text-white rounded-full shadow-2xl transition-all duration-300 overflow-hidden ${
+                        mobileSearchExpanded ? 'w-[calc(100vw-3rem)] max-w-sm h-14 pl-4 pr-2' : 'w-14 h-14 justify-center'
+                    }`}
+                >
+                    {mobileSearchExpanded ? (
+                        <>
+                            <Search className="w-4 h-4 text-white/70 shrink-0" />
+                            <input
+                                ref={mobileFloatingSearchRef}
+                                type="search"
+                                value={term}
+                                onChange={(e) => setTerm(e.target.value)}
+                                placeholder={`Rechercher des ${currentType.label.toLowerCase()}...`}
+                                className="w-full h-full px-3 bg-transparent border-none outline-none text-sm font-medium text-white placeholder-white/60"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') { submitSearch(); setMobileSearchExpanded(false); }
+                                    if (e.key === 'Escape') setMobileSearchExpanded(false);
+                                }}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => { submitSearch(); setMobileSearchExpanded(false); }}
+                                aria-label="Rechercher"
+                                className="shrink-0 w-10 h-10 flex items-center justify-center rounded-full bg-white/90 backdrop-blur-sm text-black"
+                            >
+                                <Search className="w-4 h-4" />
+                            </button>
+                        </>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => setMobileSearchExpanded(true)}
+                            aria-label="Ouvrir la recherche"
+                            className="w-14 h-14 flex items-center justify-center"
+                        >
+                            <Search className="w-5 h-5" />
+                        </button>
+                    )}
+                </div>
+            </div>
 
             {/* Desktop Floating Menu (Pop-up from Rail) */}
             {desktopSidebarOpen && (

@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { Check, Eye, EyeOff, Loader2 } from "lucide-react";
-import { Suspense, useState } from "react";
+import { Suspense, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signUpWithEmail, upsertProfile } from "../lib/auth";
 import OAuthButtons from "../components/OAuthButtons";
 import AuthBackground from "../components/AuthBackground";
+import Turnstile from "../components/Turnstile";
 
 function JoinForm() {
     const router = useRouter();
@@ -30,6 +31,9 @@ function JoinForm() {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
     const [usernameWarning, setUsernameWarning] = useState(false);
+    const [turnstileToken, setTurnstileToken] = useState(null);
+    const turnstileRef = useRef(null);
+
     const handleSignUp = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -51,12 +55,23 @@ function JoinForm() {
             return;
         }
 
+        if (!turnstileToken) {
+            setError("Merci de valider la vérification anti-bot avant de continuer.");
+            setLoading(false);
+            return;
+        }
+
+        // Le jeton Turnstile part directement vers Supabase (options.captchaToken) :
+        // la protection anti-bot est activée côté projet Supabase, qui fait
+        // lui-même l'appel à Cloudflare. Un jeton Turnstile étant à usage
+        // unique, le vérifier nous-mêmes avant l'appel ferait échouer celui
+        // de Supabase (jeton déjà consommé).
         const result = await signUpWithEmail(email, password, {
             first_name: firstName,
             last_name: lastName,
             full_name: `${firstName} ${lastName}`.trim(),
             username: username.toLowerCase(),
-        });
+        }, turnstileToken);
 
         if (result.success) {
             // Créer le profil utilisateur avec le username choisi. Un
@@ -83,6 +98,8 @@ function JoinForm() {
             }, 2000);
         } else {
             setError(result.error || "Erreur lors de la création du compte.");
+            setTurnstileToken(null);
+            turnstileRef.current?.reset();
         }
 
         setLoading(false);
@@ -212,9 +229,18 @@ function JoinForm() {
                             </div>
                         </div>
 
+                        <div className="flex justify-center">
+                            <Turnstile
+                                ref={turnstileRef}
+                                onVerify={setTurnstileToken}
+                                onExpire={() => setTurnstileToken(null)}
+                                onError={() => setTurnstileToken(null)}
+                            />
+                        </div>
+
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={loading || !turnstileToken}
                             className="w-full bg-[#111] text-white h-11 rounded-[4px] font-medium hover:bg-black transition-all active:scale-[0.99] mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? "Création en cours..." : "S'inscrire"}
