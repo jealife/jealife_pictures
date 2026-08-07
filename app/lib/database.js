@@ -1110,12 +1110,27 @@ export async function createEditorialCollection(adminUserId, { title, descriptio
 // Modération
 // ---------------------------------------------------------------------------
 
+// Passe par une route serveur (plutôt qu'un insert direct) : c'est le seul
+// endroit qui voit l'IP de l'appelant, nécessaire pour limiter les
+// signalements anonymes en répétition (voir app/api/report-media/route.js).
 export async function reportMedia(mediaId, { reason, details = '', reporterId = null }) {
     try {
-        const { error } = await supabase
-            .from('media_reports')
-            .insert({ media_id: mediaId, reason, details, reporter_id: reporterId });
-        if (error) throw error;
+        const headers = { 'Content-Type': 'application/json' };
+        if (reporterId) {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) headers.Authorization = `Bearer ${session.access_token}`;
+        }
+
+        const response = await fetch('/api/report-media', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ mediaId, reason, details }),
+        });
+
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            return { success: false, error: data.error || "L'envoi du signalement a échoué." };
+        }
         return { success: true };
     } catch (error) {
         console.error('Error reporting media:', error.message || error);
@@ -1227,10 +1242,58 @@ export async function setSetting(key, value) {
     try {
         const { error } = await supabase.rpc('set_setting', { setting_key: key, setting_value: value });
         if (error) throw error;
+        await logAdminAction('setting.update', 'setting', key, { value });
         return { success: true };
     } catch (error) {
         console.error('Error updating setting:', error.message || error);
         return { success: false, error: friendlyErrorMessage(error, "Impossible d'enregistrer le réglage.") };
+    }
+}
+
+/**
+ * Journal d'audit admin (migration 0011) : qui a fait quoi, sur quoi, quand.
+ * Best-effort — un échec de journalisation ne doit jamais faire échouer
+ * l'action elle-même, qui a déjà réussi au moment où on appelle ceci.
+ */
+async function logAdminAction(action, targetType, targetId, details = null) {
+    try {
+        const { error } = await supabase.rpc('log_admin_action', {
+            p_action: action,
+            p_target_type: targetType,
+            p_target_id: targetId === null || targetId === undefined ? null : String(targetId),
+            p_details: details,
+        });
+        if (error) throw error;
+    } catch (error) {
+        console.error('Error logging admin action:', error.message || error);
+    }
+}
+
+/** Journal d'audit, du plus récent au plus ancien. */
+export async function getAdminAuditLog({ limit = 50, offset = 0 } = {}) {
+    try {
+        const { data, error } = await supabase
+            .from('admin_audit_log')
+            .select('id, admin_id, action, target_type, target_id, details, created_at')
+            .order('created_at', { ascending: false })
+            .range(offset, offset + limit - 1);
+
+        if (error) throw error;
+        const rows = data || [];
+
+        const adminIds = [...new Set(rows.map((r) => r.admin_id).filter(Boolean))];
+        if (adminIds.length === 0) return rows.map((r) => ({ ...r, admin: null }));
+
+        const { data: admins } = await supabase
+            .from('profiles')
+            .select('id, username, full_name')
+            .in('id', adminIds);
+
+        const byId = new Map((admins || []).map((p) => [p.id, p]));
+        return rows.map((r) => ({ ...r, admin: r.admin_id ? byId.get(r.admin_id) || null : null }));
+    } catch (error) {
+        console.error('Error fetching admin audit log:', error.message || error);
+        return [];
     }
 }
 
@@ -1313,15 +1376,21 @@ export async function getOpenReports({ limit = PAGE_SIZE, offset = 0 } = {}) {
 }
 
 export async function approveMedia(mediaId) {
-    return updateMedia(mediaId, { status: 'published' });
+    const result = await updateMedia(mediaId, { status: 'published' });
+    if (result.success) await logAdminAction('media.approve', 'media', mediaId);
+    return result;
 }
 
 export async function rejectMedia(mediaId) {
-    return updateMedia(mediaId, { status: 'rejected' });
+    const result = await updateMedia(mediaId, { status: 'rejected' });
+    if (result.success) await logAdminAction('media.reject', 'media', mediaId);
+    return result;
 }
 
 export async function removeMedia(mediaId) {
-    return updateMedia(mediaId, { status: 'removed' });
+    const result = await updateMedia(mediaId, { status: 'removed' });
+    if (result.success) await logAdminAction('media.remove', 'media', mediaId);
+    return result;
 }
 
 export async function resolveReport(reportId) {
@@ -1331,6 +1400,7 @@ export async function resolveReport(reportId) {
             .update({ resolved: true })
             .eq('id', reportId);
         if (error) throw error;
+        await logAdminAction('report.resolve', 'report', reportId);
         return { success: true };
     } catch (error) {
         console.error('Error resolving report:', error.message || error);
@@ -1343,7 +1413,7 @@ export async function getAdminUsers({ search = '', limit = 50, offset = 0 } = {}
     try {
         let query = supabase
             .from('profiles')
-            .select('id, username, full_name, avatar_url, role, is_verified, is_contributor, total_views, total_downloads, created_at')
+            .select('id, username, full_name, avatar_url, role, is_verified, is_contributor, is_suspended, total_views, total_downloads, created_at')
             .order('created_at', { ascending: false });
 
         const term = search.trim();
@@ -1365,6 +1435,7 @@ export async function setUserRole(userId, role) {
     try {
         const { error } = await supabase.from('profiles').update({ role }).eq('id', userId);
         if (error) throw error;
+        await logAdminAction('user.role', 'user', userId, { role });
         return { success: true };
     } catch (error) {
         console.error('Error updating role:', error.message || error);
@@ -1373,12 +1444,13 @@ export async function setUserRole(userId, role) {
 }
 
 export async function setUserFlag(userId, field, value) {
-    if (!['is_verified', 'is_contributor'].includes(field)) {
+    if (!['is_verified', 'is_contributor', 'is_suspended'].includes(field)) {
         return { success: false, error: 'Champ non autorisé.' };
     }
     try {
         const { error } = await supabase.from('profiles').update({ [field]: value }).eq('id', userId);
         if (error) throw error;
+        await logAdminAction(`user.${field}`, 'user', userId, { value });
         return { success: true };
     } catch (error) {
         console.error('Error updating user flag:', error.message || error);

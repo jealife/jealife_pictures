@@ -35,6 +35,23 @@ export async function POST(request) {
             return NextResponse.json({ error: "Session invalide, reconnectez-vous." }, { status: 401 });
         }
 
+        // Même garde-fou que moderate-upload : cette route appelle aussi
+        // l'API Gemini payante à chaque essai.
+        const { data: withinLimit, error: rateLimitError } = await supabase.rpc("check_rate_limit", {
+            p_key: user.id,
+            p_bucket: "generate-metadata",
+            p_max_count: 15,
+            p_window_seconds: 300,
+        });
+        if (rateLimitError) {
+            console.error("Vérification de limite de débit impossible :", rateLimitError);
+        } else if (!withinLimit) {
+            return NextResponse.json(
+                { error: "Trop de tentatives en peu de temps. Patientez quelques minutes avant de réessayer." },
+                { status: 429 }
+            );
+        }
+
         const { image, mimeType, type } = await request.json();
 
         if (!image) {

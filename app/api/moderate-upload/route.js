@@ -130,6 +130,26 @@ export async function POST(request) {
             return NextResponse.json({ error: "Session invalide, reconnectez-vous." }, { status: 401 });
         }
 
+        // Cette route appelle l'API Gemini (payante) et fait tourner `sharp` à
+        // chaque appel : sans limite, un compte compromis ou un client qui
+        // boucle peut faire exploser la facture. La fonction échoue ouverte
+        // (autorise) si la table de comptage n'est pas encore migrée, plutôt
+        // que de casser tous les envois en attendant.
+        const { data: withinLimit, error: rateLimitError } = await supabase.rpc("check_rate_limit", {
+            p_key: user.id,
+            p_bucket: "moderate-upload",
+            p_max_count: 10,
+            p_window_seconds: 300,
+        });
+        if (rateLimitError) {
+            console.error("Vérification de limite de débit impossible :", rateLimitError);
+        } else if (!withinLimit) {
+            return NextResponse.json(
+                { error: "Trop d'envois en peu de temps. Patientez quelques minutes avant de réessayer." },
+                { status: 429 }
+            );
+        }
+
         const { image, mimeType, originalWidth, originalHeight, type } = await request.json();
         if (!image) {
             return NextResponse.json({ error: "Aucune image fournie." }, { status: 400 });

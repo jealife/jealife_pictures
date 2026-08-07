@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Search, ShieldCheck, BadgeCheck, Loader2 } from "lucide-react";
+import { Search, ShieldCheck, BadgeCheck, Ban, Loader2 } from "lucide-react";
 import { getAdminUsers, setUserRole, setUserFlag } from "../../lib/database";
 import { avatarFallback } from "../../lib/media";
 import { useAuth } from "../../contexts/AuthContext";
@@ -48,6 +48,23 @@ export default function AdminUsersPage() {
         load(search);
     };
 
+    // Coupe les nouvelles publications (voir migration 0011) sans supprimer
+    // le compte ni son historique — pas de blocage de connexion.
+    const toggleSuspend = async (user) => {
+        const nextValue = !user.is_suspended;
+        const confirmed = window.confirm(
+            nextValue
+                ? `Suspendre @${user.username} ? Ce compte ne pourra plus publier tant qu'il n'est pas réactivé.`
+                : `Réactiver @${user.username} ?`
+        );
+        if (!confirmed) return;
+
+        setBusyId(user.id);
+        await setUserFlag(user.id, "is_suspended", nextValue);
+        setBusyId(null);
+        load(search);
+    };
+
     return (
         <div>
             <h2 className="text-2xl font-bold text-gray-900 mb-1">Utilisateurs</h2>
@@ -88,6 +105,11 @@ export default function AdminUsersPage() {
                                     className="font-semibold text-gray-900 hover:underline truncate block"
                                 >
                                     {u.full_name || u.username}
+                                    {u.is_suspended && (
+                                        <span className="ml-2 align-middle text-[10px] font-bold uppercase tracking-wide text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                                            Suspendu
+                                        </span>
+                                    )}
                                 </Link>
                                 <p className="text-xs text-gray-500">@{u.username}</p>
                             </div>
@@ -100,6 +122,20 @@ export default function AdminUsersPage() {
                                 }`}
                             >
                                 <BadgeCheck className="w-4 h-4" />
+                            </button>
+                            <button
+                                disabled={busyId === u.id || u.id === currentAdmin?.id}
+                                onClick={() => toggleSuspend(u)}
+                                title={
+                                    u.id === currentAdmin?.id
+                                        ? "Impossible de vous suspendre vous-même"
+                                        : u.is_suspended ? "Réactiver ce compte" : "Suspendre ce compte"
+                                }
+                                className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${
+                                    u.is_suspended ? "text-red-600 bg-red-50" : "text-gray-300 hover:text-gray-500"
+                                }`}
+                            >
+                                <Ban className="w-4 h-4" />
                             </button>
                             <button
                                 disabled={busyId === u.id || u.id === currentAdmin?.id}

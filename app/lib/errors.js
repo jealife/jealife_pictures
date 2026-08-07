@@ -25,6 +25,7 @@ const ERROR_MESSAGES = [
     [/timeout|timed out/i, 'Le serveur met trop de temps à répondre. Réessayez.'],
 
     // Base de données (Postgres / RLS)
+    [/compte a été suspendu/i, 'Ce compte a été suspendu et ne peut plus publier.'],
     [/row-level security/i, "Vous n'avez pas la permission d'effectuer cette action."],
     [/duplicate key value violates unique constraint/i, 'Cet élément existe déjà.'],
     [/violates foreign key constraint/i, "Action impossible : un élément lié est introuvable."],
