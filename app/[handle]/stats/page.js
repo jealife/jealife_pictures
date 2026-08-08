@@ -2,13 +2,14 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getUserProfile, getUserStats, getUserDownloadsTrend } from "../../lib/database";
+import { getUserProfile, getUserStats, getUserDownloadsTrend, getUserMilestones } from "../../lib/database";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
 import Link from "next/link";
 import { BarChart3 } from "lucide-react";
 import TrendChart from "../../components/charts/TrendChart";
 import RankingBars from "../../components/charts/RankingBars";
+import MilestonesGrid from "../../components/MilestonesGrid";
 
 const RANGE_OPTIONS = [
     { label: "30 jours", days: 30 },
@@ -35,6 +36,7 @@ export default function UserStatsPage() {
     const [topDownloaded, setTopDownloaded] = useState([]);
     const [rangeDays, setRangeDays] = useState(30);
     const [downloadsTrend, setDownloadsTrend] = useState(null);
+    const [milestones, setMilestones] = useState([]);
 
     useEffect(() => {
         const checkOwnership = async () => {
@@ -50,6 +52,8 @@ export default function UserStatsPage() {
                     setProfileId(profile.id);
                     const userStats = await getUserStats(profile.id);
                     if (userStats) setStats(userStats);
+
+                    getUserMilestones().then(setMilestones);
 
                     const { data: vData } = await supabase
                         .from('media')
@@ -107,6 +111,8 @@ export default function UserStatsPage() {
 
     return (
         <div className="max-w-[1320px] mx-auto">
+            <MilestonesGrid milestones={milestones} />
+
             <div className="mb-10 flex items-center justify-between flex-wrap gap-4">
                 <span className="font-bold text-gray-900 dark:text-zinc-100">Aperçu</span>
                 <div className="flex items-center gap-1 bg-gray-50 dark:bg-zinc-800 rounded-full p-1">

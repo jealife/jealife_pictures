@@ -698,6 +698,25 @@ export async function getUserStats(userId) {
 }
 
 /**
+ * Jalons du contributeur connecté (« Vos évènements majeurs », page
+ * /@handle/stats) : deux jalons ponctuels (première publication, premier
+ * téléchargement reçu) et deux échelles de paliers (vues, téléchargements).
+ * `get_my_milestones` (migration 0015) est strictement bornée à
+ * `auth.uid()` côté serveur — aucun paramètre ici, impossible de demander
+ * les jalons de quelqu'un d'autre.
+ */
+export async function getUserMilestones() {
+    try {
+        const { data, error } = await supabase.rpc('get_my_milestones');
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        logQueryError('Error fetching user milestones:', error);
+        return [];
+    }
+}
+
+/**
  * Téléchargements reçus sur les médias d'un contributeur, par jour, sur les
  * `days` derniers jours (page de statistiques de profil). Nécessite la
  * policy RLS de la migration 0013 : sans elle, un propriétaire de média ne
