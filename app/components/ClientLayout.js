@@ -18,7 +18,11 @@ export default function ClientLayout({ children }) {
         "/auth/callback",
         "/verify",
     ];
-    const shouldHideLayout = hiddenRoutes.includes(pathname);
+    // L'admin a sa propre coquille (app/admin/layout.js — sidebar desktop,
+    // barre d'onglets mobile) : la Navbar publique n'a rien à y faire, elle
+    // ferait doublon avec sa navigation et lui volerait la largeur réservée
+    // par `md:pl-[64px]` ci-dessous.
+    const shouldHideLayout = hiddenRoutes.includes(pathname) || pathname.startsWith("/admin");
 
     const footerRoutes = [
         "/about",

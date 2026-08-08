@@ -67,7 +67,11 @@ export default function TrendChart({ title, data, color, total }) {
         ? `${linePath} L ${points[points.length - 1].x.toFixed(2)} ${(PAD.top + plotHeight).toFixed(2)} L ${points[0].x.toFixed(2)} ${(PAD.top + plotHeight).toFixed(2)} Z`
         : "";
 
-    const yTicks = [0, 0.5, 1].map((f) => Math.round(maxValue * f));
+    // Dédoublonné : sur un petit total (maxValue <= 2), les fractions 0 / 0.5 / 1
+    // arrondissent parfois sur le même entier (ex. maxValue=1 → 0, 1, 1), ce qui
+    // affichait deux fois la même graduation et faisait planter React sur des
+    // clés dupliquées.
+    const yTicks = [...new Set([0, 0.5, 1].map((f) => Math.round(maxValue * f)))];
     const lastPoint = points[points.length - 1];
     const hovered = hoverIndex != null ? points[hoverIndex] : null;
 
