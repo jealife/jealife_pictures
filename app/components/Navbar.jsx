@@ -194,7 +194,7 @@ export default function Navbar() {
                     <img
                         src="/JEaLiFe-Stock-Logo-transparent-noir.png"
                         alt="Logo"
-                        className="w-auto h-8 object-contain hover:scale-105 transition-transform"
+                        className="w-auto h-8 object-contain hover:scale-105 transition-transform dark:invert"
                     />
                 </Link>
 
@@ -278,7 +278,7 @@ export default function Navbar() {
                                 <img
                                     src="/JEaLiFe-Stock-Logo-transparent-noir.png"
                                     alt="JEaLiFe Stock"
-                                    className="h-8 w-auto object-contain"
+                                    className="h-8 w-auto object-contain dark:invert"
                                 />
                             </Link>
                         </div>

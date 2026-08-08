@@ -93,44 +93,44 @@ export default function AdminCollectionDetailPage() {
     };
 
     if (collection === null) {
-        return <Loader2 className="w-6 h-6 animate-spin text-gray-300" />;
+        return <Loader2 className="w-6 h-6 animate-spin text-gray-300 dark:text-zinc-600" />;
     }
 
     const currentIds = new Set((collection.media || []).map((m) => m.id));
 
     return (
         <div>
-            <Link href="/admin/collections" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-black mb-6">
+            <Link href="/admin/collections" className="inline-flex items-center gap-2 text-sm text-gray-500 dark:text-zinc-400 hover:text-black dark:hover:text-white mb-6">
                 <ArrowLeft className="w-4 h-4" /> Collections
             </Link>
 
             <form onSubmit={save} className="space-y-4 max-w-lg mb-12">
                 <div>
-                    <label className="block text-sm font-bold text-gray-900 mb-2">Titre</label>
+                    <label className="block text-sm font-bold text-gray-900 dark:text-zinc-100 mb-2">Titre</label>
                     <input
                         value={draft.title}
                         onChange={(event) => setDraft((d) => ({ ...d, title: event.target.value }))}
-                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-black outline-none"
+                        className="w-full px-4 py-2.5 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm focus:ring-2 focus:ring-black dark:focus:ring-white text-gray-900 dark:text-zinc-100 outline-none"
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-bold text-gray-900 mb-2">Description</label>
+                    <label className="block text-sm font-bold text-gray-900 dark:text-zinc-100 mb-2">Description</label>
                     <textarea
                         rows={3}
                         value={draft.description}
                         onChange={(event) => setDraft((d) => ({ ...d, description: event.target.value }))}
-                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-black outline-none resize-none"
+                        className="w-full px-4 py-2.5 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm focus:ring-2 focus:ring-black dark:focus:ring-white text-gray-900 dark:text-zinc-100 outline-none resize-none"
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-bold text-gray-900 mb-2">
-                        URL de couverture <span className="font-normal text-gray-400">(facultatif, sinon la première image sert de couverture)</span>
+                    <label className="block text-sm font-bold text-gray-900 dark:text-zinc-100 mb-2">
+                        URL de couverture <span className="font-normal text-gray-400 dark:text-zinc-500">(facultatif, sinon la première image sert de couverture)</span>
                     </label>
                     <input
                         value={draft.cover_image_url}
                         onChange={(event) => setDraft((d) => ({ ...d, cover_image_url: event.target.value }))}
                         placeholder="https://…"
-                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-black outline-none"
+                        className="w-full px-4 py-2.5 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm focus:ring-2 focus:ring-black dark:focus:ring-white text-gray-900 dark:text-zinc-100 outline-none"
                     />
                 </div>
 
@@ -138,12 +138,12 @@ export default function AdminCollectionDetailPage() {
                     <button
                         type="submit"
                         disabled={saving}
-                        className="px-5 py-2.5 bg-black text-white rounded-xl text-sm font-bold hover:bg-gray-800 disabled:opacity-50 flex items-center gap-2"
+                        className="px-5 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-xl text-sm font-bold hover:bg-gray-800 dark:hover:bg-zinc-200 disabled:opacity-50 flex items-center gap-2"
                     >
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Enregistrer
                     </button>
                     {saved && (
-                        <span className="text-sm text-emerald-600 font-medium flex items-center gap-1.5">
+                        <span className="text-sm text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5">
                             <CheckCircle2 className="w-4 h-4" /> Enregistré
                         </span>
                     )}
@@ -151,7 +151,7 @@ export default function AdminCollectionDetailPage() {
                         type="button"
                         onClick={remove}
                         disabled={deleting}
-                        className="ml-auto px-4 py-2.5 text-red-600 text-sm font-bold rounded-xl hover:bg-red-50 disabled:opacity-50 flex items-center gap-2"
+                        className="ml-auto px-4 py-2.5 text-red-600 dark:text-red-400 text-sm font-bold rounded-xl hover:bg-red-50 dark:hover:bg-red-950 disabled:opacity-50 flex items-center gap-2"
                     >
                         <Trash2 className="w-4 h-4" /> Supprimer la collection
                     </button>
@@ -159,15 +159,15 @@ export default function AdminCollectionDetailPage() {
             </form>
 
             <section className="mb-12">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-zinc-100 mb-4">
                     Images ({collection.media?.length || 0})
                 </h3>
                 {(!collection.media || collection.media.length === 0) ? (
-                    <p className="text-sm text-gray-400 italic mb-6">Aucune image pour l&apos;instant.</p>
+                    <p className="text-sm text-gray-400 dark:text-zinc-500 italic mb-6">Aucune image pour l&apos;instant.</p>
                 ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 mb-6">
                         {collection.media.map((item) => (
-                            <div key={item.id} className="relative group rounded-lg overflow-hidden bg-gray-100 aspect-square">
+                            <div key={item.id} className="relative group rounded-lg overflow-hidden bg-gray-100 dark:bg-zinc-800 aspect-square">
                                 <Image src={item.thumbnail_url || item.url} alt="" fill unoptimized className="object-cover" />
                                 <button
                                     disabled={busyMediaId === item.id}
@@ -184,25 +184,25 @@ export default function AdminCollectionDetailPage() {
             </section>
 
             <section>
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Ajouter des images</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-zinc-100 mb-4">Ajouter des images</h3>
                 <div className="relative mb-4 max-w-sm">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-zinc-500" />
                     <input
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
                         placeholder="Chercher par titre, lieu, mot-clé…"
-                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-black outline-none"
+                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl text-sm focus:ring-2 focus:ring-black dark:focus:ring-white text-gray-900 dark:text-zinc-100 outline-none"
                     />
                 </div>
 
                 {searching ? (
-                    <Loader2 className="w-5 h-5 animate-spin text-gray-300" />
+                    <Loader2 className="w-5 h-5 animate-spin text-gray-300 dark:text-zinc-600" />
                 ) : results.length > 0 ? (
                     <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
                         {results.map((media) => {
                             const already = currentIds.has(media.id);
                             return (
-                                <div key={media.id} className="relative rounded-lg overflow-hidden bg-gray-100 aspect-square">
+                                <div key={media.id} className="relative rounded-lg overflow-hidden bg-gray-100 dark:bg-zinc-800 aspect-square">
                                     <Image src={media.thumbnail_url || media.url} alt="" fill unoptimized className="object-cover" />
                                     <button
                                         disabled={already || busyMediaId === media.id}
@@ -222,7 +222,7 @@ export default function AdminCollectionDetailPage() {
                         })}
                     </div>
                 ) : query.trim() ? (
-                    <p className="text-sm text-gray-400 italic">Aucun résultat.</p>
+                    <p className="text-sm text-gray-400 dark:text-zinc-500 italic">Aucun résultat.</p>
                 ) : null}
             </section>
         </div>

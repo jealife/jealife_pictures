@@ -16,6 +16,7 @@ export default function ClientLayout({ children }) {
         "/forgot-password",
         "/reset-password",
         "/auth/callback",
+        "/verify",
     ];
     const shouldHideLayout = hiddenRoutes.includes(pathname);
 

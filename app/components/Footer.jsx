@@ -44,7 +44,7 @@ const SECTIONS = [
 
 export default function Footer() {
     return (
-        <footer className="bg-white border-t border-gray-100 pt-16 pb-8">
+        <footer className="bg-white dark:bg-zinc-950 border-t border-gray-100 dark:border-zinc-800 pt-16 pb-8">
             <div className="max-w-[1600px] mx-auto px-4 md:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
                     <div className="space-y-4">
@@ -55,10 +55,10 @@ export default function Footer() {
                                 width={100}
                                 height={40}
                                 style={{ height: "auto" }}
-                                className="w-[50px] object-contain group-hover:scale-105 transition-transform"
+                                className="w-[50px] object-contain group-hover:scale-105 transition-transform dark:invert"
                             />
                         </Link>
-                        <p className="text-gray-500 text-sm leading-relaxed max-w-xs">
+                        <p className="text-gray-500 dark:text-zinc-400 text-sm leading-relaxed max-w-xs">
                             Banque d&apos;images libres de droits et gratuites. Une sélection
                             soignée, où l&apos;on trouve de belles images du continent.
                         </p>
@@ -66,13 +66,13 @@ export default function Footer() {
 
                     {SECTIONS.map((section) => (
                         <nav key={section.title} aria-label={section.title}>
-                            <h2 className="font-bold text-gray-900 mb-6">{section.title}</h2>
+                            <h2 className="font-bold text-gray-900 dark:text-zinc-100 mb-6">{section.title}</h2>
                             <ul className="space-y-3">
                                 {section.links.map((link) => (
                                     <li key={link.href}>
                                         <Link
                                             href={link.href}
-                                            className="text-gray-500 hover:text-emerald-700 transition-colors text-sm font-medium"
+                                            className="text-gray-500 dark:text-zinc-400 hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors text-sm font-medium"
                                         >
                                             {link.label}
                                         </Link>
@@ -83,12 +83,12 @@ export default function Footer() {
                     ))}
                 </div>
 
-                <div className="pt-8 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4">
-                    <p className="text-xs text-gray-400">
+                <div className="pt-8 border-t border-gray-100 dark:border-zinc-800 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <p className="text-xs text-gray-400 dark:text-zinc-500">
                         © {new Date().getFullYear()} JEaLiFe Stock. Les images
                         appartiennent à leurs auteurs.
                     </p>
-                    <Link href="/licence" className="text-xs font-semibold text-gray-500 hover:text-black transition-colors">
+                    <Link href="/licence" className="text-xs font-semibold text-gray-500 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors">
                         Licence & conditions d&apos;utilisation
                     </Link>
                 </div>
