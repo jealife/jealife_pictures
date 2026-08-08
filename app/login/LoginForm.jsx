@@ -81,7 +81,7 @@ function LoginForm() {
     };
 
     return (
-        <div className="min-h-screen flex bg-white font-sans text-[#111]">
+        <div className="min-h-screen flex bg-white dark:bg-zinc-950 font-sans text-[#111] dark:text-zinc-100">
             <div className="relative hidden lg:block lg:w-[40%]">
                 <AuthBackground
                     imageIndex={0}
@@ -98,8 +98,8 @@ function LoginForm() {
             <div className="w-full lg:w-[60%] flex flex-col justify-center items-center px-4 sm:px-12 md:px-24 py-12 lg:py-0 overflow-y-auto">
                 <div className="w-full max-w-[560px]">
                     <div className="text-center mb-10">
-                        <h1 className="text-4xl sm:text-5xl font-bold text-[#111] mb-4">Connexion</h1>
-                        <p className="text-[#767676]">
+                        <h1 className="text-4xl sm:text-5xl font-bold text-[#111] dark:text-zinc-100 mb-4">Connexion</h1>
+                        <p className="text-[#767676] dark:text-zinc-400">
                             {redirectPath === "/submit"
                                 ? "Connectez-vous pour publier vos images."
                                 : "Bon retour parmi nous."}
@@ -111,7 +111,7 @@ function LoginForm() {
                     {error && (
                         <div
                             role="alert"
-                            className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm"
+                            className="mb-6 p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-md text-red-700 dark:text-red-400 text-sm"
                         >
                             {error}
                         </div>
@@ -119,7 +119,7 @@ function LoginForm() {
 
                     <form onSubmit={handleEmailLogin} className="space-y-6">
                         <div>
-                            <label htmlFor="email" className="block text-sm text-[#111] mb-1.5">
+                            <label htmlFor="email" className="block text-sm text-[#111] dark:text-zinc-100 mb-1.5">
                                 Adresse e-mail
                             </label>
                             <input
@@ -131,18 +131,18 @@ function LoginForm() {
                                 required
                                 autoComplete="email"
                                 autoFocus
-                                className="w-full h-11 px-3 rounded-[4px] border border-[#d1d1d1] text-[#111] focus:border-[#111] focus:ring-1 focus:ring-[#111] outline-none transition-colors"
+                                className="w-full h-11 px-3 rounded-[4px] border border-[#d1d1d1] dark:border-zinc-700 bg-white dark:bg-zinc-900 text-[#111] dark:text-zinc-100 focus:border-[#111] dark:focus:border-white focus:ring-1 focus:ring-[#111] dark:focus:ring-white outline-none transition-colors"
                             />
                         </div>
 
                         <div>
                             <div className="flex justify-between items-center mb-1.5 gap-4">
-                                <label htmlFor="password" className="block text-sm text-[#111]">
+                                <label htmlFor="password" className="block text-sm text-[#111] dark:text-zinc-100">
                                     Mot de passe
                                 </label>
                                 <Link
                                     href="/forgot-password"
-                                    className="text-sm text-[#767676] hover:text-[#111] underline transition-colors"
+                                    className="text-sm text-[#767676] dark:text-zinc-400 hover:text-[#111] dark:hover:text-white underline transition-colors"
                                 >
                                     Mot de passe oublié ?
                                 </Link>
@@ -156,12 +156,12 @@ function LoginForm() {
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
                                     autoComplete="current-password"
-                                    className="w-full h-11 px-3 pr-11 rounded-[4px] border border-[#d1d1d1] text-[#111] focus:border-[#111] focus:ring-1 focus:ring-[#111] outline-none transition-colors"
+                                    className="w-full h-11 px-3 pr-11 rounded-[4px] border border-[#d1d1d1] dark:border-zinc-700 bg-white dark:bg-zinc-900 text-[#111] dark:text-zinc-100 focus:border-[#111] dark:focus:border-white focus:ring-1 focus:ring-[#111] dark:focus:ring-white outline-none transition-colors"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 hover:text-gray-700 dark:hover:text-zinc-300 transition-colors"
                                     aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                                 >
                                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -181,18 +181,18 @@ function LoginForm() {
                         <button
                             type="submit"
                             disabled={submitting || !turnstileToken}
-                            className="w-full bg-[#111] text-white h-11 rounded-[4px] font-medium hover:bg-black transition-all active:scale-[0.99] mt-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            className="w-full bg-[#111] dark:bg-white text-white dark:text-black h-11 rounded-[4px] font-medium hover:bg-black dark:hover:bg-zinc-200 transition-all active:scale-[0.99] mt-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                         >
                             {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
                             {submitting ? "Connexion…" : "Se connecter"}
                         </button>
                     </form>
 
-                    <p className="mt-10 text-center text-[#111] text-sm">
+                    <p className="mt-10 text-center text-[#111] dark:text-zinc-100 text-sm">
                         Vous n&apos;avez pas de compte ?{" "}
                         <Link
                             href={redirectPath === "/" ? "/join" : `/join?redirect=${encodeURIComponent(redirectPath)}`}
-                            className="underline text-[#767676] hover:text-[#111] transition-colors"
+                            className="underline text-[#767676] dark:text-zinc-400 hover:text-[#111] dark:hover:text-white transition-colors"
                         >
                             Créer un compte
                         </Link>
@@ -207,8 +207,8 @@ export default function LoginPageClient() {
     return (
         <Suspense
             fallback={
-                <div className="min-h-screen flex items-center justify-center bg-white">
-                    <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
+                <div className="min-h-screen flex items-center justify-center bg-white dark:bg-zinc-950">
+                    <Loader2 className="w-8 h-8 animate-spin text-gray-300 dark:text-zinc-600" />
                 </div>
             }
         >

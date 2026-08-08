@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, useEffect, useImperativeHandle, useId, useRef } from "react";
+import { useTheme } from "../contexts/ThemeContext";
 
 const SCRIPT_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js";
 
@@ -42,6 +43,7 @@ function loadTurnstileScript() {
 const Turnstile = forwardRef(function Turnstile({ onVerify, onExpire, onError }, ref) {
     const containerId = useId().replace(/:/g, "");
     const widgetId = useRef(null);
+    const { resolvedTheme } = useTheme();
 
     useImperativeHandle(ref, () => ({
         reset() {
@@ -64,6 +66,7 @@ const Turnstile = forwardRef(function Turnstile({ onVerify, onExpire, onError },
             if (cancelled || !window.turnstile) return;
             widgetId.current = window.turnstile.render(`#${containerId}`, {
                 sitekey: siteKey,
+                theme: resolvedTheme,
                 callback: onVerify,
                 "expired-callback": onExpire,
                 "error-callback": onError,
@@ -77,7 +80,7 @@ const Turnstile = forwardRef(function Turnstile({ onVerify, onExpire, onError },
             }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [containerId]);
+    }, [containerId, resolvedTheme]);
 
     return <div id={containerId} />;
 });

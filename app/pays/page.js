@@ -31,12 +31,12 @@ export default async function CountriesPage() {
     }, {});
 
     return (
-        <main className="min-h-screen bg-white">
+        <main className="min-h-screen bg-white dark:bg-zinc-950">
             <div className="max-w-[1200px] mx-auto px-4 py-16">
-                <h1 className="text-4xl font-extrabold text-gray-900 mb-3">
+                <h1 className="text-4xl font-extrabold text-gray-900 dark:text-zinc-100 mb-3">
                     Parcourir par pays
                 </h1>
-                <p className="text-gray-500 mb-12 max-w-2xl">
+                <p className="text-gray-500 dark:text-zinc-400 mb-12 max-w-2xl">
                     Les lieux déjà représentés dans la banque. Ceux qui n&apos;ont pas
                     encore d&apos;images attendent leurs premiers photographes.
                 </p>
@@ -47,7 +47,7 @@ export default async function CountriesPage() {
 
                     return (
                         <section key={region} className="mb-12">
-                            <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
+                            <h2 className="text-sm font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-4">
                                 {label}
                             </h2>
                             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -65,16 +65,16 @@ export default async function CountriesPage() {
                                             href={`/pays/${country.slug}`}
                                             className={`flex items-center justify-between gap-2 px-4 py-3 border rounded-xl transition-all ${
                                                 count > 0
-                                                    ? "border-gray-200 hover:border-black hover:shadow-sm"
-                                                    : "border-gray-100 opacity-50 hover:opacity-100"
+                                                    ? "border-gray-200 dark:border-zinc-700 hover:border-black dark:hover:border-white hover:shadow-sm"
+                                                    : "border-gray-100 dark:border-zinc-800 opacity-50 hover:opacity-100"
                                             }`}
                                         >
                                             <span className="flex items-center gap-2 min-w-0">
-                                                <span className="text-sm font-medium text-gray-900 truncate">
+                                                <span className="text-sm font-medium text-gray-900 dark:text-zinc-100 truncate">
                                                     {country.name_fr}
                                                 </span>
                                             </span>
-                                            <span className={`text-[10px] font-bold shrink-0 ${count > 0 ? "text-gray-400" : "text-gray-300"}`}>
+                                            <span className={`text-[10px] font-bold shrink-0 ${count > 0 ? "text-gray-400 dark:text-zinc-500" : "text-gray-300 dark:text-zinc-600"}`}>
                                                 {count > 0 ? count : "Bientôt"}
                                             </span>
                                         </Link>

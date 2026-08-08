@@ -40,17 +40,17 @@ export default async function TopicPage({ params, searchParams }) {
     const initialItems = await getMediaByTopic(topic.slug, { limit: PAGE_SIZE, country, orientation });
 
     return (
-        <main className="min-h-screen bg-white">
-            <Suspense fallback={<div className="h-16 border-b border-gray-100" />}>
+        <main className="min-h-screen bg-white dark:bg-zinc-950">
+            <Suspense fallback={<div className="h-16 border-b border-gray-100 dark:border-zinc-800" />}>
                 <TopicBar activeTopic={topic.slug} />
             </Suspense>
 
             <header className="max-w-[1600px] mx-auto px-4 pt-10 pb-4">
-                <h1 className="text-3xl font-extrabold text-gray-900">{topic.name}</h1>
+                <h1 className="text-3xl font-extrabold text-gray-900 dark:text-zinc-100">{topic.name}</h1>
                 {topic.description && (
-                    <p className="text-gray-500 mt-2 max-w-2xl">{topic.description}</p>
+                    <p className="text-gray-500 dark:text-zinc-400 mt-2 max-w-2xl">{topic.description}</p>
                 )}
-                <p className="text-sm text-gray-400 mt-3 font-medium">
+                <p className="text-sm text-gray-400 dark:text-zinc-500 mt-3 font-medium">
                     {formatCount(topic.total_media)} image{topic.total_media > 1 ? "s" : ""}
                 </p>
             </header>

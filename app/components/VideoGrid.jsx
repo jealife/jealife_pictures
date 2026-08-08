@@ -92,7 +92,7 @@ export default function VideoGrid({ initialItems = null }) {
     if (loading) {
         return (
             <div className="flex justify-center py-24">
-                <Loader2 className="w-6 h-6 animate-spin text-gray-300" />
+                <Loader2 className="w-6 h-6 animate-spin text-gray-300 dark:text-zinc-600" />
             </div>
         );
     }
@@ -100,7 +100,7 @@ export default function VideoGrid({ initialItems = null }) {
     if (error) {
         return (
             <div className="max-w-[1600px] mx-auto px-4 py-20 text-center">
-                <p className="text-red-600 text-lg">{error}</p>
+                <p className="text-red-600 dark:text-red-400 text-lg">{error}</p>
             </div>
         );
     }
@@ -108,11 +108,11 @@ export default function VideoGrid({ initialItems = null }) {
     if (items.length === 0) {
         return (
             <div className="max-w-[1600px] mx-auto px-4 py-24 text-center flex flex-col items-center">
-                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-                    <VideoOff className="w-8 h-8 text-gray-300" />
+                <div className="w-20 h-20 bg-gray-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-6">
+                    <VideoOff className="w-8 h-8 text-gray-300 dark:text-zinc-600" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900 mb-2">Pas encore de vidéos</h2>
-                <p className="text-gray-500 max-w-md">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-zinc-100 mb-2">Pas encore de vidéos</h2>
+                <p className="text-gray-500 dark:text-zinc-400 max-w-md">
                     Aucune séquence n&apos;a été publiée pour l&apos;instant. Les vidéastes
                     sont les bienvenus.
                 </p>
@@ -131,7 +131,7 @@ export default function VideoGrid({ initialItems = null }) {
                     <button
                         onClick={loadMore}
                         disabled={loadingMore}
-                        className="px-6 py-3 border border-gray-200 rounded-full text-sm font-bold text-gray-600 hover:border-black hover:text-black transition-colors disabled:opacity-50"
+                        className="px-6 py-3 border border-gray-200 dark:border-zinc-700 rounded-full text-sm font-bold text-gray-600 dark:text-zinc-400 hover:border-black hover:text-black dark:hover:border-white dark:hover:text-white transition-colors disabled:opacity-50"
                     >
                         {loadingMore ? "Chargement…" : "Afficher plus de vidéos"}
                     </button>

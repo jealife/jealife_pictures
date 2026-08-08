@@ -25,7 +25,7 @@ export default function PhotoCard({ photo, liked = false, hideActions = false, p
 
     return (
         <div className="relative group mb-6 break-inside-avoid">
-            <div className="relative w-full rounded-2xl bg-gray-100 shadow-sm transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
+            <div className="relative w-full rounded-2xl bg-gray-100 dark:bg-zinc-800 shadow-sm transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
                 <div className="relative w-full overflow-hidden rounded-2xl">
                     <Link href={mediaUrl(photo)} className="block">
                         {hasDimensions ? (

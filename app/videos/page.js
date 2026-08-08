@@ -34,16 +34,16 @@ export default async function VideosPage({ searchParams }) {
         : null;
 
     return (
-        <main className="min-h-screen bg-white">
-            <Suspense fallback={<div className="h-16 border-b border-gray-100" />}>
+        <main className="min-h-screen bg-white dark:bg-zinc-950">
+            <Suspense fallback={<div className="h-16 border-b border-gray-100 dark:border-zinc-800" />}>
                 <TopicBar />
             </Suspense>
 
             <header className="max-w-[1600px] mx-auto px-4 pt-10 pb-4">
-                <h1 className="text-3xl font-extrabold text-gray-900">
+                <h1 className="text-3xl font-extrabold text-gray-900 dark:text-zinc-100">
                     {query ? `Vidéos « ${query} »` : "Vidéos"}
                 </h1>
-                <p className="text-gray-500 mt-2">
+                <p className="text-gray-500 dark:text-zinc-400 mt-2">
                     {query
                         ? `${resultsCount} vidéo${resultsCount > 1 ? "s" : ""} trouvée${resultsCount > 1 ? "s" : ""}.`
                         : "Séquences libres de droits, à télécharger gratuitement."}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import Link from "next/link";
 import { supabase } from "../../lib/supabase";
 import { upsertProfile } from "../../lib/auth";
 
@@ -86,23 +87,23 @@ function AuthCallback() {
 
     if (error) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-white px-6 text-center">
-                <h1 className="text-2xl font-bold text-gray-900 mb-3">Connexion impossible</h1>
-                <p className="text-gray-500 max-w-md mb-8">{error}</p>
-                <a
+            <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-zinc-950 px-6 text-center">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-3">Connexion impossible</h1>
+                <p className="text-gray-500 dark:text-zinc-400 max-w-md mb-8">{error}</p>
+                <Link
                     href="/login"
-                    className="px-6 py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-colors"
+                    className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold hover:bg-gray-800 dark:hover:bg-zinc-200 transition-colors"
                 >
                     Revenir à la connexion
-                </a>
+                </Link>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mb-6" />
-            <p className="text-gray-500">Connexion en cours…</p>
+        <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-zinc-950">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black dark:border-white mb-6" />
+            <p className="text-gray-500 dark:text-zinc-400">Connexion en cours…</p>
         </div>
     );
 }
@@ -110,8 +111,8 @@ function AuthCallback() {
 export default function AuthCallbackPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black" />
+            <div className="min-h-screen flex items-center justify-center bg-white dark:bg-zinc-950">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black dark:border-white" />
             </div>
         }>
             <AuthCallback />

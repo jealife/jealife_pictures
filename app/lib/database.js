@@ -89,6 +89,43 @@ function logQueryError(message, error) {
     console.error(message, error?.message || error);
 }
 
+/**
+ * Regroupe en série quotidienne, sur `days` jours jusqu'à aujourd'hui
+ * inclus, le résultat de `fetchRows(since)` — une fonction qui renvoie des
+ * lignes `{ created_at }` pour une plage de dates. Les jours sans activité
+ * sont inclus à zéro : sans ça, un graphique en ligne relierait des jours
+ * non consécutifs comme s'ils l'étaient. Partagé entre les tendances admin
+ * (téléchargements/envois/inscriptions de la plateforme) et les tendances
+ * de profil (téléchargements reçus par un contributeur).
+ */
+async function dailyTrend(fetchRows, days, errorLabel) {
+    const since = new Date();
+    since.setDate(since.getDate() - (days - 1));
+    since.setHours(0, 0, 0, 0);
+
+    try {
+        const rows = await fetchRows(since);
+
+        const counts = new Map();
+        for (const row of rows || []) {
+            const day = row.created_at.slice(0, 10); // YYYY-MM-DD
+            counts.set(day, (counts.get(day) || 0) + 1);
+        }
+
+        const series = [];
+        for (let i = 0; i < days; i++) {
+            const d = new Date(since);
+            d.setDate(d.getDate() + i);
+            const key = d.toISOString().slice(0, 10);
+            series.push({ date: key, value: counts.get(key) || 0 });
+        }
+        return series;
+    } catch (error) {
+        logQueryError(errorLabel, error);
+        return [];
+    }
+}
+
 // ---------------------------------------------------------------------------
 // Lecture des médias
 // ---------------------------------------------------------------------------
@@ -658,6 +695,29 @@ export async function getUserStats(userId) {
         logQueryError('Error fetching user stats:', error);
         return empty;
     }
+}
+
+/**
+ * Téléchargements reçus sur les médias d'un contributeur, par jour, sur les
+ * `days` derniers jours (page de statistiques de profil). Nécessite la
+ * policy RLS de la migration 0013 : sans elle, un propriétaire de média ne
+ * peut lire que SES propres téléchargements (colonne `user_id` de
+ * media_downloads = le téléchargeur), jamais ceux reçus sur son contenu.
+ */
+export async function getUserDownloadsTrend(userId, days = 30) {
+    return dailyTrend(
+        async (since) => {
+            const { data, error } = await supabase
+                .from('media_downloads')
+                .select('created_at, media!inner(user_id)')
+                .eq('media.user_id', userId)
+                .gte('created_at', since.toISOString());
+            if (error) throw error;
+            return data;
+        },
+        days,
+        'Error fetching user downloads trend:'
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -1344,6 +1404,108 @@ export async function getAdminOverview() {
     } catch (error) {
         logQueryError('Error fetching admin overview:', error);
         return empty;
+    }
+}
+
+/** Téléchargements par jour, sur les `days` derniers jours (rapports admin). */
+export async function getDownloadsTrend(days = 30) {
+    return dailyTrend(
+        async (since) => {
+            const { data, error } = await supabase
+                .from('media_downloads')
+                .select('created_at')
+                .gte('created_at', since.toISOString());
+            if (error) throw error;
+            return data;
+        },
+        days,
+        'Error fetching downloads trend:'
+    );
+}
+
+/**
+ * Envois par jour (tous statuts confondus — c'est l'activité de soumission,
+ * pas la croissance du catalogue public), sur les `days` derniers jours.
+ */
+export async function getUploadsTrend(days = 30) {
+    return dailyTrend(
+        async (since) => {
+            const { data, error } = await supabase
+                .from('media')
+                .select('created_at')
+                .gte('created_at', since.toISOString());
+            if (error) throw error;
+            return data;
+        },
+        days,
+        'Error fetching uploads trend:'
+    );
+}
+
+/** Nouvelles inscriptions par jour, sur les `days` derniers jours. */
+export async function getSignupsTrend(days = 30) {
+    return dailyTrend(
+        async (since) => {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('created_at')
+                .gte('created_at', since.toISOString());
+            if (error) throw error;
+            return data;
+        },
+        days,
+        'Error fetching signups trend:'
+    );
+}
+
+/**
+ * Médias publiés les mieux classés selon `metric` (rapports admin). Pas de
+ * vues historisées en base (seul un compteur agrégé existe) : ce classement
+ * reflète l'état actuel, pas une évolution.
+ */
+export async function getTopMedia({ metric = 'downloads_count', limit = 10 } = {}) {
+    const column = ['downloads_count', 'views_count', 'likes_count'].includes(metric)
+        ? metric
+        : 'downloads_count';
+
+    try {
+        const { data, error } = await supabase
+            .from('media')
+            .select('id, title, type, thumbnail_url, url, views_count, downloads_count, likes_count, user_id')
+            .eq('status', 'published')
+            .order(column, { ascending: false })
+            .limit(limit);
+        if (error) throw error;
+
+        const rows = data || [];
+        const userIds = [...new Set(rows.map((r) => r.user_id).filter(Boolean))];
+        if (userIds.length === 0) return rows.map((r) => ({ ...r, author: null }));
+
+        const { data: authors } = await supabase
+            .from('profiles')
+            .select('id, username, full_name')
+            .in('id', userIds);
+        const byId = new Map((authors || []).map((p) => [p.id, p]));
+        return rows.map((r) => ({ ...r, author: r.user_id ? byId.get(r.user_id) || null : null }));
+    } catch (error) {
+        logQueryError('Error fetching top media:', error);
+        return [];
+    }
+}
+
+/** Contributeurs les plus téléchargés, compteurs agrégés (rapports admin). */
+export async function getTopContributors({ limit = 10 } = {}) {
+    try {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('id, username, full_name, avatar_url, total_downloads, total_views')
+            .order('total_downloads', { ascending: false })
+            .limit(limit);
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        logQueryError('Error fetching top contributors:', error);
+        return [];
     }
 }
 

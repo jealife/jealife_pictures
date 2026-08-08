@@ -62,8 +62,8 @@ export default function CountryFilter() {
                 onClick={() => setOpen(!open)}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-sm font-medium transition-colors ${
                     active
-                        ? "border-black bg-black text-white"
-                        : "border-gray-200 text-gray-600 hover:border-gray-400 hover:text-black"
+                        ? "border-black dark:border-white bg-black dark:bg-white text-white dark:text-black"
+                        : "border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 hover:border-gray-400 hover:text-black dark:hover:border-zinc-500 dark:hover:text-white"
                 }`}
                 aria-expanded={open}
                 aria-label="Filtrer par pays"
@@ -82,20 +82,20 @@ export default function CountryFilter() {
             </button>
 
             {open && (
-                <div className="absolute right-0 top-full mt-2 w-64 max-h-96 overflow-y-auto bg-white rounded-xl shadow-2xl border border-gray-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                <div className="absolute right-0 top-full mt-2 w-64 max-h-96 overflow-y-auto bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-gray-100 dark:border-zinc-800 py-1 z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
                     <button
                         onClick={() => select(null)}
-                        className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 text-left text-sm font-medium text-gray-900 transition-colors"
+                        className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-zinc-800 text-left text-sm font-medium text-gray-900 dark:text-zinc-100 transition-colors"
                     >
                         <span className="flex items-center gap-2">
-                            <Globe2 className="w-4 h-4 text-gray-400" /> Tous les pays
+                            <Globe2 className="w-4 h-4 text-gray-400 dark:text-zinc-500" /> Tous les pays
                         </span>
-                        {!active && <Check className="w-4 h-4 text-emerald-600" />}
+                        {!active && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
                     </button>
 
                     {african.length > 0 && (
                         <>
-                            <p className="px-4 pt-3 pb-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                            <p className="px-4 pt-3 pb-1 text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider">
                                 Afrique
                             </p>
                             {african.map((country) => (
@@ -111,7 +111,7 @@ export default function CountryFilter() {
 
                     {others.length > 0 && (
                         <>
-                            <p className="px-4 pt-3 pb-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                            <p className="px-4 pt-3 pb-1 text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider">
                                 Ailleurs
                             </p>
                             {others.map((country) => (
@@ -134,14 +134,14 @@ function CountryRow({ country, active, onSelect }) {
     return (
         <button
             onClick={() => onSelect(country.code)}
-            className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 text-left transition-colors"
+            className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-zinc-800 text-left transition-colors"
         >
-            <span className="flex items-center gap-2 text-sm font-medium text-gray-900 truncate">
+            <span className="flex items-center gap-2 text-sm font-medium text-gray-900 dark:text-zinc-100 truncate">
                 {country.name_fr}
             </span>
             <span className="flex items-center gap-2 shrink-0">
-                <span className="text-[10px] text-gray-400">{country.count}</span>
-                {active && <Check className="w-4 h-4 text-emerald-600" />}
+                <span className="text-[10px] text-gray-400 dark:text-zinc-500">{country.count}</span>
+                {active && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />}
             </span>
         </button>
     );

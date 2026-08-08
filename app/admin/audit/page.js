@@ -45,31 +45,31 @@ export default function AdminAuditPage() {
 
     return (
         <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-1 flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-1 flex items-center gap-2">
                 <History className="w-5 h-5" /> Journal d&apos;audit
             </h2>
-            <p className="text-gray-500 text-sm mb-6">
+            <p className="text-gray-500 dark:text-zinc-400 text-sm mb-6">
                 Les 100 dernières actions de modération, sur les comptes et sur les réglages.
             </p>
 
             {entries === null ? (
-                <Loader2 className="w-6 h-6 animate-spin text-gray-300" />
+                <Loader2 className="w-6 h-6 animate-spin text-gray-300 dark:text-zinc-600" />
             ) : entries.length === 0 ? (
-                <p className="text-sm text-gray-400 italic">Aucune action journalisée pour l&apos;instant.</p>
+                <p className="text-sm text-gray-400 dark:text-zinc-500 italic">Aucune action journalisée pour l&apos;instant.</p>
             ) : (
                 <div className="space-y-2">
                     {entries.map((entry) => (
-                        <div key={entry.id} className="flex items-center gap-4 p-3 border border-gray-100 rounded-xl text-sm">
-                            <span className="text-gray-400 shrink-0 w-40">
+                        <div key={entry.id} className="flex items-center gap-4 p-3 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm">
+                            <span className="text-gray-400 dark:text-zinc-500 shrink-0 w-40">
                                 {new Date(entry.created_at).toLocaleString("fr-FR")}
                             </span>
-                            <span className="font-semibold text-gray-900 shrink-0 w-56 truncate">
+                            <span className="font-semibold text-gray-900 dark:text-zinc-100 shrink-0 w-56 truncate">
                                 {describe(entry)}
                             </span>
-                            <span className="text-gray-500 shrink-0">
+                            <span className="text-gray-500 dark:text-zinc-400 shrink-0">
                                 {entry.target_type} #{entry.target_id}
                             </span>
-                            <span className="ml-auto text-gray-500 truncate">
+                            <span className="ml-auto text-gray-500 dark:text-zinc-400 truncate">
                                 {entry.admin ? (
                                     <Link href={`/@${entry.admin.username}`} target="_blank" className="hover:underline">
                                         @{entry.admin.username}

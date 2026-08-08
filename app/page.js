@@ -32,7 +32,7 @@ export default async function Home({ searchParams }) {
   const heroBackground = query ? null : (await getHeroBackground()) || pickShowcaseImage();
 
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-white dark:bg-zinc-950">
       {!query && <Hero background={heroBackground} />}
       {!query && <CategorySection />}
 
@@ -48,20 +48,20 @@ export default async function Home({ searchParams }) {
 
       {query ? (
         <div className="max-w-[1600px] mx-auto px-4 pt-6 pb-2">
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-zinc-100">
             Images « {query} »
           </h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <p className="text-gray-500 dark:text-zinc-400 text-sm mt-1">
             {resultsCount} image{resultsCount > 1 ? "s" : ""} libre{resultsCount > 1 ? "s" : ""} de
             droits, téléchargeable{resultsCount > 1 ? "s" : ""} gratuitement.
           </p>
         </div>
       ) : (
         <div className="max-w-[1600px] mx-auto px-4 pt-10 pb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-2">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-zinc-100 mb-2">
             Les dernières images
           </h2>
-          <p className="text-gray-500">
+          <p className="text-gray-500 dark:text-zinc-400">
             Ajoutées récemment par la communauté.
           </p>
         </div>
@@ -77,11 +77,11 @@ export default async function Home({ searchParams }) {
         </Suspense>
       )}
 
-      <section className="bg-gray-50 border-t border-gray-100 py-20 text-center mt-20 px-4">
-        <h2 className="text-3xl font-bold mb-4">
+      <section className="bg-gray-50 dark:bg-zinc-900 border-t border-gray-100 dark:border-zinc-800 py-20 text-center mt-20 px-4">
+        <h2 className="text-3xl font-bold mb-4 text-gray-900 dark:text-zinc-100">
           Vous photographiez ? Cette banque est la vôtre.
         </h2>
-        <p className="text-gray-500 max-w-xl mx-auto mb-8">
+        <p className="text-gray-500 dark:text-zinc-400 max-w-xl mx-auto mb-8">
           Publiez vos images, gardez vos droits, et faites voir votre travail
           bien au-delà d&apos;un fil d&apos;actualité. Retrait possible à tout moment.
         </p>

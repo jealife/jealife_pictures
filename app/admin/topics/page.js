@@ -61,7 +61,7 @@ export default function AdminTopicsPage() {
     };
 
     if (topics === null) {
-        return <Loader2 className="w-6 h-6 animate-spin text-gray-300" />;
+        return <Loader2 className="w-6 h-6 animate-spin text-gray-300 dark:text-zinc-600" />;
     }
 
     const categories = topics.filter((t) => t.kind === "category");
@@ -70,8 +70,8 @@ export default function AdminTopicsPage() {
     return (
         <div className="space-y-16">
             <section>
-                <h2 className="text-2xl font-bold text-gray-900 mb-1">Catégories</h2>
-                <p className="text-gray-500 text-sm mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-1">Catégories</h2>
+                <p className="text-gray-500 dark:text-zinc-400 text-sm mb-6">
                     La structure fixe du site (Nature, Portrait, Culture…). Les catégories mises en
                     avant apparaissent dans la navigation ; les autres restent des pages
                     d&apos;atterrissage accessibles par lien direct ou recherche.
@@ -82,12 +82,12 @@ export default function AdminTopicsPage() {
                         value={name}
                         onChange={(event) => setName(event.target.value)}
                         placeholder="Nouvelle catégorie…"
-                        className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-black outline-none"
+                        className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-zinc-100 rounded-xl text-sm focus:ring-2 focus:ring-black dark:focus:ring-white outline-none"
                     />
                     <button
                         type="submit"
                         disabled={creating || !name.trim()}
-                        className="px-4 py-2.5 bg-black text-white rounded-xl text-sm font-bold hover:bg-gray-800 disabled:opacity-50 flex items-center gap-2"
+                        className="px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-xl text-sm font-bold hover:bg-gray-800 dark:hover:bg-zinc-200 disabled:opacity-50 flex items-center gap-2"
                     >
                         <Plus className="w-4 h-4" /> Créer
                     </button>
@@ -109,8 +109,8 @@ export default function AdminTopicsPage() {
             </section>
 
             <section>
-                <h2 className="text-2xl font-bold text-gray-900 mb-1">Tags</h2>
-                <p className="text-gray-500 text-sm mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-1">Tags</h2>
+                <p className="text-gray-500 dark:text-zinc-400 text-sm mb-6">
                     Nés des mots-clés saisis par les contributeurs à l&apos;envoi, pas créés depuis
                     l&apos;admin. Supprimez les tags de spam, ou promouvez-en un en catégorie s&apos;il
                     mérite une place fixe dans la structure du site.
@@ -140,19 +140,19 @@ function TopicList({
     onToggleFeatured, onStartEdit, onSaveEdit, onCancelEdit, onRemove, onPromote, emptyLabel,
 }) {
     if (topics.length === 0) {
-        return <p className="text-sm text-gray-400 italic">{emptyLabel}</p>;
+        return <p className="text-sm text-gray-400 dark:text-zinc-500 italic">{emptyLabel}</p>;
     }
 
     return (
         <div className="space-y-2">
             {topics.map((topic) => (
-                <div key={topic.id} className="flex items-center gap-4 p-3 border border-gray-100 rounded-xl">
+                <div key={topic.id} className="flex items-center gap-4 p-3 border border-gray-100 dark:border-zinc-800 rounded-xl">
                     <button
                         disabled={busyId === topic.id}
                         onClick={() => onToggleFeatured(topic)}
                         title={topic.is_featured ? "Retirer de la navigation" : "Mettre en avant"}
                         className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${
-                            topic.is_featured ? "text-amber-500 bg-amber-50" : "text-gray-300 hover:text-gray-500"
+                            topic.is_featured ? "text-amber-500 dark:text-amber-400 bg-amber-50 dark:bg-amber-950" : "text-gray-300 dark:text-zinc-600 hover:text-gray-500 dark:hover:text-zinc-400"
                         }`}
                     >
                         <Star className="w-4 h-4" fill={topic.is_featured ? "currentColor" : "none"} />
@@ -164,19 +164,19 @@ function TopicList({
                                 <input
                                     value={editDraft.name}
                                     onChange={(event) => setEditDraft((d) => ({ ...d, name: event.target.value }))}
-                                    className="px-3 py-1.5 border border-gray-200 rounded-lg text-sm font-semibold"
+                                    className="px-3 py-1.5 border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 rounded-lg text-sm font-semibold"
                                 />
                                 <input
                                     value={editDraft.description}
                                     onChange={(event) => setEditDraft((d) => ({ ...d, description: event.target.value }))}
                                     placeholder="Description"
-                                    className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs text-gray-600"
+                                    className="px-3 py-1.5 border border-gray-200 dark:border-zinc-700 rounded-lg text-xs text-gray-600 dark:text-zinc-400"
                                 />
                             </div>
                         ) : (
                             <button onClick={() => onStartEdit(topic)} className="text-left w-full">
-                                <p className="font-semibold text-gray-900">{topic.name}</p>
-                                <p className="text-xs text-gray-500">
+                                <p className="font-semibold text-gray-900 dark:text-zinc-100">{topic.name}</p>
+                                <p className="text-xs text-gray-500 dark:text-zinc-400">
                                     /{topic.slug} · {topic.total_media} média{topic.total_media > 1 ? "s" : ""}
                                 </p>
                             </button>
@@ -188,11 +188,11 @@ function TopicList({
                             <button
                                 disabled={busyId === topic.id}
                                 onClick={() => onSaveEdit(topic)}
-                                className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg disabled:opacity-50"
+                                className="p-2 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950 rounded-lg disabled:opacity-50"
                             >
                                 <Check className="w-4 h-4" />
                             </button>
-                            <button onClick={onCancelEdit} className="p-2 text-gray-400 hover:bg-gray-50 rounded-lg">
+                            <button onClick={onCancelEdit} className="p-2 text-gray-400 dark:text-zinc-500 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-lg">
                                 <X className="w-4 h-4" />
                             </button>
                         </>
@@ -203,7 +203,7 @@ function TopicList({
                                     disabled={busyId === topic.id}
                                     onClick={() => onPromote(topic)}
                                     title="Promouvoir en catégorie"
-                                    className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg disabled:opacity-50"
+                                    className="p-2 text-gray-400 dark:text-zinc-500 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950 rounded-lg disabled:opacity-50"
                                 >
                                     <ArrowUpRight className="w-4 h-4" />
                                 </button>
@@ -211,7 +211,7 @@ function TopicList({
                             <button
                                 disabled={busyId === topic.id}
                                 onClick={() => onRemove(topic)}
-                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg disabled:opacity-50"
+                                className="p-2 text-gray-400 dark:text-zinc-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 rounded-lg disabled:opacity-50"
                             >
                                 <Trash2 className="w-4 h-4" />
                             </button>

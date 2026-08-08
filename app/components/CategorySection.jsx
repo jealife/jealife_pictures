@@ -25,21 +25,21 @@ export default function CategorySection() {
             count: stats?.total_photos,
             icon: Camera,
             href: "/",
-            color: "bg-emerald-50 text-emerald-700",
+            color: "bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400",
         },
         {
             title: "Illustrations",
             count: stats?.total_illustrations,
             icon: PenTool,
             href: "/illustrations",
-            color: "bg-purple-50 text-purple-600",
+            color: "bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400",
         },
         {
             title: "Vidéos",
             count: stats?.total_videos,
             icon: Video,
             href: "/videos",
-            color: "bg-red-50 text-red-600",
+            color: "bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400",
         },
     ];
 
@@ -51,7 +51,7 @@ export default function CategorySection() {
 
     return (
         <section className="w-full max-w-[1600px] mx-auto px-4 py-16">
-            <h2 className="text-2xl font-bold mb-8 text-gray-900">
+            <h2 className="text-2xl font-bold mb-8 text-gray-900 dark:text-zinc-100">
                 Des ressources libres pour vos projets
             </h2>
 
@@ -60,16 +60,16 @@ export default function CategorySection() {
                     <Link
                         key={category.title}
                         href={category.href}
-                        className="group relative overflow-hidden rounded-2xl h-28 flex items-center p-6 transition-all hover:shadow-lg hover:border-gray-300 border border-gray-100 bg-white"
+                        className="group relative overflow-hidden rounded-2xl h-28 flex items-center p-6 transition-all hover:shadow-lg hover:border-gray-300 dark:hover:border-zinc-700 border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900"
                     >
                         <div className="flex flex-col justify-center h-full">
                             <div className="flex items-center gap-3 mb-1">
                                 <span className={`p-2 rounded-lg ${category.color} group-hover:scale-110 transition-transform`}>
                                     <category.icon className="w-5 h-5" />
                                 </span>
-                                <h3 className="font-bold text-lg text-gray-900">{category.title}</h3>
+                                <h3 className="font-bold text-lg text-gray-900 dark:text-zinc-100">{category.title}</h3>
                             </div>
-                            <p className="text-xs text-gray-500 font-medium pl-1">
+                            <p className="text-xs text-gray-500 dark:text-zinc-400 font-medium pl-1">
                                 {label(category.count)}
                             </p>
                         </div>

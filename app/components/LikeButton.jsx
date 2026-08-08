@@ -71,13 +71,13 @@ export default function LikeButton({
         }`,
         outline: `flex items-center gap-2 px-3 py-2 border rounded-lg text-sm font-medium transition-all ${
             liked
-                ? "border-red-200 bg-red-50 text-red-600"
-                : "border-gray-200 text-gray-600 hover:text-black hover:border-black"
+                ? "border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400"
+                : "border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 hover:text-black hover:border-black dark:hover:text-white dark:hover:border-white"
         }`,
         large: `shrink-0 flex items-center gap-2 px-6 py-4 rounded-2xl transition-all border active:scale-95 font-bold ${
             liked
-                ? "bg-red-50 border-red-100 text-red-600"
-                : "bg-gray-50 border-gray-100 text-gray-500 hover:bg-red-50 hover:text-red-500"
+                ? "bg-red-50 dark:bg-red-950 border-red-100 dark:border-red-900 text-red-600 dark:text-red-400"
+                : "bg-gray-50 dark:bg-zinc-800 border-gray-100 dark:border-zinc-700 text-gray-500 dark:text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950 dark:hover:text-red-400"
         }`,
     };
 

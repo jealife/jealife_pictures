@@ -50,10 +50,10 @@ function VerifyGate() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-white text-center px-6">
-            <ShieldCheck className="w-10 h-10 text-gray-300 mb-6" />
-            <h1 className="text-2xl font-bold text-gray-900 mb-3">Vérification anti-bot</h1>
-            <p className="text-gray-500 max-w-sm mb-8">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-zinc-950 text-center px-6">
+            <ShieldCheck className="w-10 h-10 text-gray-300 dark:text-zinc-600 mb-6" />
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-3">Vérification anti-bot</h1>
+            <p className="text-gray-500 dark:text-zinc-400 max-w-sm mb-8">
                 Un instant avant d&apos;accéder à JEaLiFe Stock, le temps de confirmer que vous n&apos;êtes pas un robot.
             </p>
 
@@ -65,13 +65,13 @@ function VerifyGate() {
             />
 
             {verifying && (
-                <div className="mt-6 flex items-center gap-2 text-gray-500 text-sm">
+                <div className="mt-6 flex items-center gap-2 text-gray-500 dark:text-zinc-400 text-sm">
                     <Loader2 className="w-4 h-4 animate-spin" /> Vérification en cours…
                 </div>
             )}
 
             {error && (
-                <div role="alert" className="mt-6 text-red-600 text-sm max-w-sm">
+                <div role="alert" className="mt-6 text-red-600 dark:text-red-400 text-sm max-w-sm">
                     {error}
                 </div>
             )}
@@ -83,8 +83,8 @@ export default function VerifyPage() {
     return (
         <Suspense
             fallback={
-                <div className="min-h-screen flex items-center justify-center bg-white">
-                    <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
+                <div className="min-h-screen flex items-center justify-center bg-white dark:bg-zinc-950">
+                    <Loader2 className="w-8 h-8 animate-spin text-gray-300 dark:text-zinc-600" />
                 </div>
             }
         >

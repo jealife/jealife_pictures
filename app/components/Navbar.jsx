@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { signOut } from "../lib/auth";
 import UserMenu from "./UserMenu";
+import { ThemeToggle, ThemeToggleIcon } from "./ThemeToggle";
 
 // Une seule source pour le menu bureau et le menu mobile : les deux listes
 // divergeaient (l'une proposait « Newsroom », l'autre « Presse », avec des
@@ -151,21 +152,21 @@ export default function Navbar() {
      * fonctionnent.
      */
     const renderSidebarContent = (closeMenu) => (
-        <div className="flex flex-col h-full bg-white text-gray-900 px-8 py-10">
+        <div className="flex flex-col h-full bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 px-8 py-10">
             <div className="flex flex-col md:flex-row gap-12 md:gap-24">
                 {MENU_SECTIONS.map((section) => (
                     <div key={section.title} className="flex flex-col gap-4">
-                        <div className="flex items-center gap-3 mb-2 text-gray-900 font-bold text-lg">
+                        <div className="flex items-center gap-3 mb-2 text-gray-900 dark:text-zinc-100 font-bold text-lg">
                             <section.icon size={24} />
                             <span>{section.title}</span>
                         </div>
-                        <div className="flex flex-col gap-3 text-gray-500 font-medium text-[15px]">
+                        <div className="flex flex-col gap-3 text-gray-500 dark:text-zinc-400 font-medium text-[15px]">
                             {section.links.map((link) => (
                                 <Link
                                     key={link.href}
                                     href={link.href}
                                     onClick={closeMenu}
-                                    className="hover:text-black transition-colors"
+                                    className="hover:text-black dark:hover:text-white transition-colors"
                                 >
                                     {link.label}
                                 </Link>
@@ -175,10 +176,11 @@ export default function Navbar() {
                 ))}
             </div>
 
-            <div className="mt-auto pt-10 border-t border-gray-100 flex flex-wrap gap-6 text-sm text-gray-500 font-medium">
-                <Link href="/licence" onClick={closeMenu} className="hover:text-black">Licence</Link>
-                <Link href="/help" onClick={closeMenu} className="hover:text-black">Aide</Link>
-                <Link href="/about" onClick={closeMenu} className="hover:text-black">À propos</Link>
+            <div className="mt-auto pt-10 border-t border-gray-100 dark:border-zinc-800 flex flex-wrap items-center gap-6 text-sm text-gray-500 dark:text-zinc-400 font-medium">
+                <Link href="/licence" onClick={closeMenu} className="hover:text-black dark:hover:text-white">Licence</Link>
+                <Link href="/help" onClick={closeMenu} className="hover:text-black dark:hover:text-white">Aide</Link>
+                <Link href="/about" onClick={closeMenu} className="hover:text-black dark:hover:text-white">À propos</Link>
+                <span className="ml-auto"><ThemeToggle /></span>
             </div>
         </div>
     );
@@ -186,7 +188,7 @@ export default function Navbar() {
     return (
         <>
             {/* Desktop Navigation Rail (Unsplash Style) */}
-            <div className="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-[64px] z-[60] bg-white border-r border-gray-100 items-center py-4 bg-white">
+            <div className="hidden md:flex flex-col fixed left-0 top-0 bottom-0 w-[64px] z-[60] bg-white dark:bg-zinc-900 border-r border-gray-100 dark:border-zinc-800 items-center py-4">
                 {/* Logo */}
                 <Link href="/" className="mb-10 px-2">
                     <img
@@ -198,20 +200,20 @@ export default function Navbar() {
 
                 {/* Main Nav Icons */}
                 <div className="flex flex-col gap-6 w-full items-center">
-                    <Link href="/" title="Photos" aria-label="Photos" className={`p-2 rounded-lg transition-colors ${pathname === '/' ? 'text-black' : 'text-gray-400 hover:text-black hover:bg-gray-50'}`}>
+                    <Link href="/" title="Photos" aria-label="Photos" className={`p-2 rounded-lg transition-colors ${pathname === '/' ? 'text-black dark:text-white' : 'text-gray-400 hover:text-black hover:bg-gray-50 dark:text-zinc-500 dark:hover:text-white dark:hover:bg-zinc-800'}`}>
                         <ImageIcon size={24} />
                     </Link>
-                    <Link href="/illustrations" title="Illustrations" aria-label="Illustrations" className={`p-2 rounded-lg transition-colors ${pathname === '/illustrations' ? 'text-black' : 'text-gray-400 hover:text-black hover:bg-gray-50'}`}>
+                    <Link href="/illustrations" title="Illustrations" aria-label="Illustrations" className={`p-2 rounded-lg transition-colors ${pathname === '/illustrations' ? 'text-black dark:text-white' : 'text-gray-400 hover:text-black hover:bg-gray-50 dark:text-zinc-500 dark:hover:text-white dark:hover:bg-zinc-800'}`}>
                         <PenTool size={24} />
                     </Link>
-                    <Link href="/videos" title="Vidéos" aria-label="Vidéos" className={`p-2 rounded-lg transition-colors ${pathname === '/videos' ? 'text-black' : 'text-gray-400 hover:text-black hover:bg-gray-50'}`}>
+                    <Link href="/videos" title="Vidéos" aria-label="Vidéos" className={`p-2 rounded-lg transition-colors ${pathname === '/videos' ? 'text-black dark:text-white' : 'text-gray-400 hover:text-black hover:bg-gray-50 dark:text-zinc-500 dark:hover:text-white dark:hover:bg-zinc-800'}`}>
                         <Video size={24} />
                     </Link>
-                    <Link href="/collections" title="Collections" aria-label="Collections" className={`p-2 rounded-lg transition-colors ${pathname.startsWith('/collections') ? 'text-black' : 'text-gray-400 hover:text-black hover:bg-gray-50'}`}>
+                    <Link href="/collections" title="Collections" aria-label="Collections" className={`p-2 rounded-lg transition-colors ${pathname.startsWith('/collections') ? 'text-black dark:text-white' : 'text-gray-400 hover:text-black hover:bg-gray-50 dark:text-zinc-500 dark:hover:text-white dark:hover:bg-zinc-800'}`}>
                         <LayoutGrid size={24} />
                     </Link>
 
-                    <div className="w-8 h-px bg-gray-100"></div>
+                    <div className="w-8 h-px bg-gray-100 dark:bg-zinc-800"></div>
                 </div>
 
                 {/* Spacer */}
@@ -231,13 +233,13 @@ export default function Navbar() {
                                 <img
                                     src={profile?.avatar_url || user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`}
                                     alt="Profile"
-                                    className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
+                                    className="w-8 h-8 rounded-full object-cover border-2 border-gray-200 dark:border-zinc-700"
                                 />
                             </button>
 
                             {/* User Dropdown Menu */}
                             {userMenuOpen && (
-                                <div className="absolute left-16 bottom-0 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-70 animate-in fade-in zoom-in-95 duration-200 origin-bottom-left">
+                                <div className="absolute left-16 bottom-0 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden z-70 animate-in fade-in zoom-in-95 duration-200 origin-bottom-left">
                                     <UserMenu
                                         user={user}
                                         onSignOut={handleSignOut}
@@ -247,14 +249,16 @@ export default function Navbar() {
                             )}
                         </div>
                     ) : (
-                        <Link href="/login" title="Connexion" aria-label="Connexion" className="p-2 rounded-lg text-gray-400 hover:text-black hover:bg-gray-50 transition-colors">
+                        <Link href="/login" title="Connexion" aria-label="Connexion" className="p-2 rounded-lg text-gray-400 hover:text-black hover:bg-gray-50 dark:text-zinc-500 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors">
                             <UserIcon size={24} />
                         </Link>
                     )}
 
+                    <ThemeToggleIcon />
+
                     <button
                         onClick={() => setDesktopSidebarOpen(true)}
-                        className="p-2 rounded-lg text-gray-400 hover:text-black hover:bg-gray-50 transition-colors"
+                        className="p-2 rounded-lg text-gray-400 hover:text-black hover:bg-gray-50 dark:text-zinc-500 dark:hover:text-white dark:hover:bg-zinc-800 transition-colors"
                         title="Menu"
                         aria-label="Menu"
                     >
@@ -264,7 +268,7 @@ export default function Navbar() {
             </div>
 
             {/* Floating Navbar Container */}
-            <nav className={`sticky top-0 z-50 transition-all duration-300 md:ml-[64px] ${scrolled ? 'bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100' : 'bg-white border-b border-transparent'}`}>
+            <nav className={`sticky top-0 z-50 transition-all duration-300 md:ml-[64px] ${scrolled ? 'bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md shadow-sm border-b border-gray-100 dark:border-zinc-800' : 'bg-white dark:bg-zinc-900 border-b border-transparent'}`}>
                 <div className="max-w-[1800px] mx-auto px-4 sm:px-6">
                     <div className="h-16 flex items-center justify-between gap-4">
 
@@ -281,14 +285,14 @@ export default function Navbar() {
 
                         {/* Search Bar - Desktop Only (Hidden on mobile top bar) */}
                         <div className={`hidden md:block flex-1 max-w-2xl transition-all duration-300 ${isSearchFocused ? 'scale-[1.01]' : ''}`}>
-                            <div className={`relative flex items-center bg-gray-100 rounded-full transition-all duration-300 ${isSearchFocused ? 'ring-2 ring-black/5 bg-white shadow-lg' : 'hover:bg-gray-200/70'}`}>
+                            <div className={`relative flex items-center bg-gray-100 dark:bg-zinc-800 rounded-full transition-all duration-300 ${isSearchFocused ? 'ring-2 ring-black/5 dark:ring-white/10 bg-white dark:bg-zinc-800 shadow-lg' : 'hover:bg-gray-200/70 dark:hover:bg-zinc-700/70'}`}>
                                 <SearchDropdown currentType={currentType} setTypeMenuOpen={setTypeMenuOpen} typeMenuOpen={typeMenuOpen} ImageIconSizeIcon={ImageIconSizeIcon} PaletteSizeIcon={PaletteSizeIcon} VideoSizeIcon={VideoSizeIcon} />
                                 <input
                                     type="search"
                                     value={term}
                                     onChange={(e) => setTerm(e.target.value)}
                                     placeholder={`Rechercher des ${currentType.label.toLowerCase()}...`}
-                                    className="w-full h-10 pl-3 pr-4 bg-transparent border-none outline-none text-sm font-medium text-gray-800 placeholder-gray-500"
+                                    className="w-full h-10 pl-3 pr-4 bg-transparent border-none outline-none text-sm font-medium text-gray-800 dark:text-zinc-100 placeholder-gray-500 dark:placeholder-zinc-500"
                                     onFocus={() => setIsSearchFocused(true)}
                                     onBlur={() => setIsSearchFocused(false)}
                                     onKeyDown={handleSearch}
@@ -297,7 +301,7 @@ export default function Navbar() {
                                     type="button"
                                     onClick={submitSearch}
                                     aria-label="Rechercher"
-                                    className="flex items-center pr-4 text-gray-400 hover:text-gray-700 transition-colors"
+                                    className="flex items-center pr-4 text-gray-400 hover:text-gray-700 dark:hover:text-zinc-200 transition-colors"
                                 >
                                     <Search className="w-5 h-5" />
                                 </button>
@@ -307,15 +311,15 @@ export default function Navbar() {
                         {/* Desktop Actions */}
                         <div className="hidden md:flex items-center gap-1 shrink-0">
                             {user ? (
-                                <Link href="/submit" className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-gray-800 active:scale-95 transition-all shadow-md hover:shadow-lg ml-2">
+                                <Link href="/submit" className="bg-black dark:bg-white text-white dark:text-black text-sm font-medium px-5 py-2.5 rounded-full hover:bg-gray-800 dark:hover:bg-zinc-200 active:scale-95 transition-all shadow-md hover:shadow-lg ml-2">
                                     Soumettre
                                 </Link>
                             ) : (
                                 <>
-                                    <Link href="/login" className="text-sm font-medium text-gray-500 hover:text-black px-4 py-2 rounded-full hover:bg-gray-100 transition-all">
+                                    <Link href="/login" className="text-sm font-medium text-gray-500 hover:text-black px-4 py-2 rounded-full hover:bg-gray-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800 transition-all">
                                         Connexion
                                     </Link>
-                                    <Link href="/submit" className="bg-black text-white text-sm font-medium px-5 py-2.5 rounded-full hover:bg-gray-800 active:scale-95 transition-all shadow-md hover:shadow-lg ml-2">
+                                    <Link href="/submit" className="bg-black dark:bg-white text-white dark:text-black text-sm font-medium px-5 py-2.5 rounded-full hover:bg-gray-800 dark:hover:bg-zinc-200 active:scale-95 transition-all shadow-md hover:shadow-lg ml-2">
                                         Soumettre
                                     </Link>
                                 </>
@@ -330,21 +334,21 @@ export default function Navbar() {
                                         <img
                                             src={profile?.avatar_url || user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.id}`}
                                             alt="Profile"
-                                            className="w-8 h-8 rounded-full object-cover border-2 border-gray-200"
+                                            className="w-8 h-8 rounded-full object-cover border-2 border-gray-200 dark:border-zinc-700"
                                         />
                                     </button>
                                     {userMenuOpen && (
-                                        <div className="absolute right-0 top-12 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-70 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                                        <div className="absolute right-0 top-12 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden z-70 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
                                             <UserMenu user={user} onSignOut={handleSignOut} onClose={() => setUserMenuOpen(false)} />
                                         </div>
                                     )}
                                 </div>
                             ) : (
-                                <Link href="/login" className="p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+                                <Link href="/login" className="p-2 text-gray-600 hover:bg-gray-100 dark:text-zinc-400 dark:hover:bg-zinc-800 rounded-full transition-colors">
                                     <UserIcon className="w-6 h-6" />
                                 </Link>
                             )}
-                            <button className="relative z-[60] p-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors active:scale-90" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                            <button className="relative z-[60] p-2 text-gray-600 hover:bg-gray-100 dark:text-zinc-400 dark:hover:bg-zinc-800 rounded-full transition-colors active:scale-90" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
                                 {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                             </button>
                         </div>
@@ -358,12 +362,12 @@ export default function Navbar() {
                         insuffisant). Repliée au scroll, le nav rejoint la même
                         hauteur que sur bureau dès que ça compte réellement. */}
                     <div className={`md:hidden overflow-hidden transition-all duration-300 ${scrolled ? 'max-h-0 opacity-0' : 'max-h-20 opacity-100 pb-4'}`}>
-                        <div className={`relative flex items-center bg-gray-100 rounded-full transition-all duration-300 ${isSearchFocused ? 'ring-2 ring-black/5 bg-white shadow-md' : ''}`}>
+                        <div className={`relative flex items-center bg-gray-100 dark:bg-zinc-800 rounded-full transition-all duration-300 ${isSearchFocused ? 'ring-2 ring-black/5 dark:ring-white/10 bg-white dark:bg-zinc-800 shadow-md' : ''}`}>
                             <button
                                 type="button"
                                 onClick={submitSearch}
                                 aria-label="Rechercher"
-                                className="pl-4 text-gray-400"
+                                className="pl-4 text-gray-400 dark:text-zinc-500"
                             >
                                 <Search className="w-4 h-4" />
                             </button>
@@ -372,7 +376,7 @@ export default function Navbar() {
                                 value={term}
                                 onChange={(e) => setTerm(e.target.value)}
                                 placeholder={`Explorer des ${currentType.label.toLowerCase()}...`}
-                                className="w-full h-10 pl-3 pr-4 bg-transparent border-none outline-none text-sm font-medium text-gray-800 placeholder-gray-500"
+                                className="w-full h-10 pl-3 pr-4 bg-transparent border-none outline-none text-sm font-medium text-gray-800 dark:text-zinc-100 placeholder-gray-500 dark:placeholder-zinc-500"
                                 onFocus={() => setIsSearchFocused(true)}
                                 onBlur={() => setIsSearchFocused(false)}
                                 onKeyDown={handleSearch}
@@ -392,7 +396,7 @@ export default function Navbar() {
 
 
                         {/* Floating Menu Card mimicking Unsplash */}
-                        <div className="absolute top-[70px] right-4 left-4 z-[60] bg-white rounded-xl shadow-2xl border border-gray-100 p-4 animate-in slide-in-from-top-2 duration-200 origin-top">
+                        <div className="absolute top-[70px] right-4 left-4 z-[60] bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-gray-100 dark:border-zinc-800 p-4 animate-in slide-in-from-top-2 duration-200 origin-top">
                             <div className="flex flex-col mb-4">
                                 {/* Même source que le menu bureau : les deux
                                     listes ont cessé de diverger. */}
@@ -400,27 +404,27 @@ export default function Navbar() {
                                     const isOpen = openMenuSection === section.title;
 
                                     return (
-                                        <div key={section.title} className="border-b border-gray-100 last:border-0">
+                                        <div key={section.title} className="border-b border-gray-100 dark:border-zinc-800 last:border-0">
                                             <button
                                                 onClick={() => setOpenMenuSection(isOpen ? null : section.title)}
-                                                className="w-full flex items-center justify-between py-4 group hover:text-black text-gray-600 transition-colors"
+                                                className="w-full flex items-center justify-between py-4 group hover:text-black dark:hover:text-white text-gray-600 dark:text-zinc-400 transition-colors"
                                                 aria-expanded={isOpen}
                                             >
                                                 <div className="flex items-center gap-4">
-                                                    <section.icon className="w-5 h-5 text-gray-900" />
-                                                    <span className="font-bold text-base text-gray-900">{section.title}</span>
+                                                    <section.icon className="w-5 h-5 text-gray-900 dark:text-zinc-100" />
+                                                    <span className="font-bold text-base text-gray-900 dark:text-zinc-100">{section.title}</span>
                                                 </div>
-                                                <ChevronDown className={`w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+                                                <ChevronDown className={`w-5 h-5 text-gray-400 dark:text-zinc-500 group-hover:text-gray-600 dark:group-hover:text-zinc-300 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
                                             </button>
 
                                             <div className={`grid transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'grid-rows-[1fr] opacity-100 mb-4' : 'grid-rows-[0fr] opacity-0'}`}>
                                                 <div className="overflow-hidden">
-                                                    <div className="flex flex-col gap-3 pl-[3.25rem] border-l-2 border-gray-100 ml-2.5">
+                                                    <div className="flex flex-col gap-3 pl-[3.25rem] border-l-2 border-gray-100 dark:border-zinc-800 ml-2.5">
                                                         {section.links.map((link) => (
                                                             <Link
                                                                 key={link.href}
                                                                 href={link.href}
-                                                                className="text-gray-500 hover:text-black text-sm font-medium transition-colors"
+                                                                className="text-gray-500 hover:text-black dark:text-zinc-400 dark:hover:text-white text-sm font-medium transition-colors"
                                                                 onClick={() => setMobileMenuOpen(false)}
                                                             >
                                                                 {link.label}
@@ -434,15 +438,23 @@ export default function Navbar() {
                                 })}
                             </div>
 
+                            {/* Thème — même contrôle segmenté que /settings, mais
+                                joignable partout : le menu mobile est le seul
+                                endroit systématiquement accessible sans défiler. */}
+                            <div className="flex items-center justify-between mb-6 pb-6 border-b border-gray-100 dark:border-zinc-800">
+                                <span className="text-sm font-semibold text-gray-700 dark:text-zinc-300">Thème</span>
+                                <ThemeToggle />
+                            </div>
+
                             {/* Footer Buttons — même logique que les actions bureau :
                                 un membre connecté n'a plus besoin qu'on lui
                                 propose de se connecter ou de s'inscrire. */}
                             <div className="flex gap-3 mb-6">
-                                <Link href="/submit" onClick={() => setMobileMenuOpen(false)} className="flex-1 py-2.5 px-4 bg-white border border-gray-300 rounded text-gray-600 font-medium text-sm text-center shadow-sm hover:border-gray-400 hover:text-black transition-colors">
+                                <Link href="/submit" onClick={() => setMobileMenuOpen(false)} className="flex-1 py-2.5 px-4 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded text-gray-600 dark:text-zinc-300 font-medium text-sm text-center shadow-sm hover:border-gray-400 hover:text-black dark:hover:border-zinc-500 dark:hover:text-white transition-colors">
                                     Soumettre une image
                                 </Link>
                                 {!user && (
-                                    <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="flex-1 py-2.5 px-4 bg-white border border-gray-300 rounded text-gray-600 font-medium text-sm text-center shadow-sm hover:border-gray-400 hover:text-black transition-colors">
+                                    <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="flex-1 py-2.5 px-4 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded text-gray-600 dark:text-zinc-300 font-medium text-sm text-center shadow-sm hover:border-gray-400 hover:text-black dark:hover:border-zinc-500 dark:hover:text-white transition-colors">
                                         Connexion
                                     </Link>
                                 )}
@@ -451,8 +463,8 @@ export default function Navbar() {
                             {/* Sign Up Footer */}
                             {!user && (
                                 <div className="text-center">
-                                    <p className="text-gray-500 text-sm">
-                                        Nouveau sur JEaLiFe ? <Link href="/join" onClick={() => setMobileMenuOpen(false)} className="text-gray-600 underline hover:text-black underline-offset-2">Inscrivez-vous gratuitement</Link>
+                                    <p className="text-gray-500 dark:text-zinc-400 text-sm">
+                                        Nouveau sur JEaLiFe ? <Link href="/join" onClick={() => setMobileMenuOpen(false)} className="text-gray-600 dark:text-zinc-300 underline hover:text-black dark:hover:text-white underline-offset-2">Inscrivez-vous gratuitement</Link>
                                     </p>
                                 </div>
                             )}
@@ -540,7 +552,7 @@ export default function Navbar() {
                     />
 
                     {/* Floating Popover Container */}
-                    <div className="fixed bottom-4 left-[70px] z-[70] w-[850px] max-h-[90vh] bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden origin-bottom-left animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200 cursor-default">
+                    <div className="fixed bottom-4 left-[70px] z-[70] w-[850px] max-h-[90vh] bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-gray-200 dark:border-zinc-800 overflow-hidden origin-bottom-left animate-in fade-in zoom-in-95 slide-in-from-bottom-2 duration-200 cursor-default">
 
                         {/* Content Reusing the 3-column Layout */}
                         {renderSidebarContent(() => setDesktopSidebarOpen(false))}
@@ -557,23 +569,23 @@ function SearchDropdown({ currentType, setTypeMenuOpen, typeMenuOpen, ImageIconS
         <div className="relative z-20">
             <button
                 onClick={() => setTypeMenuOpen(!typeMenuOpen)}
-                className="flex items-center gap-1.5 pl-4 pr-3 h-10 border-r border-gray-300/50 text-gray-600 hover:text-black transition-colors"
+                className="flex items-center gap-1.5 pl-4 pr-3 h-10 border-r border-gray-300/50 dark:border-zinc-600/50 text-gray-600 hover:text-black dark:text-zinc-400 dark:hover:text-white transition-colors"
             >
                 {currentType.icon}
                 <ChevronDown size={14} className={`opacity-50 transition-transform ${typeMenuOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {typeMenuOpen && (
-                <div className="absolute top-11 left-0 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
+                <div className="absolute top-11 left-0 w-48 bg-white dark:bg-zinc-900 rounded-xl shadow-xl border border-gray-100 dark:border-zinc-800 py-1 z-50 animate-in fade-in zoom-in-95 duration-200">
                     <div className="fixed inset-0 z-40" onClick={() => setTypeMenuOpen(false)}></div>
                     <div className="relative z-50">
-                        <Link href="/" onClick={() => setTypeMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-sm font-medium text-gray-700">
+                        <Link href="/" onClick={() => setTypeMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-zinc-800 text-sm font-medium text-gray-700 dark:text-zinc-300">
                             <ImageIconSizeIcon /> Photos
                         </Link>
-                        <Link href="/illustrations" onClick={() => setTypeMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-sm font-medium text-gray-700">
+                        <Link href="/illustrations" onClick={() => setTypeMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-zinc-800 text-sm font-medium text-gray-700 dark:text-zinc-300">
                             <PaletteSizeIcon /> Illustrations
                         </Link>
-                        <Link href="/videos" onClick={() => setTypeMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 text-sm font-medium text-gray-700">
+                        <Link href="/videos" onClick={() => setTypeMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-zinc-800 text-sm font-medium text-gray-700 dark:text-zinc-300">
                             <VideoSizeIcon /> Vidéos
                         </Link>
                     </div>

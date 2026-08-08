@@ -49,7 +49,7 @@ export default function CollectionDetail() {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
+                <Loader2 className="w-8 h-8 animate-spin text-gray-300 dark:text-zinc-600" />
             </div>
         );
     }
@@ -57,14 +57,14 @@ export default function CollectionDetail() {
     if (!collection) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center text-center px-4">
-                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-                    <Layers className="w-8 h-8 text-gray-300" />
+                <div className="w-20 h-20 bg-gray-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-6">
+                    <Layers className="w-8 h-8 text-gray-300 dark:text-zinc-600" />
                 </div>
-                <h1 className="text-2xl font-bold text-gray-900 mb-3">Collection introuvable</h1>
-                <p className="text-gray-500 mb-8 max-w-sm">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-3">Collection introuvable</h1>
+                <p className="text-gray-500 dark:text-zinc-400 mb-8 max-w-sm">
                     Elle a peut-être été supprimée, ou son auteur l&apos;a rendue privée.
                 </p>
-                <Link href="/" className="px-6 py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-colors">
+                <Link href="/" className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold hover:bg-gray-800 dark:hover:bg-zinc-200 transition-colors">
                     Retour à l&apos;accueil
                 </Link>
             </div>
@@ -75,17 +75,17 @@ export default function CollectionDetail() {
     const author = collection.profiles;
 
     return (
-        <main className="min-h-screen bg-white">
+        <main className="min-h-screen bg-white dark:bg-zinc-950">
             <header className="max-w-[1600px] mx-auto px-4 pt-12 pb-6">
-                <h1 className="text-4xl font-extrabold text-gray-900 flex items-center gap-3">
+                <h1 className="text-4xl font-extrabold text-gray-900 dark:text-zinc-100 flex items-center gap-3">
                     {collection.title}
                     {collection.is_private && (
-                        <Lock className="w-6 h-6 text-gray-400" aria-label="Collection privée" />
+                        <Lock className="w-6 h-6 text-gray-400 dark:text-zinc-500" aria-label="Collection privée" />
                     )}
                 </h1>
 
                 {collection.description && (
-                    <p className="text-gray-500 mt-3 max-w-2xl">{collection.description}</p>
+                    <p className="text-gray-500 dark:text-zinc-400 mt-3 max-w-2xl">{collection.description}</p>
                 )}
 
                 <div className="flex items-center justify-between gap-4 mt-6">
@@ -97,13 +97,13 @@ export default function CollectionDetail() {
                                 width={40}
                                 height={40}
                                 unoptimized
-                                className="w-10 h-10 rounded-full object-cover border border-gray-200"
+                                className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-zinc-700"
                             />
                             <span>
-                                <span className="block text-sm font-bold text-gray-900 group-hover:text-black">
+                                <span className="block text-sm font-bold text-gray-900 dark:text-zinc-100 group-hover:text-black dark:group-hover:text-white">
                                     {author.full_name || author.username}
                                 </span>
-                                <span className="block text-xs text-gray-500">
+                                <span className="block text-xs text-gray-500 dark:text-zinc-400">
                                     {items.length} image{items.length > 1 ? "s" : ""}
                                 </span>
                             </span>
@@ -113,9 +113,9 @@ export default function CollectionDetail() {
                     <button
                         type="button"
                         onClick={copyLink}
-                        className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-full text-sm font-medium text-gray-600 hover:border-gray-400 hover:text-black transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-zinc-700 rounded-full text-sm font-medium text-gray-600 dark:text-zinc-400 hover:border-gray-400 hover:text-black dark:hover:border-zinc-500 dark:hover:text-white transition-colors"
                     >
-                        {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Share2 className="w-4 h-4" />}
+                        {copied ? <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : <Share2 className="w-4 h-4" />}
                         {copied ? "Lien copié" : "Partager"}
                     </button>
                 </div>
@@ -123,7 +123,7 @@ export default function CollectionDetail() {
 
             <div className="max-w-[1600px] mx-auto px-4 pb-16">
                 {items.length === 0 ? (
-                    <p className="py-24 text-center text-gray-500">
+                    <p className="py-24 text-center text-gray-500 dark:text-zinc-400">
                         Cette collection est encore vide.
                     </p>
                 ) : (

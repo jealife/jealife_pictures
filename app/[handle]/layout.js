@@ -48,7 +48,7 @@ export default function UserProfileLayout({ children }) {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black dark:border-white"></div>
             </div>
         );
     }
@@ -56,9 +56,9 @@ export default function UserProfileLayout({ children }) {
     if (!profileUser) {
         return (
             <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Profil introuvable</h2>
-                <p className="text-gray-500">L&apos;utilisateur @{username} n&apos;existe pas ou a été supprimé.</p>
-                <Link href="/" className="mt-6 text-blue-600 hover:underline">Retour à l&apos;accueil</Link>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-2">Profil introuvable</h2>
+                <p className="text-gray-500 dark:text-zinc-400">L&apos;utilisateur @{username} n&apos;existe pas ou a été supprimé.</p>
+                <Link href="/" className="mt-6 text-blue-600 dark:text-blue-400 hover:underline">Retour à l&apos;accueil</Link>
             </div>
         );
     }
@@ -92,7 +92,7 @@ export default function UserProfileLayout({ children }) {
     const currentTabId = lastSegment === `@${username}` ? '' : lastSegment;
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-white dark:bg-zinc-950">
 
             {/* 1. Header Area - Unsplash Style */}
             <div className="max-w-[1320px] mx-auto px-4 sm:px-6 pt-12 pb-8 md:pt-20 md:pb-16">
@@ -100,7 +100,7 @@ export default function UserProfileLayout({ children }) {
 
                     {/* Avatar */}
                     <div className="shrink-0 mx-auto md:mx-0">
-                        <div className="w-32 h-32 md:w-[150px] md:h-[150px] rounded-full overflow-hidden border border-gray-100 shadow-sm">
+                        <div className="w-32 h-32 md:w-[150px] md:h-[150px] rounded-full overflow-hidden border border-gray-100 dark:border-zinc-800 shadow-sm">
                             <img
                                 src={profileUser.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profileUser.username}`}
                                 alt={profileUser.full_name || profileUser.username}
@@ -113,13 +113,13 @@ export default function UserProfileLayout({ children }) {
                     <div className="flex-1 text-center md:text-left space-y-4 w-full">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
-                                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 tracking-tight">{profileUser.full_name || profileUser.username}</h1>
+                                <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-zinc-100 tracking-tight">{profileUser.full_name || profileUser.username}</h1>
                                 <div className="mt-2 md:mt-3 max-w-2xl">
-                                    <p className="text-gray-600 text-[15px] leading-relaxed">
+                                    <p className="text-gray-600 dark:text-zinc-400 text-[15px] leading-relaxed">
                                         {profileUser.bio || `Téléchargez de superbes photos haute qualité sélectionnées par ${profileUser.full_name || profileUser.username}.`}
                                     </p>
                                 </div>
-                                <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-3 text-sm text-gray-500">
+                                <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-3 text-sm text-gray-500 dark:text-zinc-400">
                                     {/* Ne concerne que les contributeurs qui l'ont explicitement activé
                                         dans leurs réglages — jamais le compte JEaLiFe Stock lui-même, qui
                                         est le compte de l'entreprise, pas un photographe indépendant. */}
@@ -127,53 +127,53 @@ export default function UserProfileLayout({ children }) {
                                         <button
                                             type="button"
                                             onClick={(e) => { e.preventDefault(); setShowConnect(!showConnect); }}
-                                            className="flex items-center gap-1.5 text-blue-600 font-medium hover:text-blue-700 transition-colors"
+                                            className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-medium hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
                                         >
                                             <CheckBadgeIcon className="w-4 h-4" /> Disponible à l&apos;embauche
                                         </button>
                                     )}
                                     {profileUser.location && (
                                         <span className="flex items-center gap-1.5">
-                                            <MapPin className="w-4 h-4 text-gray-400" /> {profileUser.location}
+                                            <MapPin className="w-4 h-4 text-gray-400 dark:text-zinc-500" /> {profileUser.location}
                                         </span>
                                     )}
                                     <div className="relative">
-                                        <button 
+                                        <button
                                             onClick={(e) => { e.preventDefault(); setShowConnect(!showConnect); }}
-                                            className="flex items-center gap-1.5 hover:text-black transition-colors"
+                                            className="flex items-center gap-1.5 hover:text-black dark:hover:text-white transition-colors"
                                         >
-                                            <Mail className="w-4 h-4 text-gray-400" /> Connectez-vous avec {(profileUser.full_name || profileUser.username || "cet utilisateur").split(' ')[0]}
+                                            <Mail className="w-4 h-4 text-gray-400 dark:text-zinc-500" /> Connectez-vous avec {(profileUser.full_name || profileUser.username || "cet utilisateur").split(' ')[0]}
                                         </button>
-                                        
+
                                         {showConnect && (
                                             <>
                                                 <div className="fixed inset-0 z-40" onClick={() => setShowConnect(false)} />
-                                                <div className="absolute left-0 top-full mt-2 w-56 bg-white border border-gray-200 shadow-xl rounded-md overflow-hidden z-50 py-1 text-left">
-                                                    <div className="px-4 py-2 text-[11px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50/50">
+                                                <div className="absolute left-0 top-full mt-2 w-56 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-xl rounded-md overflow-hidden z-50 py-1 text-left">
+                                                    <div className="px-4 py-2 text-[11px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider bg-gray-50/50 dark:bg-zinc-800/50">
                                                         Connectez-vous avec {(profileUser.full_name || profileUser.username).split(' ')[0]}
                                                     </div>
                                                     {profileUser.email && (
-                                                        <a href={`mailto:${profileUser.email}`} className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors">
-                                                            <Mail className="w-4 h-4 text-gray-400" /> Envoyer un email
+                                                        <a href={`mailto:${profileUser.email}`} className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
+                                                            <Mail className="w-4 h-4 text-gray-400 dark:text-zinc-500" /> Envoyer un email
                                                         </a>
                                                     )}
                                                     {profileUser.website && (
-                                                        <a href={profileUser.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors">
-                                                            <Globe className="w-4 h-4 text-gray-400" /> Site web
+                                                        <a href={profileUser.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
+                                                            <Globe className="w-4 h-4 text-gray-400 dark:text-zinc-500" /> Site web
                                                         </a>
                                                     )}
                                                     {profileUser.instagram_username && (
-                                                        <a href={`https://instagram.com/${profileUser.instagram_username}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors">
-                                                            <ImageIcon className="w-4 h-4 text-gray-400" /> Instagram
+                                                        <a href={`https://instagram.com/${profileUser.instagram_username}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
+                                                            <ImageIcon className="w-4 h-4 text-gray-400 dark:text-zinc-500" /> Instagram
                                                         </a>
                                                     )}
                                                     {profileUser.twitter_username && (
-                                                        <a href={`https://twitter.com/${profileUser.twitter_username}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 hover:bg-gray-50 transition-colors">
-                                                            <Mail className="w-4 h-4 text-gray-400" /> Twitter
+                                                        <a href={`https://twitter.com/${profileUser.twitter_username}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
+                                                            <Mail className="w-4 h-4 text-gray-400 dark:text-zinc-500" /> Twitter
                                                         </a>
                                                     )}
                                                     {!profileUser.email && !profileUser.website && !profileUser.instagram_username && !profileUser.twitter_username && (
-                                                        <div className="px-4 py-3 text-[13px] text-gray-500 italic">
+                                                        <div className="px-4 py-3 text-[13px] text-gray-500 dark:text-zinc-400 italic">
                                                             Aucun lien de contact renseigné.
                                                         </div>
                                                     )}
@@ -190,7 +190,7 @@ export default function UserProfileLayout({ children }) {
                                     <>
                                         <Link
                                             href="/settings"
-                                            className="px-4 py-2 border border-gray-300 rounded-md text-gray-500 font-medium hover:text-black hover:border-gray-400 transition-colors text-sm flex items-center gap-2"
+                                            className="px-4 py-2 border border-gray-300 dark:border-zinc-700 rounded-md text-gray-500 dark:text-zinc-400 font-medium hover:text-black dark:hover:text-white hover:border-gray-400 dark:hover:border-zinc-500 transition-colors text-sm flex items-center gap-2"
                                         >
                                             <Edit2 className="w-4 h-4" /> Modifier le profil
                                         </Link>
@@ -203,7 +203,7 @@ export default function UserProfileLayout({ children }) {
             </div>
 
             {/* 2. Navigation Tabs */}
-            <div className="sticky top-16 z-30 bg-white border-b border-gray-200">
+            <div className="sticky top-16 z-30 bg-white dark:bg-zinc-950 border-b border-gray-200 dark:border-zinc-800">
                 <div className="max-w-[1320px] mx-auto px-4 sm:px-6">
                     <div className="flex gap-8 overflow-x-auto scrollbar-hide">
                         {tabs.map(tab => {
@@ -212,12 +212,12 @@ export default function UserProfileLayout({ children }) {
                                 <Link
                                     key={tab.id}
                                     href={tab.path}
-                                    className={`flex items-center gap-2 py-4 border-b-2 font-medium text-sm transition-all whitespace-nowrap ${isActive ? 'border-black text-black' : 'border-transparent text-gray-500 hover:text-black'}`}
+                                    className={`flex items-center gap-2 py-4 border-b-2 font-medium text-sm transition-all whitespace-nowrap ${isActive ? 'border-black dark:border-white text-black dark:text-white' : 'border-transparent text-gray-500 dark:text-zinc-400 hover:text-black dark:hover:text-white'}`}
                                 >
-                                    {tab.icon && <tab.icon className={`w-4 h-4 ${isActive ? 'text-black' : 'text-gray-400 group-hover:text-black'}`} />}
+                                    {tab.icon && <tab.icon className={`w-4 h-4 ${isActive ? 'text-black dark:text-white' : 'text-gray-400 dark:text-zinc-500 group-hover:text-black dark:group-hover:text-white'}`} />}
                                     {tab.label}
                                     {tab.count !== null && (
-                                        <span className="text-gray-400 ml-1">{tab.count}</span>
+                                        <span className="text-gray-400 dark:text-zinc-500 ml-1">{tab.count}</span>
                                     )}
                                 </Link>
                             );

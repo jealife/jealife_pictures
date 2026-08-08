@@ -1,10 +1,22 @@
 
 @import "tailwindcss";
 
+/* Pilote `dark:` par une classe posée sur <html> (voir ThemeContext) plutôt
+   que par la seule media query `prefers-color-scheme` : sans ça, un choix
+   explicite « Sombre »/« Clair » dans l'interface ne pourrait jamais
+   l'emporter sur le réglage du système. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #0f172a; /* Slate 900 */
   color-scheme: light;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #f4f4f5; /* Zinc 100 */
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -20,6 +32,7 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 html {

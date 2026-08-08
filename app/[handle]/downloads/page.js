@@ -56,7 +56,7 @@ export default function UserDownloadsPage() {
     if (loading) {
         return (
             <div className="py-20 flex justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
+                <Loader2 className="w-8 h-8 animate-spin text-gray-300 dark:text-zinc-600" />
             </div>
         );
     }
@@ -97,11 +97,11 @@ export default function UserDownloadsPage() {
 function EmptyState({ title, message }) {
     return (
         <div className="py-24 text-center flex flex-col items-center">
-            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-                <Download className="w-8 h-8 text-gray-300" />
+            <div className="w-20 h-20 bg-gray-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-6">
+                <Download className="w-8 h-8 text-gray-300 dark:text-zinc-600" />
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
-            <p className="text-gray-500 max-w-sm">{message}</p>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-zinc-100 mb-2">{title}</h3>
+            <p className="text-gray-500 dark:text-zinc-400 max-w-sm">{message}</p>
         </div>
     );
 }

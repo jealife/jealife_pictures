@@ -68,7 +68,7 @@ export default function OAuthButtons({ redirectPath = "/", onError, action = "Co
 
     // `null` = on ne sait pas encore ; `[]` = aucun fournisseur activé.
     if (providers === null) {
-        return <div className="h-[52px] mb-8 rounded-md bg-gray-50 animate-pulse" aria-hidden="true" />;
+        return <div className="h-[52px] mb-8 rounded-md bg-gray-50 dark:bg-zinc-800 animate-pulse" aria-hidden="true" />;
     }
     if (providers.length === 0) return null;
 
@@ -106,10 +106,10 @@ export default function OAuthButtons({ redirectPath = "/", onError, action = "Co
 
             <div className="relative my-8">
                 <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                    <div className="w-full border-t border-[#d1d1d1]" />
+                    <div className="w-full border-t border-[#d1d1d1] dark:border-zinc-700" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-white text-[#767676]">OU</span>
+                    <span className="px-4 bg-white dark:bg-zinc-950 text-[#767676] dark:text-zinc-500">OU</span>
                 </div>
             </div>
         </>

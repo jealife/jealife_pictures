@@ -48,23 +48,23 @@ export default function DownloadButton({ media, variant = "compact", onDownloade
     };
 
     const menu = (
-        <div className="absolute right-0 bottom-full mb-2 w-60 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
-            <p className="px-4 pt-3 pb-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+        <div className="absolute right-0 bottom-full mb-2 w-60 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+            <p className="px-4 pt-3 pb-2 text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider">
                 Choisir la taille
             </p>
             {options.map((option) => (
                 <button
                     key={option.key}
                     onClick={() => run(option.key)}
-                    className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 text-left transition-colors group/item"
+                    className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-zinc-800 text-left transition-colors group/item"
                 >
                     <span>
-                        <span className="block text-sm font-medium text-gray-900">{option.label}</span>
+                        <span className="block text-sm font-medium text-gray-900 dark:text-zinc-100">{option.label}</span>
                         {option.hint && (
-                            <span className="block text-[10px] text-gray-400">{option.hint}</span>
+                            <span className="block text-[10px] text-gray-400 dark:text-zinc-500">{option.hint}</span>
                         )}
                     </span>
-                    <ChevronRight className="w-3.5 h-3.5 text-gray-300 group-hover/item:text-gray-900 transition-colors" />
+                    <ChevronRight className="w-3.5 h-3.5 text-gray-300 dark:text-zinc-600 group-hover/item:text-gray-900 dark:group-hover/item:text-zinc-100 transition-colors" />
                 </button>
             ))}
         </div>
@@ -100,31 +100,31 @@ export default function DownloadButton({ media, variant = "compact", onDownloade
                 </button>
 
                 {open && (
-                    <div className="absolute right-0 top-12 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                    <div className="absolute right-0 top-12 w-64 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
                         <div className="p-2">
                             {options.map((option) => (
                                 <button
                                     key={option.key}
                                     onClick={() => run(option.key)}
-                                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 rounded-lg transition-colors group"
+                                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 dark:hover:bg-zinc-800 rounded-lg transition-colors group"
                                 >
                                     <span className="text-left">
-                                        <span className="block text-sm font-semibold text-gray-900">{option.label}</span>
+                                        <span className="block text-sm font-semibold text-gray-900 dark:text-zinc-100">{option.label}</span>
                                         {option.hint && (
-                                            <span className="block text-[10px] text-gray-400">{option.hint}</span>
+                                            <span className="block text-[10px] text-gray-400 dark:text-zinc-500">{option.hint}</span>
                                         )}
                                     </span>
-                                    <Download className="w-4 h-4 text-gray-300 group-hover:text-green-600 transition-colors" />
+                                    <Download className="w-4 h-4 text-gray-300 dark:text-zinc-600 group-hover:text-green-600 transition-colors" />
                                 </button>
                             ))}
                         </div>
-                        <p className="p-4 bg-gray-50 border-t border-gray-100 text-[10px] text-gray-400 leading-tight">
+                        <p className="p-4 bg-gray-50 dark:bg-zinc-800 border-t border-gray-100 dark:border-zinc-700 text-[10px] text-gray-400 dark:text-zinc-500 leading-tight">
                             Toutes les images de JEaLiFe Stock sont gratuites, sous licence libre.
                         </p>
                     </div>
                 )}
 
-                {error && <span className="ml-3 text-xs text-red-600">{error}</span>}
+                {error && <span className="ml-3 text-xs text-red-600 dark:text-red-400">{error}</span>}
             </div>
         );
     }

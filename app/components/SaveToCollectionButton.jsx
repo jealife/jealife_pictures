@@ -87,7 +87,7 @@ export default function SaveToCollectionButton({ mediaId, variant = "overlay", c
     const triggerClass =
         variant === "overlay"
             ? "bg-white/20 backdrop-blur-md hover:bg-white text-white hover:text-black p-2.5 rounded-full transition-all active:scale-95 border border-white/10"
-            : "flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:text-black hover:border-black transition-all";
+            : "flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-zinc-700 rounded-lg text-sm font-medium text-gray-600 dark:text-zinc-400 hover:text-black hover:border-black dark:hover:text-white dark:hover:border-white transition-all";
 
     return (
         <div className="relative" ref={containerRef}>
@@ -102,23 +102,23 @@ export default function SaveToCollectionButton({ mediaId, variant = "overlay", c
             </button>
 
             {open && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-                    <p className="px-4 pt-3 pb-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                    <p className="px-4 pt-3 pb-2 text-[10px] font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider">
                         Enregistrer dans
                     </p>
 
                     {error && (
-                        <p className="px-4 pb-2 text-xs text-red-600">{error}</p>
+                        <p className="px-4 pb-2 text-xs text-red-600 dark:text-red-400">{error}</p>
                     )}
 
                     {loading ? (
                         <div className="flex justify-center py-6">
-                            <Loader2 className="w-5 h-5 animate-spin text-gray-300" />
+                            <Loader2 className="w-5 h-5 animate-spin text-gray-300 dark:text-zinc-600" />
                         </div>
                     ) : (
                         <div className="max-h-56 overflow-y-auto">
                             {collections.length === 0 && !creating && (
-                                <p className="px-4 py-3 text-sm text-gray-500">
+                                <p className="px-4 py-3 text-sm text-gray-500 dark:text-zinc-400">
                                     Aucune collection pour le moment.
                                 </p>
                             )}
@@ -126,13 +126,13 @@ export default function SaveToCollectionButton({ mediaId, variant = "overlay", c
                                 <button
                                     key={collection.id}
                                     onClick={() => save(collection.id)}
-                                    className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 text-left transition-colors"
+                                    className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-zinc-800 text-left transition-colors"
                                 >
-                                    <span className="text-sm font-medium text-gray-900 truncate">
+                                    <span className="text-sm font-medium text-gray-900 dark:text-zinc-100 truncate">
                                         {collection.title}
                                     </span>
                                     {savedIn.has(collection.id) && (
-                                        <Check className="w-4 h-4 text-green-600 shrink-0" />
+                                        <Check className="w-4 h-4 text-green-600 dark:text-green-400 shrink-0" />
                                     )}
                                 </button>
                             ))}
@@ -140,17 +140,17 @@ export default function SaveToCollectionButton({ mediaId, variant = "overlay", c
                     )}
 
                     {creating ? (
-                        <form onSubmit={handleCreate} className="p-3 border-t border-gray-100">
+                        <form onSubmit={handleCreate} className="p-3 border-t border-gray-100 dark:border-zinc-800">
                             <input
                                 autoFocus
                                 value={newTitle}
                                 onChange={(e) => setNewTitle(e.target.value)}
                                 placeholder="Nom de la collection"
-                                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-black"
+                                className="w-full px-3 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg text-sm text-gray-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
                             />
                             <button
                                 type="submit"
-                                className="mt-2 w-full py-2 bg-black text-white rounded-lg text-sm font-bold hover:bg-gray-800 transition-colors"
+                                className="mt-2 w-full py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg text-sm font-bold hover:bg-gray-800 dark:hover:bg-zinc-200 transition-colors"
                             >
                                 Créer et enregistrer
                             </button>
@@ -158,7 +158,7 @@ export default function SaveToCollectionButton({ mediaId, variant = "overlay", c
                     ) : (
                         <button
                             onClick={() => setCreating(true)}
-                            className="w-full flex items-center gap-2 px-4 py-3 border-t border-gray-100 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-black transition-colors"
+                            className="w-full flex items-center gap-2 px-4 py-3 border-t border-gray-100 dark:border-zinc-800 text-sm font-medium text-gray-600 dark:text-zinc-400 hover:bg-gray-50 dark:hover:bg-zinc-800 hover:text-black dark:hover:text-white transition-colors"
                         >
                             <FolderPlus className="w-4 h-4" />
                             Nouvelle collection

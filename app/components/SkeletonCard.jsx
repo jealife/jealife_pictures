@@ -4,22 +4,22 @@ export default function SkeletonCard({ index = 0 }) {
     const stableHeight = heights[index % heights.length];
 
     return (
-        <div className={`relative mb-6 break-inside-avoid w-full ${stableHeight} rounded-2xl bg-gray-100 animate-pulse overflow-hidden`}>
+        <div className={`relative mb-6 break-inside-avoid w-full ${stableHeight} rounded-2xl bg-gray-100 dark:bg-zinc-800 animate-pulse overflow-hidden`}>
             {/* Simulation du dégradé en bas */}
             <div className="absolute bottom-0 left-0 right-0 p-5 space-y-3">
                 <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-gray-200"></div>
+                    <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-zinc-700"></div>
                     <div className="space-y-2">
-                        <div className="w-24 h-3 bg-gray-200 rounded"></div>
-                        <div className="w-16 h-2 bg-gray-200 rounded opacity-50"></div>
+                        <div className="w-24 h-3 bg-gray-200 dark:bg-zinc-700 rounded"></div>
+                        <div className="w-16 h-2 bg-gray-200 dark:bg-zinc-700 rounded opacity-50"></div>
                     </div>
                 </div>
             </div>
 
             {/* Simulation des boutons en haut */}
             <div className="absolute top-4 right-4 flex gap-2">
-                <div className="w-10 h-10 rounded-full bg-gray-200"></div>
-                <div className="w-10 h-10 rounded-full bg-gray-200"></div>
+                <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-zinc-700"></div>
+                <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-zinc-700"></div>
             </div>
 
             {/* Effet de balayage brillant (shimmer) */}

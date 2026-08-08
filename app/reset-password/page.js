@@ -69,33 +69,33 @@ export default function ResetPasswordPage() {
 
     if (!ready) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-white">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black" />
+            <div className="min-h-screen flex items-center justify-center bg-white dark:bg-zinc-950">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black dark:border-white" />
             </div>
         );
     }
 
     if (done) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-white px-6 text-center">
-                <CheckCircle2 className="w-14 h-14 text-green-500 mb-6" />
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">Mot de passe mis à jour</h1>
-                <p className="text-gray-500">Redirection en cours…</p>
+            <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-zinc-950 px-6 text-center">
+                <CheckCircle2 className="w-14 h-14 text-green-500 dark:text-green-400 mb-6" />
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-2">Mot de passe mis à jour</h1>
+                <p className="text-gray-500 dark:text-zinc-400">Redirection en cours…</p>
             </div>
         );
     }
 
     if (!hasSession) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-white px-6 text-center">
-                <h1 className="text-2xl font-bold text-gray-900 mb-3">Lien expiré</h1>
-                <p className="text-gray-500 max-w-md mb-8">
+            <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-zinc-950 px-6 text-center">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-3">Lien expiré</h1>
+                <p className="text-gray-500 dark:text-zinc-400 max-w-md mb-8">
                     Ce lien de réinitialisation n&apos;est plus valable. Demandez-en un nouveau
                     depuis la page de connexion.
                 </p>
                 <Link
                     href="/login"
-                    className="px-6 py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-colors"
+                    className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold hover:bg-gray-800 dark:hover:bg-zinc-200 transition-colors"
                 >
                     Retour à la connexion
                 </Link>
@@ -104,33 +104,33 @@ export default function ResetPasswordPage() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-white px-6">
+        <div className="min-h-screen flex items-center justify-center bg-white dark:bg-zinc-950 px-6">
             <div className="w-full max-w-md">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Nouveau mot de passe</h1>
-                <p className="text-gray-500 mb-8">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-zinc-100 mb-2">Nouveau mot de passe</h1>
+                <p className="text-gray-500 dark:text-zinc-400 mb-8">
                     Choisissez un mot de passe d&apos;au moins 8 caractères.
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
-                        <label htmlFor="password" className="block text-sm font-bold text-gray-900 mb-2">
+                        <label htmlFor="password" className="block text-sm font-bold text-gray-900 dark:text-zinc-100 mb-2">
                             Mot de passe
                         </label>
                         <div className="relative">
-                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-zinc-500" />
                             <input
                                 id="password"
                                 type={showPassword ? "text" : "password"}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 autoComplete="new-password"
-                                className="w-full pl-11 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all font-medium"
+                                className="w-full pl-11 pr-12 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-zinc-100 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white outline-none transition-all font-medium"
                                 required
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 hover:text-gray-700 dark:hover:text-zinc-300"
                                 aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                             >
                                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -139,25 +139,25 @@ export default function ResetPasswordPage() {
                     </div>
 
                     <div>
-                        <label htmlFor="confirmation" className="block text-sm font-bold text-gray-900 mb-2">
+                        <label htmlFor="confirmation" className="block text-sm font-bold text-gray-900 dark:text-zinc-100 mb-2">
                             Confirmation
                         </label>
                         <div className="relative">
-                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-zinc-500" />
                             <input
                                 id="confirmation"
                                 type={showPassword ? "text" : "password"}
                                 value={confirmation}
                                 onChange={(e) => setConfirmation(e.target.value)}
                                 autoComplete="new-password"
-                                className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all font-medium"
+                                className="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-zinc-100 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white outline-none transition-all font-medium"
                                 required
                             />
                         </div>
                     </div>
 
                     {error && (
-                        <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+                        <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 border border-red-100 dark:border-red-900 rounded-xl px-4 py-3">
                             {error}
                         </p>
                     )}
@@ -165,7 +165,7 @@ export default function ResetPasswordPage() {
                     <button
                         type="submit"
                         disabled={saving}
-                        className="w-full py-4 bg-black text-white font-bold rounded-2xl hover:bg-gray-800 transition-all active:scale-95 disabled:opacity-50"
+                        className="w-full py-4 bg-black dark:bg-white text-white dark:text-black font-bold rounded-2xl hover:bg-gray-800 dark:hover:bg-zinc-200 transition-all active:scale-95 disabled:opacity-50"
                     >
                         {saving ? "Enregistrement…" : "Enregistrer le mot de passe"}
                     </button>

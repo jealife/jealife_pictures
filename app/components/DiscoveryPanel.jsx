@@ -31,15 +31,15 @@ export default async function DiscoveryPanel() {
         <section className="w-full max-w-[1600px] mx-auto px-4 pb-16">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                 {collections.length > 0 && (
-                    <div className="border border-gray-100 rounded-2xl p-6">
+                    <div className="border border-gray-100 dark:border-zinc-800 rounded-2xl p-6">
                         <div className="flex items-center justify-between mb-5">
                             <div className="flex items-center gap-3">
-                                <span className="p-2 rounded-lg bg-amber-50 text-amber-700">
+                                <span className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400">
                                     <Layers className="w-5 h-5" />
                                 </span>
-                                <h2 className="font-bold text-lg text-gray-900">Collections</h2>
+                                <h2 className="font-bold text-lg text-gray-900 dark:text-zinc-100">Collections</h2>
                             </div>
-                            <Link href="/collections" className="text-xs font-bold text-gray-500 hover:text-emerald-700 transition-colors">
+                            <Link href="/collections" className="text-xs font-bold text-gray-500 hover:text-emerald-700 dark:text-zinc-400 dark:hover:text-emerald-400 transition-colors">
                                 Voir tout
                             </Link>
                         </div>
@@ -47,16 +47,16 @@ export default async function DiscoveryPanel() {
                             {collections.map((collection) => (
                                 <li key={collection.id}>
                                     <Link href={`/collections/${collection.id}`} className="flex items-center gap-3 group">
-                                        <div className="relative w-11 h-11 rounded-lg overflow-hidden bg-gray-100 shrink-0">
+                                        <div className="relative w-11 h-11 rounded-lg overflow-hidden bg-gray-100 dark:bg-zinc-800 shrink-0">
                                             {collection.cover && (
                                                 <Image src={collection.cover} alt="" fill sizes="44px" className="object-cover" />
                                             )}
                                         </div>
                                         <span className="min-w-0">
-                                            <span className="block text-sm font-semibold text-gray-900 group-hover:text-emerald-700 transition-colors truncate">
+                                            <span className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors truncate">
                                                 {collection.title}
                                             </span>
-                                            <span className="block text-xs text-gray-500">
+                                            <span className="block text-xs text-gray-500 dark:text-zinc-400">
                                                 {collection.total_photos} image{collection.total_photos > 1 ? "s" : ""}
                                             </span>
                                         </span>
@@ -68,19 +68,19 @@ export default async function DiscoveryPanel() {
                 )}
 
                 {trending.length > 0 && (
-                    <div className="border border-gray-100 rounded-2xl p-6">
+                    <div className="border border-gray-100 dark:border-zinc-800 rounded-2xl p-6">
                         <div className="flex items-center gap-3 mb-5">
-                            <span className="p-2 rounded-lg bg-red-50 text-red-600">
+                            <span className="p-2 rounded-lg bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400">
                                 <TrendingUp className="w-5 h-5" />
                             </span>
-                            <h2 className="font-bold text-lg text-gray-900">Tendances de la semaine</h2>
+                            <h2 className="font-bold text-lg text-gray-900 dark:text-zinc-100">Tendances de la semaine</h2>
                         </div>
                         <div className="flex flex-wrap gap-2">
                             {trending.map((photo) => (
                                 <Link
                                     key={photo.id}
                                     href={`/photos/${photo.id}`}
-                                    className="relative w-11 h-11 rounded-lg overflow-hidden bg-gray-100 shrink-0 group"
+                                    className="relative w-11 h-11 rounded-lg overflow-hidden bg-gray-100 dark:bg-zinc-800 shrink-0 group"
                                 >
                                     <Image
                                         src={photo.thumbnail_url || photo.url}

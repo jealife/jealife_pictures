@@ -52,20 +52,20 @@ export default function ReportDialog({ mediaId, userId, onClose }) {
             aria-label="Signaler cette image"
         >
             <div
-                className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+                className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-md p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200"
                 onClick={(event) => event.stopPropagation()}
             >
                 {sent ? (
                     <div className="text-center py-6">
-                        <Check className="w-12 h-12 text-emerald-600 mx-auto mb-4" />
-                        <h2 className="text-xl font-bold text-gray-900 mb-2">Signalement envoyé</h2>
-                        <p className="text-gray-500 text-sm mb-6">
+                        <Check className="w-12 h-12 text-emerald-600 dark:text-emerald-400 mx-auto mb-4" />
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-zinc-100 mb-2">Signalement envoyé</h2>
+                        <p className="text-gray-500 dark:text-zinc-400 text-sm mb-6">
                             Nous examinons chaque signalement. Merci d&apos;aider à garder la
                             plateforme saine.
                         </p>
                         <button
                             onClick={onClose}
-                            className="px-6 py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-colors"
+                            className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-bold hover:bg-gray-800 dark:hover:bg-zinc-200 transition-colors"
                         >
                             Fermer
                         </button>
@@ -73,10 +73,10 @@ export default function ReportDialog({ mediaId, userId, onClose }) {
                 ) : (
                     <form onSubmit={submit}>
                         <div className="flex items-center justify-between mb-6">
-                            <h2 className="flex items-center gap-2 text-xl font-bold text-gray-900">
-                                <Flag className="w-5 h-5 text-red-500" /> Signaler
+                            <h2 className="flex items-center gap-2 text-xl font-bold text-gray-900 dark:text-zinc-100">
+                                <Flag className="w-5 h-5 text-red-500 dark:text-red-400" /> Signaler
                             </h2>
-                            <button type="button" onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full" aria-label="Fermer">
+                            <button type="button" onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full text-gray-600 dark:text-zinc-400" aria-label="Fermer">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
@@ -88,8 +88,8 @@ export default function ReportDialog({ mediaId, userId, onClose }) {
                                     key={item.key}
                                     className={`flex items-start gap-3 p-3 border rounded-xl cursor-pointer transition-colors ${
                                         reason === item.key
-                                            ? "border-black bg-gray-50"
-                                            : "border-gray-200 hover:border-gray-300"
+                                            ? "border-black dark:border-white bg-gray-50 dark:bg-zinc-800"
+                                            : "border-gray-200 dark:border-zinc-700 hover:border-gray-300 dark:hover:border-zinc-600"
                                     }`}
                                 >
                                     <input
@@ -100,24 +100,24 @@ export default function ReportDialog({ mediaId, userId, onClose }) {
                                         onChange={() => setReason(item.key)}
                                         className="mt-1"
                                     />
-                                    <span className="text-sm text-gray-700">{item.label}</span>
+                                    <span className="text-sm text-gray-700 dark:text-zinc-300">{item.label}</span>
                                 </label>
                             ))}
                         </fieldset>
 
-                        <label htmlFor="report-details" className="block text-sm font-bold text-gray-900 mb-2">
-                            Précisions <span className="font-normal text-gray-400">(facultatif)</span>
+                        <label htmlFor="report-details" className="block text-sm font-bold text-gray-900 dark:text-zinc-100 mb-2">
+                            Précisions <span className="font-normal text-gray-400 dark:text-zinc-500">(facultatif)</span>
                         </label>
                         <textarea
                             id="report-details"
                             rows={3}
                             value={details}
                             onChange={(event) => setDetails(event.target.value)}
-                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all text-sm resize-none mb-4"
+                            className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-zinc-100 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white outline-none transition-all text-sm resize-none mb-4"
                             placeholder="Tout élément qui nous aidera à traiter le signalement."
                         />
 
-                        {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+                        {error && <p className="text-sm text-red-600 dark:text-red-400 mb-4">{error}</p>}
 
                         <button
                             type="submit"

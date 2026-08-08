@@ -49,10 +49,10 @@ export default function FeaturedTopics() {
     if (topics.length === 0) return null;
 
     return (
-        <section className="w-full max-w-[1600px] mx-auto px-4 py-16 border-t border-gray-100">
+        <section className="w-full max-w-[1600px] mx-auto px-4 py-16 border-t border-gray-100 dark:border-zinc-800">
             <div className="flex items-center justify-between mb-8">
-                <h2 className="text-2xl font-bold text-gray-900">Thèmes à explorer</h2>
-                <Link href="/themes" className="text-sm font-bold text-gray-500 hover:text-emerald-700 transition-colors">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-zinc-100">Thèmes à explorer</h2>
+                <Link href="/themes" className="text-sm font-bold text-gray-500 hover:text-emerald-700 dark:text-zinc-400 dark:hover:text-emerald-400 transition-colors">
                     Tous les thèmes
                 </Link>
             </div>

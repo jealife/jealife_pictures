@@ -15,7 +15,7 @@ export const metadata = {
  */
 export default function TeamPage() {
     return (
-        <div className="min-h-screen bg-white text-gray-900 font-sans">
+        <div className="min-h-screen bg-white dark:bg-zinc-950 text-gray-900 dark:text-zinc-100 font-sans">
 
             {/* Hero Section */}
             <div className="max-w-7xl mx-auto px-6 py-24 md:py-32">
@@ -23,7 +23,7 @@ export default function TeamPage() {
                     Make something <br />
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500">meaningful.</span>
                 </h1>
-                <p className="text-xl md:text-2xl text-gray-600 max-w-3xl leading-relaxed">
+                <p className="text-xl md:text-2xl text-gray-600 dark:text-zinc-400 max-w-3xl leading-relaxed">
                     Chez JEaLiFe, nous ne construisons pas seulement une banque d&apos;images. Nous construisons une communauté qui célèbre la culture, la créativité et le partage.
                 </p>
             </div>
@@ -51,24 +51,24 @@ export default function TeamPage() {
             </div>
 
             {/* Values */}
-            <div className="max-w-7xl mx-auto px-6 py-24 border-t border-gray-100">
+            <div className="max-w-7xl mx-auto px-6 py-24 border-t border-gray-100 dark:border-zinc-800">
                 <h2 className="text-3xl font-bold mb-16">Ce qui nous porte</h2>
                 <div className="grid md:grid-cols-3 gap-12">
                     <div>
                         <h3 className="text-xl font-bold mb-4">Remote First</h3>
-                        <p className="text-gray-600">
+                        <p className="text-gray-600 dark:text-zinc-400">
                             Nous travaillons de partout. Nous valorisons les résultats, pas les heures de présence.
                         </p>
                     </div>
                     <div>
                         <h3 className="text-xl font-bold mb-4">Impact Culturel</h3>
-                        <p className="text-gray-600">
+                        <p className="text-gray-600 dark:text-zinc-400">
                             Chaque ligne de code, chaque pixel contribue à faire exister de belles images.
                         </p>
                     </div>
                     <div>
                         <h3 className="text-xl font-bold mb-4">Open &amp; Transparent</h3>
-                        <p className="text-gray-600">
+                        <p className="text-gray-600 dark:text-zinc-400">
                             Nous partageons nos succès et nos échecs. Nous construisons en public et valorisons l&apos;honnêteté radicale.
                         </p>
                     </div>
@@ -76,17 +76,17 @@ export default function TeamPage() {
             </div>
 
             {/* Contact — pas de poste ouvert pour l'instant, mais on lit tout */}
-            <div className="bg-gray-50 py-24">
+            <div className="bg-gray-50 dark:bg-zinc-900 py-24">
                 <div className="max-w-3xl mx-auto px-6 text-center">
                     <h2 className="text-3xl md:text-4xl font-bold mb-4">Aucun poste ouvert pour l&apos;instant</h2>
-                    <p className="text-gray-500 mb-10 max-w-xl mx-auto">
+                    <p className="text-gray-500 dark:text-zinc-400 mb-10 max-w-xl mx-auto">
                         JEaLiFe Stock est encore une petite équipe. Si vous voulez contribuer autrement
                         qu&apos;en publiant vos photos (développement, design, écriture), dites-nous-le,
                         on lit chaque message.
                     </p>
                     <a
                         href="mailto:jealife.pictures@gmail.com"
-                        className="inline-flex items-center gap-2 px-8 py-4 bg-black text-white rounded-full font-bold hover:bg-gray-800 transition-all"
+                        className="inline-flex items-center gap-2 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full font-bold hover:bg-gray-800 dark:hover:bg-zinc-200 transition-all"
                     >
                         <Mail className="w-5 h-5" /> Écrivez-nous
                     </a>

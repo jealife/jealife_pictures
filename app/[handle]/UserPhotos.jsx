@@ -32,7 +32,7 @@ export default function UserPhotos() {
     if (loading) {
         return (
             <div className="py-20 flex justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
+                <Loader2 className="w-8 h-8 animate-spin text-gray-300 dark:text-zinc-600" />
             </div>
         );
     }

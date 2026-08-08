@@ -103,22 +103,22 @@ export default function TopicBar({ activeTopic = null }) {
     // sur `scrolled`) : un seul décalage suffit désormais, plus besoin de
     // distinguer mobile/bureau ici.
     return (
-        <div className="sticky top-16 z-[45] bg-white/95 backdrop-blur-sm border-b border-gray-100">
+        <div className="sticky top-16 z-[45] bg-white/95 dark:bg-zinc-900/95 backdrop-blur-sm border-b border-gray-100 dark:border-zinc-800">
             <div className="max-w-[1800px] mx-auto px-4 flex items-center gap-6 py-3">
-                <nav className="hidden md:flex items-center gap-1 pr-6 border-r border-gray-200 shrink-0">
+                <nav className="hidden md:flex items-center gap-1 pr-6 border-r border-gray-200 dark:border-zinc-700 shrink-0">
                     {mediaTypes.map((type) => (
                         <Link
                             key={type.href}
                             href={typeHref(type.href)}
                             className={`px-3 py-1.5 text-sm transition-colors ${
                                 pathname === type.href
-                                    ? "font-semibold text-black"
-                                    : "font-medium text-gray-500 hover:text-black"
+                                    ? "font-semibold text-black dark:text-white"
+                                    : "font-medium text-gray-500 hover:text-black dark:text-zinc-400 dark:hover:text-white"
                             }`}
                         >
                             {type.label}
                             {typeCounts && (
-                                <span className="ml-1 text-gray-400">{typeCounts[type.countKey]}</span>
+                                <span className="ml-1 text-gray-400 dark:text-zinc-500">{typeCounts[type.countKey]}</span>
                             )}
                         </Link>
                     ))}
@@ -131,13 +131,13 @@ export default function TopicBar({ activeTopic = null }) {
                 {!query && (
                 <div className="relative flex-1 overflow-hidden">
                     {showLeftArrow && (
-                        <div className="absolute left-0 top-0 bottom-0 w-16 bg-linear-to-r from-white via-white to-transparent z-10 flex items-center pl-2">
+                        <div className="absolute left-0 top-0 bottom-0 w-16 bg-linear-to-r from-white via-white dark:from-zinc-900 dark:via-zinc-900 to-transparent z-10 flex items-center pl-2">
                             <button
                                 onClick={() => scroll("left")}
-                                className="p-1.5 bg-white shadow-lg rounded-full border border-gray-100 hover:scale-110 transition-transform"
+                                className="p-1.5 bg-white dark:bg-zinc-800 shadow-lg rounded-full border border-gray-100 dark:border-zinc-700 hover:scale-110 transition-transform"
                                 aria-label="Faire défiler vers la gauche"
                             >
-                                <ChevronLeft className="w-4 h-4 text-gray-700" />
+                                <ChevronLeft className="w-4 h-4 text-gray-700 dark:text-zinc-300" />
                             </button>
                         </div>
                     )}
@@ -148,10 +148,10 @@ export default function TopicBar({ activeTopic = null }) {
                     >
                         <Link
                             href="/"
-                            className={`whitespace-nowrap pb-2 text-sm font-medium transition-all border-b-2 hover:text-black ${
+                            className={`whitespace-nowrap pb-2 text-sm font-medium transition-all border-b-2 hover:text-black dark:hover:text-white ${
                                 !activeTopic && pathname === "/"
-                                    ? "border-black text-black"
-                                    : "border-transparent text-gray-500"
+                                    ? "border-black dark:border-white text-black dark:text-white"
+                                    : "border-transparent text-gray-500 dark:text-zinc-400"
                             }`}
                         >
                             À la une
@@ -161,10 +161,10 @@ export default function TopicBar({ activeTopic = null }) {
                             <Link
                                 key={topic.slug}
                                 href={`/themes/${topic.slug}`}
-                                className={`whitespace-nowrap pb-2 text-sm font-medium transition-all border-b-2 hover:text-black ${
+                                className={`whitespace-nowrap pb-2 text-sm font-medium transition-all border-b-2 hover:text-black dark:hover:text-white ${
                                     activeTopic === topic.slug
-                                        ? "border-black text-black"
-                                        : "border-transparent text-gray-500"
+                                        ? "border-black dark:border-white text-black dark:text-white"
+                                        : "border-transparent text-gray-500 dark:text-zinc-400"
                                 }`}
                             >
                                 {topic.name}
@@ -173,13 +173,13 @@ export default function TopicBar({ activeTopic = null }) {
                     </div>
 
                     {showRightArrow && (
-                        <div className="absolute right-0 top-0 bottom-0 w-16 bg-linear-to-l from-white via-white to-transparent z-10 flex items-center justify-end pr-2">
+                        <div className="absolute right-0 top-0 bottom-0 w-16 bg-linear-to-l from-white via-white dark:from-zinc-900 dark:via-zinc-900 to-transparent z-10 flex items-center justify-end pr-2">
                             <button
                                 onClick={() => scroll("right")}
-                                className="p-1.5 bg-white shadow-lg rounded-full border border-gray-100 hover:scale-110 transition-transform"
+                                className="p-1.5 bg-white dark:bg-zinc-800 shadow-lg rounded-full border border-gray-100 dark:border-zinc-700 hover:scale-110 transition-transform"
                                 aria-label="Faire défiler vers la droite"
                             >
-                                <ChevronRight className="w-4 h-4 text-gray-700" />
+                                <ChevronRight className="w-4 h-4 text-gray-700 dark:text-zinc-300" />
                             </button>
                         </div>
                     )}

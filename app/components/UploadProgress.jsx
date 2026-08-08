@@ -75,31 +75,31 @@ export default function UploadProgress({ percent = 0, label }) {
 
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="bg-white rounded-3xl shadow-2xl px-10 py-12 max-w-sm w-full text-center">
+            <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl px-10 py-12 max-w-sm w-full text-center">
                 <div className="relative w-32 h-32 mx-auto mb-6">
                     <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
-                        <circle cx="60" cy="60" r={radius} fill="none" stroke="#e5e7eb" strokeWidth="8" />
+                        <circle cx="60" cy="60" r={radius} fill="none" stroke="currentColor" strokeWidth="8" className="text-gray-200 dark:text-zinc-700" />
                         <circle
                             cx="60"
                             cy="60"
                             r={radius}
                             fill="none"
-                            stroke="#111827"
+                            stroke="currentColor"
                             strokeWidth="8"
                             strokeLinecap="round"
                             strokeDasharray={circumference}
                             strokeDashoffset={offset}
-                            className="transition-all duration-500 ease-out"
+                            className="text-gray-900 dark:text-zinc-100 transition-all duration-500 ease-out"
                         />
                     </svg>
-                    <div className="absolute inset-0 flex items-center justify-center text-2xl font-extrabold text-gray-900">
+                    <div className="absolute inset-0 flex items-center justify-center text-2xl font-extrabold text-gray-900 dark:text-zinc-100">
                         {Math.round(clamped)}%
                     </div>
                 </div>
-                <p className="text-[15px] font-semibold text-gray-900 mb-1">{label || "Envoi en cours…"}</p>
-                <p className="text-xs text-gray-400 mb-3">Ne fermez pas cette page pendant l&apos;envoi.</p>
+                <p className="text-[15px] font-semibold text-gray-900 dark:text-zinc-100 mb-1">{label || "Envoi en cours…"}</p>
+                <p className="text-xs text-gray-400 dark:text-zinc-500 mb-3">Ne fermez pas cette page pendant l&apos;envoi.</p>
                 {hint && (
-                    <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                    <p className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950 border border-amber-100 dark:border-amber-900 rounded-lg px-3 py-2">
                         {hint}
                     </p>
                 )}

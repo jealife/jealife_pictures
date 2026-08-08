@@ -32,10 +32,10 @@ export default async function TopicsPage() {
     const empty = topics.filter((topic) => topic.total_media === 0);
 
     return (
-        <main className="min-h-screen bg-white">
+        <main className="min-h-screen bg-white dark:bg-zinc-950">
             <div className="max-w-[1200px] mx-auto px-4 py-16">
-                <h1 className="text-4xl font-extrabold text-gray-900 mb-3">Thèmes</h1>
-                <p className="text-gray-500 mb-12 max-w-2xl">
+                <h1 className="text-4xl font-extrabold text-gray-900 dark:text-zinc-100 mb-3">Thèmes</h1>
+                <p className="text-gray-500 dark:text-zinc-400 mb-12 max-w-2xl">
                     La structure choisie par JEaLiFe Stock pour parcourir le catalogue :
                     chaque image publiée y est rattachée selon ses mots-clés.
                 </p>
@@ -87,7 +87,7 @@ export default async function TopicsPage() {
 
                 {empty.length > 0 && (
                     <section>
-                        <h2 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">
+                        <h2 className="text-sm font-bold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-4">
                             Thèmes en attente de leurs premières images
                         </h2>
                         <div className="flex flex-wrap gap-2">
@@ -95,7 +95,7 @@ export default async function TopicsPage() {
                                 <Link
                                     key={topic.slug}
                                     href={`/themes/${topic.slug}`}
-                                    className="px-4 py-2 bg-gray-50 border border-gray-100 rounded-lg text-sm font-medium text-gray-500 hover:text-black hover:border-gray-300 transition-colors"
+                                    className="px-4 py-2 bg-gray-50 dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 rounded-lg text-sm font-medium text-gray-500 dark:text-zinc-400 hover:text-black dark:hover:text-white hover:border-gray-300 dark:hover:border-zinc-500 transition-colors"
                                 >
                                     {topic.name}
                                 </Link>

@@ -41,15 +41,15 @@ export default async function CountryPage({ params }) {
     const initialItems = await getMedia({ type: "photo", limit: PAGE_SIZE, country: country.code });
 
     return (
-        <main className="min-h-screen bg-white">
+        <main className="min-h-screen bg-white dark:bg-zinc-950">
             <header className="max-w-[1600px] mx-auto px-4 pt-12 pb-6">
-                <Link href="/pays" className="text-sm font-medium text-gray-400 hover:text-black transition-colors">
+                <Link href="/pays" className="text-sm font-medium text-gray-400 dark:text-zinc-500 hover:text-black dark:hover:text-white transition-colors">
                     ← Tous les pays
                 </Link>
-                <h1 className="text-4xl font-extrabold text-gray-900 mt-4">
+                <h1 className="text-4xl font-extrabold text-gray-900 dark:text-zinc-100 mt-4">
                     {country.name_fr}
                 </h1>
-                <p className="text-gray-500 mt-2">
+                <p className="text-gray-500 dark:text-zinc-400 mt-2">
                     Images libres de droits prises au {country.name_fr}.
                 </p>
             </header>

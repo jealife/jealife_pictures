@@ -67,58 +67,58 @@ export default function AdminUsersPage() {
 
     return (
         <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-1">Utilisateurs</h2>
-            <p className="text-gray-500 text-sm mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-1">Utilisateurs</h2>
+            <p className="text-gray-500 dark:text-zinc-400 text-sm mb-6">
                 {users ? `${users.length} membre${users.length > 1 ? "s" : ""}` : " "}
             </p>
 
             <div className="relative mb-6 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-zinc-500" />
                 <input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Chercher un nom ou un pseudo…"
-                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-black outline-none"
+                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-zinc-100 rounded-xl text-sm focus:ring-2 focus:ring-black dark:focus:ring-white outline-none"
                 />
             </div>
 
             {users === null ? (
-                <Loader2 className="w-6 h-6 animate-spin text-gray-300" />
+                <Loader2 className="w-6 h-6 animate-spin text-gray-300 dark:text-zinc-600" />
             ) : users.length === 0 ? (
-                <p className="text-sm text-gray-400 italic">Aucun résultat.</p>
+                <p className="text-sm text-gray-400 dark:text-zinc-500 italic">Aucun résultat.</p>
             ) : (
                 <div className="space-y-2">
                     {users.map((u) => (
-                        <div key={u.id} className="flex items-center gap-4 p-3 border border-gray-100 rounded-xl">
+                        <div key={u.id} className="flex items-center gap-4 p-3 border border-gray-100 dark:border-zinc-800 rounded-xl">
                             <Image
                                 src={u.avatar_url || avatarFallback(u.id)}
                                 alt=""
                                 width={40}
                                 height={40}
                                 unoptimized
-                                className="w-10 h-10 rounded-full object-cover shrink-0 bg-gray-100"
+                                className="w-10 h-10 rounded-full object-cover shrink-0 bg-gray-100 dark:bg-zinc-800"
                             />
                             <div className="min-w-0 flex-1">
                                 <Link
                                     href={`/@${u.username}`}
                                     target="_blank"
-                                    className="font-semibold text-gray-900 hover:underline truncate block"
+                                    className="font-semibold text-gray-900 dark:text-zinc-100 hover:underline truncate block"
                                 >
                                     {u.full_name || u.username}
                                     {u.is_suspended && (
-                                        <span className="ml-2 align-middle text-[10px] font-bold uppercase tracking-wide text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                                        <span className="ml-2 align-middle text-[10px] font-bold uppercase tracking-wide text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 px-1.5 py-0.5 rounded">
                                             Suspendu
                                         </span>
                                     )}
                                 </Link>
-                                <p className="text-xs text-gray-500">@{u.username}</p>
+                                <p className="text-xs text-gray-500 dark:text-zinc-400">@{u.username}</p>
                             </div>
                             <button
                                 disabled={busyId === u.id}
                                 onClick={() => toggleFlag(u, "is_verified")}
                                 title="Contributeur vérifié"
                                 className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${
-                                    u.is_verified ? "text-blue-600 bg-blue-50" : "text-gray-300 hover:text-gray-500"
+                                    u.is_verified ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950" : "text-gray-300 dark:text-zinc-600 hover:text-gray-500 dark:hover:text-zinc-400"
                                 }`}
                             >
                                 <BadgeCheck className="w-4 h-4" />
@@ -132,7 +132,7 @@ export default function AdminUsersPage() {
                                         : u.is_suspended ? "Réactiver ce compte" : "Suspendre ce compte"
                                 }
                                 className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${
-                                    u.is_suspended ? "text-red-600 bg-red-50" : "text-gray-300 hover:text-gray-500"
+                                    u.is_suspended ? "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950" : "text-gray-300 dark:text-zinc-600 hover:text-gray-500 dark:hover:text-zinc-400"
                                 }`}
                             >
                                 <Ban className="w-4 h-4" />
@@ -146,7 +146,7 @@ export default function AdminUsersPage() {
                                         : u.role === "admin" ? "Retirer les droits admin" : "Nommer administrateur"
                                 }
                                 className={`px-3 py-2 text-xs font-bold rounded-lg transition-colors disabled:opacity-40 flex items-center gap-1.5 ${
-                                    u.role === "admin" ? "bg-black text-white" : "border border-gray-200 text-gray-600 hover:border-gray-400"
+                                    u.role === "admin" ? "bg-black dark:bg-white text-white dark:text-black" : "border border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 hover:border-gray-400 dark:hover:border-zinc-500"
                                 }`}
                             >
                                 <ShieldCheck className="w-4 h-4" /> {u.role === "admin" ? "Admin" : "Rendre admin"}

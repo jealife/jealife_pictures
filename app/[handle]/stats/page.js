@@ -1,24 +1,40 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getUserProfile, getUserStats } from "../../lib/database";
+import { getUserProfile, getUserStats, getUserDownloadsTrend } from "../../lib/database";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
 import Link from "next/link";
-import { BarChart3, Download, Info, TrendingUp, Globe } from "lucide-react";
+import { BarChart3 } from "lucide-react";
+import TrendChart from "../../components/charts/TrendChart";
+import RankingBars from "../../components/charts/RankingBars";
+
+const RANGE_OPTIONS = [
+    { label: "30 jours", days: 30 },
+    { label: "90 jours", days: 90 },
+];
+
+// Palette catégorielle validée (skill dataviz, slot 1). Vues et
+// téléchargements partagent la même teinte : ce ne sont pas deux séries
+// d'un même graphique, mais deux blocs distincts côte à côte.
+const COLOR_DOWNLOADS = "#2a78d6";
+
+const sum = (series) => series.reduce((total, d) => total + d.value, 0);
 
 export default function UserStatsPage() {
     const { handle } = useParams();
     const decodedHandle = handle ? decodeURIComponent(handle) : "";
     const username = decodedHandle.startsWith("@") ? decodedHandle.slice(1) : null;
-    const router = useRouter();
     const { user: currentUser } = useAuth();
     const [isOwner, setIsOwner] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [profileId, setProfileId] = useState(null);
     const [stats, setStats] = useState({ total_views: 0, total_downloads: 0 });
     const [topViewed, setTopViewed] = useState([]);
     const [topDownloaded, setTopDownloaded] = useState([]);
+    const [rangeDays, setRangeDays] = useState(30);
+    const [downloadsTrend, setDownloadsTrend] = useState(null);
 
     useEffect(() => {
         const checkOwnership = async () => {
@@ -31,6 +47,7 @@ export default function UserStatsPage() {
                 const profile = await getUserProfile(username);
                 if (profile && profile.id === currentUser.id) {
                     setIsOwner(true);
+                    setProfileId(profile.id);
                     const userStats = await getUserStats(profile.id);
                     if (userStats) setStats(userStats);
 
@@ -40,7 +57,7 @@ export default function UserStatsPage() {
                         .eq('user_id', profile.id)
                         .eq('status', 'published')
                         .order('views_count', { ascending: false })
-                        .limit(3);
+                        .limit(5);
                     if (vData) setTopViewed(vData);
 
                     const { data: dData } = await supabase
@@ -49,7 +66,7 @@ export default function UserStatsPage() {
                         .eq('user_id', profile.id)
                         .eq('status', 'published')
                         .order('downloads_count', { ascending: false })
-                        .limit(3);
+                        .limit(5);
                     if (dData) setTopDownloaded(dData);
                 }
             } catch (err) {
@@ -60,161 +77,115 @@ export default function UserStatsPage() {
         checkOwnership();
     }, [username, currentUser]);
 
-    // Mock Data for the graph
-    const dataPoints = [30, 45, 35, 50, 40, 60, 55, 70, 65, 80, 75, 90, 85, 100, 95, 85, 70, 75, 80, 60, 50, 45, 40, 35, 30, 25, 35, 40, 45, 50];
+    useEffect(() => {
+        if (!profileId) return;
+        let cancelled = false;
+        // Pas de reset à `null` au changement de période : le graphique
+        // précédent reste affiché pendant le rechargement (voir dataviz :
+        // "refetch keeps the frame").
+        getUserDownloadsTrend(profileId, rangeDays).then((trend) => {
+            if (!cancelled) setDownloadsTrend(trend);
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, [profileId, rangeDays]);
 
-    // Simple SVG Path generator for the line chart
-    const maxVal = Math.max(...dataPoints);
-    const minVal = Math.min(...dataPoints);
-    const range = maxVal - minVal;
-
-    // Normalize points to viewbox 0-100 height
-    const points = dataPoints.map((val, i) => {
-        const x = (i / (dataPoints.length - 1)) * 1000; // Width 1000
-        const y = 200 - ((val - minVal) / range) * 150; // Height 200, padding
-        return `${x},${y}`;
-    }).join(" ");
-
-    // Path command
-    const pathD = `M ${points}`;
-    const fillPathD = `M ${points} L 1000,250 L 0,250 Z`; // Close the path at bottom
-
-    if (loading) return <div className="py-20 text-center animate-pulse text-gray-400">Vérification...</div>;
+    if (loading) return <div className="py-20 text-center animate-pulse text-gray-400 dark:text-zinc-600">Vérification...</div>;
 
     if (!isOwner) {
         return (
             <div className="py-[100px] text-center flex flex-col items-center justify-center">
-                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-                    <BarChart3 className="w-8 h-8 text-gray-300" />
+                <div className="w-20 h-20 bg-gray-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-6">
+                    <BarChart3 className="w-8 h-8 text-gray-300 dark:text-zinc-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Accès restreint</h3>
-                <p className="text-gray-500 max-w-sm">Les statistiques sont privées. Vous ne pouvez voir que les vôtres.</p>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-zinc-100 mb-2">Accès restreint</h3>
+                <p className="text-gray-500 dark:text-zinc-400 max-w-sm">Les statistiques sont privées. Vous ne pouvez voir que les vôtres.</p>
             </div>
         );
     }
 
     return (
         <div className="max-w-[1320px] mx-auto">
-            {/* Title */}
-            <div className="mb-10 flex items-center gap-2">
-                <span className="font-bold text-gray-900">Aperçu</span>
-                <span className="text-gray-400 text-sm">30 derniers jours</span>
+            <div className="mb-10 flex items-center justify-between flex-wrap gap-4">
+                <span className="font-bold text-gray-900 dark:text-zinc-100">Aperçu</span>
+                <div className="flex items-center gap-1 bg-gray-50 dark:bg-zinc-800 rounded-full p-1">
+                    {RANGE_OPTIONS.map((opt) => (
+                        <button
+                            key={opt.days}
+                            type="button"
+                            onClick={() => setRangeDays(opt.days)}
+                            className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                                rangeDays === opt.days
+                                    ? "bg-white dark:bg-zinc-900 text-black dark:text-zinc-100 shadow-sm"
+                                    : "text-gray-500 dark:text-zinc-400 hover:text-black dark:hover:text-zinc-100"
+                            }`}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Chart 1: Vues */}
-                <div className="border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow bg-white">
-                    <div className="mb-8">
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-gray-900">Vues</span>
-                        </div>
-                        <div className="flex items-baseline gap-3">
-                            <h2 className="text-4xl font-bold text-gray-900">{stats.total_views?.toLocaleString('fr-FR') || 0}</h2>
-                        </div>
-                        <p className="text-sm text-gray-500 mt-2 flex items-center gap-1">
-                            Vous faites partie des 10 % de contributeurs les plus importants <span className="text-yellow-500">⭐</span>
-                        </p>
-                    </div>
+                {downloadsTrend === null ? (
+                    <div className="border border-gray-100 dark:border-zinc-800 rounded-2xl p-5 h-[230px] animate-pulse bg-gray-50 dark:bg-zinc-800/50" />
+                ) : (
+                    <TrendChart
+                        title="Téléchargements"
+                        data={downloadsTrend}
+                        color={COLOR_DOWNLOADS}
+                        total={sum(downloadsTrend)}
+                    />
+                )}
 
-                    {/* SVG Chart */}
-                    <div className="w-full h-[150px] relative overflow-hidden">
-                        <svg viewBox="0 0 1000 250" className="w-full h-full overflow-visible" preserveAspectRatio="none">
-                            <path d={pathD} fill="none" stroke="#22c55e" strokeWidth="4" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d={fillPathD} fill="url(#gradientGreen)" className="opacity-10" />
-                            <defs>
-                                <linearGradient id="gradientGreen" x1="0" x2="0" y1="0" y2="1">
-                                    <stop offset="0%" stopColor="#22c55e" />
-                                    <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
-                                </linearGradient>
-                            </defs>
-                        </svg>
-                    </div>
-                </div>
-
-                {/* Chart 2: Téléchargements */}
-                <div className="border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow bg-white">
-                    <div className="mb-8">
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-gray-900">Téléchargements</span>
-                        </div>
-                        <div className="flex items-baseline gap-3">
-                            <h2 className="text-4xl font-bold text-gray-900">{stats.total_downloads?.toLocaleString('fr-FR') || 0}</h2>
-                        </div>
-                        <p className="text-sm text-gray-500 mt-2 flex items-center gap-1">
-                            Vous faites partie des 10 % de contributeurs les plus importants <span className="text-blue-500">🌍</span>
-                        </p>
-                    </div>
-
-                    {/* SVG Chart */}
-                    <div className="w-full h-[150px] relative overflow-hidden">
-                        <svg viewBox="0 0 1000 250" className="w-full h-full overflow-visible" preserveAspectRatio="none">
-                            <path d={pathD} fill="none" stroke="#22c55e" strokeWidth="4" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d={fillPathD} fill="url(#gradientGreen)" className="opacity-10" />
-                        </svg>
-                    </div>
+                {/* Vues : pas d'historique par jour en base (seul un compteur
+                    agrégé existe), donc un total plutôt qu'une tendance
+                    inventée. */}
+                <div className="border border-gray-100 dark:border-zinc-800 rounded-2xl p-5 bg-white dark:bg-zinc-900">
+                    <span className="text-sm font-bold text-gray-900 dark:text-zinc-100">Vues</span>
+                    <p className="text-2xl font-extrabold text-gray-900 dark:text-zinc-100 mt-1 tabular-nums">
+                        {stats.total_views?.toLocaleString('fr-FR') || 0}
+                    </p>
+                    <p className="text-sm text-gray-400 dark:text-zinc-500 mt-3">
+                        Total cumulé, toutes vos photos confondues.
+                    </p>
                 </div>
             </div>
 
-            {/* Top Lists */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
+                <RankingBars
+                    title="Vos photos les plus vues"
+                    color={COLOR_DOWNLOADS}
+                    valueLabel="Vues"
+                    emptyLabel="Vous n'avez publié aucune photo."
+                    items={topViewed.map((photo) => ({
+                        key: photo.id,
+                        label: photo.title || `Photo #${photo.id}`,
+                        value: photo.views_count || 0,
+                        imageUrl: photo.thumbnail_url || photo.url,
+                    }))}
+                />
 
-                {/* Top Views */}
-                <div>
-                    <div className="flex items-center gap-2 mb-6">
-                        <h3 className="font-bold text-gray-900">Vos photos les plus vues</h3>
-                        <Info className="w-4 h-4 text-gray-400" />
-                    </div>
-
-                    <div className="space-y-3">
-                        {topViewed.map((photo, i) => (
-                            <Link key={photo.id} href={`/photos/${photo.id}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                <div className="flex items-center gap-4 min-w-0">
-                                    <span className="font-bold text-gray-400 w-4 text-center">{i + 1}</span>
-                                    <img src={photo.thumbnail_url || photo.url} alt={photo.title || "Photo"} className="w-12 h-12 rounded object-cover" />
-                                    <span className="font-medium text-sm text-gray-900 truncate max-w-[200px]">{photo.title || `Photo #${photo.id}`}</span>
-                                </div>
-                                <div className="font-semibold text-gray-900 shrink-0">
-                                    {photo.views_count?.toLocaleString('fr-FR') || 0} vues
-                                </div>
-                            </Link>
-                        ))}
-                        {topViewed.length === 0 && (
-                            <div className="p-4 text-center text-sm text-gray-500 bg-gray-50 rounded-lg">
-                                Vous n&apos;avez publié aucune photo.
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Top Downloads */}
-                <div>
-                    <div className="flex items-center gap-2 mb-6">
-                        <h3 className="font-bold text-gray-900">Vos photos les plus téléchargées</h3>
-                        <Info className="w-4 h-4 text-gray-400" />
-                    </div>
-
-                    <div className="space-y-3">
-                        {topDownloaded.map((photo, i) => (
-                            <Link key={photo.id} href={`/photos/${photo.id}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                                <div className="flex items-center gap-4 min-w-0">
-                                    <span className="font-bold text-gray-400 w-4 text-center">{i + 1}</span>
-                                    <img src={photo.thumbnail_url || photo.url} alt={photo.title || "Photo"} className="w-12 h-12 rounded object-cover" />
-                                    <span className="font-medium text-sm text-gray-900 truncate max-w-[200px]">{photo.title || `Photo #${photo.id}`}</span>
-                                </div>
-                                <div className="font-semibold text-gray-900 shrink-0">
-                                    {photo.downloads_count?.toLocaleString('fr-FR') || 0} tél.
-                                </div>
-                            </Link>
-                        ))}
-                        {topDownloaded.length === 0 && (
-                            <div className="p-4 text-center text-sm text-gray-500 bg-gray-50 rounded-lg">
-                                Vous n&apos;avez publié aucune photo.
-                            </div>
-                        )}
-                    </div>
-                </div>
-
+                <RankingBars
+                    title="Vos photos les plus téléchargées"
+                    color={COLOR_DOWNLOADS}
+                    valueLabel="Téléchargements"
+                    emptyLabel="Vous n'avez publié aucune photo."
+                    items={topDownloaded.map((photo) => ({
+                        key: photo.id,
+                        label: photo.title || `Photo #${photo.id}`,
+                        value: photo.downloads_count || 0,
+                        imageUrl: photo.thumbnail_url || photo.url,
+                    }))}
+                />
             </div>
+
+            <p className="text-center mt-12">
+                <Link href={`/@${username}`} className="text-sm text-gray-400 dark:text-zinc-500 hover:text-gray-700 dark:hover:text-zinc-300 underline underline-offset-2">
+                    Retour au profil
+                </Link>
+            </p>
         </div>
     );
 }

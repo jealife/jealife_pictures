@@ -6,7 +6,7 @@
  */
 export default function ImageLoader() {
     return (
-        <div className="absolute inset-0 bg-gray-100 overflow-hidden">
+        <div className="absolute inset-0 bg-gray-100 dark:bg-zinc-800 overflow-hidden">
             <div className="absolute inset-0 -translate-x-full animate-shimmer bg-linear-to-r from-transparent via-white/40 to-transparent" />
         </div>
     );

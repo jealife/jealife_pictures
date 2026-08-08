@@ -25,7 +25,7 @@ export default async function AboutPage() {
         (stats.total_photos || 0) + (stats.total_illustrations || 0) + (stats.total_videos || 0);
 
     return (
-        <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-black selection:text-white">
+        <div className="min-h-screen bg-white dark:bg-zinc-950 text-gray-900 dark:text-zinc-100 font-sans selection:bg-black selection:text-white">
             {/* Hero Section */}
             <div className="relative h-[70vh] flex items-center justify-center overflow-hidden">
                 <video
@@ -38,13 +38,13 @@ export default async function AboutPage() {
                 >
                     <source src="https://videos.pexels.com/video-files/3195394/3195394-uhd_2560_1440_25fps.mp4" type="video/mp4" />
                 </video>
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-white"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 dark:via-black/20 to-white dark:to-zinc-950"></div>
 
                 <div className="relative z-10 text-center max-w-4xl px-6 mt-20">
                     <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
                         Photos for everyone.
                     </h1>
-                    <p className="text-xl md:text-2xl text-gray-700 font-medium max-w-2xl mx-auto leading-relaxed">
+                    <p className="text-xl md:text-2xl text-gray-700 dark:text-zinc-300 font-medium max-w-2xl mx-auto leading-relaxed">
                         Une banque d&apos;images libres de droits. Pour tous les créateurs.
                     </p>
                 </div>
@@ -55,7 +55,7 @@ export default async function AboutPage() {
                 <div className="grid md:grid-cols-2 gap-16 items-center">
                     <div>
                         <h2 className="text-3xl md:text-4xl font-bold mb-6">Une banque d&apos;images qui a du caractère.</h2>
-                        <div className="prose prose-lg text-gray-600 space-y-6">
+                        <div className="prose prose-lg text-gray-600 dark:text-zinc-400 space-y-6">
                             <p>
                                 JEaLiFe Stock est né d&apos;une idée simple : de belles images ne devraient pas être enfermées derrière des murs payants.
                             </p>
@@ -118,11 +118,11 @@ export default async function AboutPage() {
             {/* Team CTA */}
             <div className="max-w-4xl mx-auto px-6 py-32 text-center">
                 <h2 className="text-4xl md:text-5xl font-bold mb-6">Rejoignez l&apos;aventure</h2>
-                <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
+                <p className="text-xl text-gray-600 dark:text-zinc-400 mb-10 max-w-2xl mx-auto">
                     JEaLiFe Stock démarre. Chaque photographe qui publie aujourd&apos;hui façonne ce que
                     la plateforme devient.
                 </p>
-                <Link href="/submit" className="inline-block px-8 py-4 bg-black text-white rounded-full font-bold hover:bg-gray-800 transition-all hover:scale-105">
+                <Link href="/submit" className="inline-block px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full font-bold hover:bg-gray-800 dark:hover:bg-zinc-200 transition-all hover:scale-105">
                     Publier une image
                 </Link>
             </div>

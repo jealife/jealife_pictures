@@ -16,17 +16,17 @@ export default async function CollectionsPage() {
     const collections = await getDiscoverableCollections({ limit: 48 });
 
     return (
-        <main className="min-h-screen bg-white">
+        <main className="min-h-screen bg-white dark:bg-zinc-950">
             <div className="max-w-[1200px] mx-auto px-4 py-16">
-                <h1 className="text-4xl font-extrabold text-gray-900 mb-3">Collections</h1>
-                <p className="text-gray-500 mb-12 max-w-2xl">
+                <h1 className="text-4xl font-extrabold text-gray-900 dark:text-zinc-100 mb-3">Collections</h1>
+                <p className="text-gray-500 dark:text-zinc-400 mb-12 max-w-2xl">
                     Les sélections de l&apos;équipe JEaLiFe Stock, et les meilleures collections
                     construites par la communauté, à parcourir d&apos;un seul geste plutôt que
                     thème par thème.
                 </p>
 
                 {collections.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center text-center py-24 text-gray-400">
+                    <div className="flex flex-col items-center justify-center text-center py-24 text-gray-400 dark:text-zinc-600">
                         <Layers className="w-10 h-10 mb-4" />
                         <p>Aucune collection publiée pour l&apos;instant.</p>
                     </div>
@@ -41,10 +41,10 @@ export default async function CollectionsPage() {
                                         alt={collection.title}
                                         className="aspect-[4/3] rounded-xl overflow-hidden"
                                     />
-                                    <h2 className="mt-3 font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">
+                                    <h2 className="mt-3 font-bold text-gray-900 dark:text-zinc-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
                                         {collection.title}
                                     </h2>
-                                    <p className="text-sm text-gray-500 mt-0.5">
+                                    <p className="text-sm text-gray-500 dark:text-zinc-400 mt-0.5">
                                         {collection.total_photos} image{collection.total_photos > 1 ? "s" : ""}
                                         {author && <> · Sélection {author}</>}
                                     </p>

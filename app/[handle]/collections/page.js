@@ -44,7 +44,7 @@ export default function UserCollectionsPage() {
     if (loading) {
         return (
             <div className="py-20 flex justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
+                <Loader2 className="w-8 h-8 animate-spin text-gray-300 dark:text-zinc-600" />
             </div>
         );
     }
@@ -52,11 +52,11 @@ export default function UserCollectionsPage() {
     if (collections.length === 0) {
         return (
             <div className="py-24 text-center flex flex-col items-center">
-                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-                    <Layers className="w-8 h-8 text-gray-300" />
+                <div className="w-20 h-20 bg-gray-50 dark:bg-zinc-800 rounded-full flex items-center justify-center mb-6">
+                    <Layers className="w-8 h-8 text-gray-300 dark:text-zinc-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Aucune collection</h3>
-                <p className="text-gray-500 max-w-md">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-zinc-100 mb-2">Aucune collection</h3>
+                <p className="text-gray-500 dark:text-zinc-400 max-w-md">
                     Les collections servent à regrouper des images : un reportage, une
                     ambiance, une commande client.
                 </p>
@@ -68,7 +68,7 @@ export default function UserCollectionsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {collections.map((collection) => (
                 <Link key={collection.id} href={`/collections/${collection.id}`} className="group block">
-                    <div className="h-64 grid grid-cols-3 gap-0.5 rounded-lg overflow-hidden bg-gray-100 mb-4">
+                    <div className="h-64 grid grid-cols-3 gap-0.5 rounded-lg overflow-hidden bg-gray-100 dark:bg-zinc-800 mb-4">
                         {collection.preview_photos.length > 0 ? (
                             <>
                                 <div className="col-span-2 relative h-full">
@@ -82,7 +82,7 @@ export default function UserCollectionsPage() {
                                 </div>
                                 <div className="col-span-1 grid grid-rows-2 gap-0.5 h-full">
                                     {[1, 2].map((index) => (
-                                        <div key={index} className="relative h-full bg-gray-100">
+                                        <div key={index} className="relative h-full bg-gray-100 dark:bg-zinc-800">
                                             {collection.preview_photos[index] && (
                                                 <Image
                                                     src={collection.preview_photos[index]}
@@ -97,19 +97,19 @@ export default function UserCollectionsPage() {
                                 </div>
                             </>
                         ) : (
-                            <div className="col-span-3 flex items-center justify-center text-gray-300">
+                            <div className="col-span-3 flex items-center justify-center text-gray-300 dark:text-zinc-600">
                                 <Layers className="w-8 h-8" />
                             </div>
                         )}
                     </div>
 
-                    <h3 className="text-lg font-bold text-gray-900 mb-1 flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-zinc-100 mb-1 flex items-center gap-2">
                         {collection.title}
                         {collection.is_private && (
-                            <Lock className="w-3.5 h-3.5 text-gray-400" aria-label="Collection privée" />
+                            <Lock className="w-3.5 h-3.5 text-gray-400 dark:text-zinc-500" aria-label="Collection privée" />
                         )}
                     </h3>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-zinc-400">
                         {collection.total_photos} image{collection.total_photos > 1 ? "s" : ""}
                     </p>
                 </Link>

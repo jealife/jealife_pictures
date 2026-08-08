@@ -566,10 +566,10 @@ export default function SubmitForm() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-white">
+            <div className="min-h-screen flex items-center justify-center bg-white dark:bg-zinc-950">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black mx-auto mb-4" />
-                    <p className="text-gray-500">Vérification de votre session…</p>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black dark:border-white mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-zinc-400">Vérification de votre session…</p>
                 </div>
             </div>
         );
@@ -583,16 +583,16 @@ export default function SubmitForm() {
         processed && file ? Math.round((1 - processed.display.size / file.size) * 100) : 0;
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-white dark:bg-zinc-950">
             {uploading && <UploadProgress percent={uploadPercent} label={uploadStage} />}
             <div className="max-w-[1200px] mx-auto px-4 py-12 md:py-20">
                 {step === 1 ? (
                     <div className="max-w-3xl mx-auto">
                         <div className="text-center mb-12">
-                            <h1 className="text-4xl font-extrabold text-gray-900 mb-4">
+                            <h1 className="text-4xl font-extrabold text-gray-900 dark:text-zinc-100 mb-4">
                                 Contribuez à JEaLiFe Stock
                             </h1>
-                            <p className="text-lg text-gray-500">
+                            <p className="text-lg text-gray-500 dark:text-zinc-400">
                                 Partagez votre regard, gardez vos droits.
                             </p>
                         </div>
@@ -601,7 +601,7 @@ export default function SubmitForm() {
                             className={`border-3 border-dashed rounded-[32px] p-20 text-center transition-all ${
                                 dragActive
                                     ? "border-green-500 bg-green-50/50 scale-[1.02]"
-                                    : "border-gray-200 hover:border-gray-300"
+                                    : "border-gray-200 dark:border-zinc-700 hover:border-gray-300 dark:hover:border-zinc-600"
                             }`}
                             onDragEnter={handleDrag}
                             onDragLeave={handleDrag}
@@ -609,13 +609,13 @@ export default function SubmitForm() {
                             onDrop={handleDrop}
                         >
                             <div className="cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <UploadCloud className="w-10 h-10 text-gray-400" />
+                                <div className="w-20 h-20 bg-gray-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <UploadCloud className="w-10 h-10 text-gray-400 dark:text-zinc-500" />
                                 </div>
-                                <p className="mt-4 text-[15px] font-medium text-gray-700">
+                                <p className="mt-4 text-[15px] font-medium text-gray-700 dark:text-zinc-300">
                                     Glissez et déposez votre fichier ici
                                 </p>
-                                <p className="mt-1.5 text-[13px] text-gray-500">
+                                <p className="mt-1.5 text-[13px] text-gray-500 dark:text-zinc-400">
                                     Format JPG, PNG, WebP, SVG ou MP4 • Jusqu&apos;à 50 Mo
                                 </p>
                             </div>
@@ -629,17 +629,17 @@ export default function SubmitForm() {
                         </div>
 
                         {formError && (
-                            <p className="mt-6 text-center text-sm text-red-600">{formError}</p>
+                            <p className="mt-6 text-center text-sm text-red-600 dark:text-red-400">{formError}</p>
                         )}
 
                         {moderationMode === "manual" && (
-                            <p className="mt-6 text-center text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+                            <p className="mt-6 text-center text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950 border border-amber-100 dark:border-amber-900 rounded-xl px-4 py-3">
                                 Chaque envoi est actuellement vérifié par un membre de l&apos;équipe
                                 avant d&apos;être publié.
                             </p>
                         )}
 
-                        <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-gray-400 text-sm font-medium">
+                        <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-gray-400 dark:text-zinc-500 text-sm font-medium">
                             <span className="flex items-center gap-2">
                                 <CheckCircle2 className="w-4 h-4 text-green-500" /> Gratuit
                             </span>
@@ -654,28 +654,28 @@ export default function SubmitForm() {
                         {/* Ce que le contrôle qualité automatique vérifie réellement à
                             l'envoi (voir /api/moderate-upload) : mieux vaut le dire avant
                             l'envoi qu'après un rejet. */}
-                        <div className="mt-10 p-6 bg-gray-50 border border-gray-100 rounded-2xl">
-                            <p className="text-xs font-bold text-gray-900 uppercase tracking-wider mb-4">
+                        <div className="mt-10 p-6 bg-gray-50 dark:bg-zinc-800 border border-gray-100 dark:border-zinc-800 rounded-2xl">
+                            <p className="text-xs font-bold text-gray-900 dark:text-zinc-100 uppercase tracking-wider mb-4">
                                 Avant d&apos;envoyer
                             </p>
-                            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2.5 text-sm text-gray-600">
+                            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2.5 text-sm text-gray-600 dark:text-zinc-400">
                                 <li className="flex gap-2.5">
-                                    <span className="text-gray-300">•</span> Photo nette, 5 mégapixels minimum
+                                    <span className="text-gray-300 dark:text-zinc-600">•</span> Photo nette, 5 mégapixels minimum
                                 </li>
                                 <li className="flex gap-2.5">
-                                    <span className="text-gray-300">•</span> Vous devez être l&apos;auteur et détenir les droits
+                                    <span className="text-gray-300 dark:text-zinc-600">•</span> Vous devez être l&apos;auteur et détenir les droits
                                 </li>
                                 <li className="flex gap-2.5">
-                                    <span className="text-gray-300">•</span> Pas de contenu choquant, violent ou à caractère sexuel
+                                    <span className="text-gray-300 dark:text-zinc-600">•</span> Pas de contenu choquant, violent ou à caractère sexuel
                                 </li>
                                 <li className="flex gap-2.5">
-                                    <span className="text-gray-300">•</span> Pas de filigrane, logo ou texte incrusté
+                                    <span className="text-gray-300 dark:text-zinc-600">•</span> Pas de filigrane, logo ou texte incrusté
                                 </li>
                                 <li className="flex gap-2.5">
-                                    <span className="text-gray-300">•</span> Une photo ou illustration originale, pas une capture d&apos;écran
+                                    <span className="text-gray-300 dark:text-zinc-600">•</span> Une photo ou illustration originale, pas une capture d&apos;écran
                                 </li>
                                 <li className="flex gap-2.5">
-                                    <span className="text-gray-300">•</span> 50 Mo maximum
+                                    <span className="text-gray-300 dark:text-zinc-600">•</span> 50 Mo maximum
                                 </li>
                             </ul>
                         </div>
@@ -683,30 +683,30 @@ export default function SubmitForm() {
                 ) : step === 3 ? (
                     <div className="max-w-2xl mx-auto text-center">
                         <Confetti />
-                        <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <PartyPopper className="w-10 h-10 text-green-600" />
+                        <div className="w-20 h-20 bg-green-50 dark:bg-green-950 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <PartyPopper className="w-10 h-10 text-green-600 dark:text-green-400" />
                         </div>
 
-                        <h1 className="text-4xl font-extrabold text-gray-900 mb-4">
+                        <h1 className="text-4xl font-extrabold text-gray-900 dark:text-zinc-100 mb-4">
                             Merci pour votre contribution
                         </h1>
 
                         {publishedMedia?.status === "pending" ? (
-                            <p className="text-lg text-gray-500 mb-10">
+                            <p className="text-lg text-gray-500 dark:text-zinc-400 mb-10">
                                 Votre image a passé nos contrôles de qualité automatiques.
                                 Un membre de l&apos;équipe la vérifie avant publication : vous
                                 êtes pour l&apos;instant la seule personne à pouvoir la voir.
                             </p>
                         ) : (
                             <>
-                                <p className="text-lg text-gray-500 mb-2">
+                                <p className="text-lg text-gray-500 dark:text-zinc-400 mb-2">
                                     Votre image a passé nos contrôles de qualité automatiques et est
                                     déjà visible sur JEaLiFe Stock.
                                 </p>
                                 {platformStats && (
-                                    <p className="text-lg text-gray-500 mb-10">
+                                    <p className="text-lg text-gray-500 dark:text-zinc-400 mb-10">
                                         Grâce à vous, la plateforme compte désormais{" "}
-                                        <strong className="text-gray-900">
+                                        <strong className="text-gray-900 dark:text-zinc-100">
                                             {(
                                                 (platformStats.total_photos || 0) +
                                                 (platformStats.total_illustrations || 0) +
@@ -720,14 +720,14 @@ export default function SubmitForm() {
                         )}
 
                         {publishedMedia?.topicsWarning && (
-                            <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 mb-6">
+                            <p className="text-sm text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950 border border-amber-100 dark:border-amber-900 rounded-xl px-4 py-3 mb-6">
                                 Votre image est publiée, mais vos mots-clés n&apos;ont pas pu être enregistrés.
                                 Vous pouvez les ajouter depuis la page de modification.
                             </p>
                         )}
 
                         {previewUrl && (
-                            <div className="rounded-2xl overflow-hidden shadow-xl bg-gray-100 ring-1 ring-black/5 mb-10 max-w-sm mx-auto">
+                            <div className="rounded-2xl overflow-hidden shadow-xl bg-gray-100 dark:bg-zinc-800 ring-1 ring-black/5 dark:ring-white/10 mb-10 max-w-sm mx-auto">
                                 <img
                                     src={previewUrl}
                                     alt="Aperçu de l'image publiée"
@@ -740,7 +740,7 @@ export default function SubmitForm() {
                             <button
                                 type="button"
                                 onClick={() => publishedMedia && router.push(`/photos/${publishedMedia.id}-${publishedMedia.slug}`)}
-                                className="px-6 py-4 bg-black text-white font-bold rounded-2xl hover:bg-gray-800 transition-all shadow-xl hover:shadow-2xl active:scale-95 flex items-center justify-center gap-2"
+                                className="px-6 py-4 bg-black dark:bg-white text-white dark:text-black font-bold rounded-2xl hover:bg-gray-800 dark:hover:bg-zinc-200 transition-all shadow-xl hover:shadow-2xl active:scale-95 flex items-center justify-center gap-2"
                             >
                                 {publishedMedia?.status === "pending" ? "Voir mon envoi" : "Voir la photo publiée"}{" "}
                                 <ArrowRight className="w-4 h-4" />
@@ -748,22 +748,22 @@ export default function SubmitForm() {
                             <button
                                 type="button"
                                 onClick={resetForm}
-                                className="px-6 py-4 border border-gray-200 text-gray-600 font-bold rounded-2xl hover:bg-gray-50 transition-all active:scale-95"
+                                className="px-6 py-4 border border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 font-bold rounded-2xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all active:scale-95"
                             >
                                 Publier une autre image
                             </button>
                         </div>
 
-                        <div className="mt-8 flex items-center justify-center gap-6 text-sm font-medium text-gray-500">
+                        <div className="mt-8 flex items-center justify-center gap-6 text-sm font-medium text-gray-500 dark:text-zinc-400">
                             {profile?.username && (
-                                <a href={`/@${profile.username}`} className="hover:text-black transition-colors">
+                                <a href={`/@${profile.username}`} className="hover:text-black dark:hover:text-white transition-colors">
                                     Voir mon profil
                                 </a>
                             )}
                             <button
                                 type="button"
                                 onClick={copyPublishedLink}
-                                className="flex items-center gap-2 hover:text-black transition-colors"
+                                className="flex items-center gap-2 hover:text-black dark:hover:text-white transition-colors"
                             >
                                 {linkCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
                                 {linkCopied ? "Lien copié" : "Copier le lien"}
@@ -773,7 +773,7 @@ export default function SubmitForm() {
                 ) : (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
                         <div className="lg:sticky lg:top-28">
-                            <div className="rounded-2xl overflow-hidden shadow-2xl bg-gray-100 ring-1 ring-black/5">
+                            <div className="rounded-2xl overflow-hidden shadow-2xl bg-gray-100 dark:bg-zinc-800 ring-1 ring-black/5 dark:ring-white/10">
                                 <img
                                     src={previewUrl}
                                     alt="Aperçu de l'image à publier"
@@ -784,20 +784,20 @@ export default function SubmitForm() {
                             <div className="mt-4 flex items-center justify-between gap-4">
                                 <button
                                     onClick={resetFile}
-                                    className="text-sm font-medium text-gray-500 hover:text-black flex items-center gap-2 transition-colors"
+                                    className="text-sm font-medium text-gray-500 dark:text-zinc-400 hover:text-black dark:hover:text-white flex items-center gap-2 transition-colors"
                                 >
                                     <X className="w-4 h-4" /> Changer de fichier
                                 </button>
 
                                 {processing && (
-                                    <span className="text-xs text-gray-400 flex items-center gap-2">
+                                    <span className="text-xs text-gray-400 dark:text-zinc-500 flex items-center gap-2">
                                         <Loader2 className="w-3 h-3 animate-spin" /> Préparation…
                                     </span>
                                 )}
                             </div>
 
                             {processed && (
-                                <div className="mt-4 p-4 bg-green-50 border border-green-100 rounded-xl text-xs text-green-800 leading-relaxed">
+                                <div className="mt-4 p-4 bg-green-50 dark:bg-green-950 border border-green-100 dark:border-green-900 rounded-xl text-xs text-green-800 dark:text-green-400 leading-relaxed">
                                     <strong>{processed.width} × {processed.height} px.</strong>{" "}
                                     Version web réduite à {formatFileSize(processed.display.size)}
                                     {savings > 0 && ` (−${savings} % par rapport à l'original de ${formatFileSize(file.size)})`}.
@@ -808,17 +808,17 @@ export default function SubmitForm() {
 
                         <form onSubmit={handleSubmit} className="space-y-8">
                             <div>
-                                <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                                <h2 className="text-3xl font-bold text-gray-900 dark:text-zinc-100 mb-2">
                                     Détails de l&apos;image
                                 </h2>
-                                <p className="text-gray-500">
+                                <p className="text-gray-500 dark:text-zinc-400">
                                     Ces informations décident de qui trouvera votre photo.
                                 </p>
                             </div>
 
                             <div className="space-y-6">
                                 <fieldset>
-                                    <legend className="block text-sm font-bold text-gray-900 mb-2">
+                                    <legend className="block text-sm font-bold text-gray-900 dark:text-zinc-100 mb-2">
                                         Type de contenu
                                     </legend>
                                     <div className="flex gap-2">
@@ -829,8 +829,8 @@ export default function SubmitForm() {
                                                 onClick={() => setSelectedType(key)}
                                                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
                                                     selectedType === key
-                                                        ? "border-black bg-black text-white"
-                                                        : "border-gray-200 text-gray-600 hover:border-gray-400"
+                                                        ? "border-black dark:border-white bg-black dark:bg-white text-white dark:text-black"
+                                                        : "border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 hover:border-gray-400 dark:hover:border-zinc-500"
                                                 }`}
                                             >
                                                 <Icon className="w-4 h-4" /> {label}
@@ -841,14 +841,14 @@ export default function SubmitForm() {
 
                                 <div>
                                     <div className="flex items-center justify-between mb-2">
-                                        <label htmlFor="title" className="block text-sm font-bold text-gray-900">
+                                        <label htmlFor="title" className="block text-sm font-bold text-gray-900 dark:text-zinc-100">
                                             Titre
                                         </label>
                                         <button
                                             type="button"
                                             onClick={generateMetadataWithAI}
                                             disabled={isGeneratingMetadata || !processed}
-                                            className="text-[13px] font-medium text-amber-600 hover:text-amber-700 disabled:opacity-50 flex items-center gap-1 transition-colors"
+                                            className="text-[13px] font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 disabled:opacity-50 flex items-center gap-1 transition-colors"
                                         >
                                             {isGeneratingMetadata ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "✨"}
                                             {isGeneratingMetadata ? "Génération..." : "Générer avec l'IA"}
@@ -860,7 +860,7 @@ export default function SubmitForm() {
                                         value={title}
                                         onChange={(e) => setTitle(e.target.value)}
                                         placeholder="Ex : Éléphant de forêt dans le parc d'Ivindo"
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all font-medium"
+                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-zinc-100 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white outline-none transition-all font-medium"
                                         required
                                     />
                                 </div>
@@ -870,7 +870,7 @@ export default function SubmitForm() {
                                     lecteur d'écran. C'est le premier levier de visibilité
                                     d'une banque d'images. */}
                                 <div>
-                                    <label htmlFor="alt" className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
+                                    <label htmlFor="alt" className="text-sm font-bold text-gray-900 dark:text-zinc-100 mb-2 flex items-center gap-2">
                                         <Accessibility className="w-4 h-4 opacity-40" />
                                         Décrivez l&apos;image <span className="text-red-500">*</span>
                                     </label>
@@ -880,18 +880,18 @@ export default function SubmitForm() {
                                         value={altText}
                                         onChange={(e) => setAltText(e.target.value)}
                                         placeholder="Ex : Deux pêcheurs remontent un filet sur la plage de Mayumba au lever du jour"
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all font-medium"
+                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-zinc-100 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white outline-none transition-all font-medium"
                                         required
                                     />
-                                    <p className="text-xs text-gray-400 mt-2">
+                                    <p className="text-xs text-gray-400 dark:text-zinc-500 mt-2">
                                         Une phrase simple qui dit ce qu&apos;on voit. C&apos;est ce que lisent
                                         Google Images et les lecteurs d&apos;écran.
                                     </p>
                                 </div>
 
                                 <div>
-                                    <label htmlFor="description" className="block text-sm font-bold text-gray-900 mb-2">
-                                        Contexte <span className="font-normal text-gray-400">(facultatif)</span>
+                                    <label htmlFor="description" className="block text-sm font-bold text-gray-900 dark:text-zinc-100 mb-2">
+                                        Contexte <span className="font-normal text-gray-400 dark:text-zinc-500">(facultatif)</span>
                                     </label>
                                     <textarea
                                         id="description"
@@ -899,7 +899,7 @@ export default function SubmitForm() {
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
                                         placeholder="L'histoire derrière la photo, les conditions de prise de vue…"
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all font-medium resize-none"
+                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-zinc-100 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white outline-none transition-all font-medium resize-none"
                                     />
                                 </div>
 
@@ -908,14 +908,14 @@ export default function SubmitForm() {
                                     pages par pays. */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
-                                        <label htmlFor="country" className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
+                                        <label htmlFor="country" className="text-sm font-bold text-gray-900 dark:text-zinc-100 mb-2 flex items-center gap-2">
                                             <Globe2 className="w-4 h-4 opacity-40" /> Pays
                                         </label>
                                         <select
                                             id="country"
                                             value={countryCode}
                                             onChange={(e) => setCountryCode(e.target.value)}
-                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all font-medium"
+                                            className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-zinc-100 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white outline-none transition-all font-medium"
                                         >
                                             <option value="">Non précisé</option>
                                             <optgroup label="Afrique">
@@ -936,7 +936,7 @@ export default function SubmitForm() {
                                     </div>
 
                                     <div>
-                                        <label htmlFor="city" className="block text-sm font-bold text-gray-900 mb-2">
+                                        <label htmlFor="city" className="block text-sm font-bold text-gray-900 dark:text-zinc-100 mb-2">
                                             Ville
                                         </label>
                                         <input
@@ -945,13 +945,13 @@ export default function SubmitForm() {
                                             value={city}
                                             onChange={(e) => setCity(e.target.value)}
                                             placeholder="Ex : Libreville"
-                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all font-medium"
+                                            className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-zinc-100 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white outline-none transition-all font-medium"
                                         />
                                     </div>
                                 </div>
 
                                 <div className="relative">
-                                    <label htmlFor="location" className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
+                                    <label htmlFor="location" className="text-sm font-bold text-gray-900 dark:text-zinc-100 mb-2 flex items-center gap-2">
                                         <MapPin className="w-4 h-4 opacity-40" /> Lieu précis
                                     </label>
                                     <input
@@ -961,18 +961,18 @@ export default function SubmitForm() {
                                         onChange={(e) => { setLocation(e.target.value); setShowLocationSuggestions(true); }}
                                         onFocus={() => setShowLocationSuggestions(true)}
                                         placeholder="Ex : Parc national de la Lopé"
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all font-medium"
+                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-zinc-100 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white outline-none transition-all font-medium"
                                     />
                                     {showLocationSuggestions && locationSuggestions.length > 0 && (
-                                        <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <div className="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                                             {locationSuggestions.map((suggestion) => (
                                                 <button
                                                     key={suggestion.label}
                                                     type="button"
                                                     onClick={() => selectLocation(suggestion)}
-                                                    className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 border-b border-gray-50 last:border-none flex items-center gap-3 transition-colors"
+                                                    className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 border-b border-gray-50 dark:border-zinc-800 last:border-none flex items-center gap-3 transition-colors"
                                                 >
-                                                    <MapPin className="w-4 h-4 text-gray-300 shrink-0" />
+                                                    <MapPin className="w-4 h-4 text-gray-300 dark:text-zinc-600 shrink-0" />
                                                     {suggestion.label}
                                                 </button>
                                             ))}
@@ -981,7 +981,7 @@ export default function SubmitForm() {
                                 </div>
 
                                 <div>
-                                    <label htmlFor="camera" className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
+                                    <label htmlFor="camera" className="text-sm font-bold text-gray-900 dark:text-zinc-100 mb-2 flex items-center gap-2">
                                         <Camera className="w-4 h-4 opacity-40" /> Matériel
                                     </label>
                                     <input
@@ -990,12 +990,12 @@ export default function SubmitForm() {
                                         value={camera}
                                         onChange={(e) => setCamera(e.target.value)}
                                         placeholder="Ex : Sony A7 III, 85 mm f/1.4"
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all font-medium"
+                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-zinc-100 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white outline-none transition-all font-medium"
                                     />
                                 </div>
 
                                 <div className="relative">
-                                    <label htmlFor="tags" className="text-sm font-bold text-gray-900 mb-2 flex items-center gap-2">
+                                    <label htmlFor="tags" className="text-sm font-bold text-gray-900 dark:text-zinc-100 mb-2 flex items-center gap-2">
                                         <Tag className="w-4 h-4 opacity-40" /> Mots-clés
                                     </label>
 
@@ -1004,7 +1004,7 @@ export default function SubmitForm() {
                                             {tags.map((tag) => (
                                                 <span
                                                     key={tag}
-                                                    className="px-3 py-1.5 bg-black text-white text-xs font-bold rounded-lg flex items-center gap-2 animate-in zoom-in-95"
+                                                    className="px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black text-xs font-bold rounded-lg flex items-center gap-2 animate-in zoom-in-95"
                                                 >
                                                     {tag}
                                                     <button type="button" onClick={() => setTags(tags.filter((t) => t !== tag))} aria-label={`Retirer ${tag}`}>
@@ -1023,19 +1023,19 @@ export default function SubmitForm() {
                                         onFocus={() => setShowTagSuggestions(true)}
                                         onKeyDown={addTag}
                                         placeholder="Tapez un mot-clé puis Entrée…"
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-black outline-none transition-all font-medium"
+                                        className="w-full px-4 py-3 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-zinc-100 rounded-xl focus:ring-2 focus:ring-black dark:focus:ring-white outline-none transition-all font-medium"
                                     />
 
                                     {showTagSuggestions && tagSuggestions.length > 0 && (
-                                        <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <div className="absolute z-50 left-0 right-0 mt-1 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                                             {tagSuggestions.map((tag) => (
                                                 <button
                                                     key={tag}
                                                     type="button"
                                                     onClick={() => selectTag(tag)}
-                                                    className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 border-b border-gray-50 last:border-none flex items-center gap-3 transition-colors"
+                                                    className="w-full text-left px-4 py-3 text-sm font-medium text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 border-b border-gray-50 dark:border-zinc-800 last:border-none flex items-center gap-3 transition-colors"
                                                 >
-                                                    <Tag className="w-4 h-4 text-gray-300 shrink-0" /> {tag}
+                                                    <Tag className="w-4 h-4 text-gray-300 dark:text-zinc-600 shrink-0" /> {tag}
                                                 </button>
                                             ))}
                                         </div>
@@ -1047,7 +1047,7 @@ export default function SubmitForm() {
                                                 key={tag}
                                                 type="button"
                                                 onClick={() => selectTag(tag)}
-                                                className="px-3 py-1 text-xs font-medium text-gray-500 bg-gray-50 border border-gray-100 rounded-lg hover:border-gray-300 hover:text-black transition-colors"
+                                                className="px-3 py-1 text-xs font-medium text-gray-500 dark:text-zinc-400 bg-gray-50 dark:bg-zinc-800 border border-gray-100 dark:border-zinc-700 rounded-lg hover:border-gray-300 dark:hover:border-zinc-500 hover:text-black dark:hover:text-white transition-colors"
                                             >
                                                 + {tag}
                                             </button>
@@ -1055,11 +1055,11 @@ export default function SubmitForm() {
                                     </div>
                                 </div>
 
-                                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 flex gap-3">
-                                    <Info className="w-5 h-5 text-gray-400 shrink-0" />
-                                    <p className="text-xs text-gray-500 leading-relaxed">
+                                <div className="p-4 bg-gray-50 dark:bg-zinc-800 rounded-xl border border-gray-100 dark:border-zinc-700 flex gap-3">
+                                    <Info className="w-5 h-5 text-gray-400 dark:text-zinc-500 shrink-0" />
+                                    <p className="text-xs text-gray-500 dark:text-zinc-400 leading-relaxed">
                                         En publiant, vous acceptez la{" "}
-                                        <a href="/licence" target="_blank" className="underline font-semibold hover:text-black">
+                                        <a href="/licence" target="_blank" className="underline font-semibold hover:text-black dark:hover:text-white">
                                             licence JEaLiFe
                                         </a>
                                         . Vous restez propriétaire de votre image et pouvez la retirer
@@ -1068,7 +1068,7 @@ export default function SubmitForm() {
                                 </div>
 
                                 {formError && (
-                                    <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+                                    <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 border border-red-100 dark:border-red-900 rounded-xl px-4 py-3">
                                         {formError}
                                     </p>
                                 )}
@@ -1078,14 +1078,14 @@ export default function SubmitForm() {
                                         type="button"
                                         onClick={resetFile}
                                         disabled={uploading}
-                                        className="flex-1 py-4 px-6 border border-gray-200 text-gray-600 font-bold rounded-2xl hover:bg-gray-50 transition-all active:scale-95 disabled:opacity-50"
+                                        className="flex-1 py-4 px-6 border border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 font-bold rounded-2xl hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all active:scale-95 disabled:opacity-50"
                                     >
                                         Annuler
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={uploading || processing || !processed}
-                                        className="flex-1 py-4 px-6 bg-black text-white font-bold rounded-2xl hover:bg-gray-800 transition-all shadow-xl hover:shadow-2xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
+                                        className="flex-1 py-4 px-6 bg-black dark:bg-white text-white dark:text-black font-bold rounded-2xl hover:bg-gray-800 dark:hover:bg-zinc-200 transition-all shadow-xl hover:shadow-2xl active:scale-95 disabled:opacity-50 flex items-center justify-center gap-3"
                                     >
                                         {uploading ? (
                                             <>

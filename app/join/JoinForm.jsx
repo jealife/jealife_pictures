@@ -106,7 +106,7 @@ function JoinForm() {
     };
 
     return (
-        <div className="min-h-screen flex bg-white font-sans text-[#111]">
+        <div className="min-h-screen flex bg-white dark:bg-zinc-950 font-sans text-[#111] dark:text-zinc-100">
             <div className="relative hidden lg:block lg:w-[40%]">
                 <AuthBackground
                     imageIndex={3}
@@ -124,12 +124,12 @@ function JoinForm() {
             <div className="w-full lg:w-[60%] flex flex-col justify-center items-center px-4 sm:px-12 md:px-24 py-12 lg:py-0 overflow-y-auto">
                 <div className="w-full max-w-[560px]">
                     <div className="text-center mb-10">
-                        <h1 className="text-5xl font-bold text-[#111] mb-4">S&apos;inscrire à JEaLiFe</h1>
-                        <p className="text-[#111]">
+                        <h1 className="text-5xl font-bold text-[#111] dark:text-zinc-100 mb-4">S&apos;inscrire à JEaLiFe</h1>
+                        <p className="text-[#111] dark:text-zinc-100">
                             Vous avez déjà un compte ?{" "}
                             <Link
                                 href={redirectPath === "/" ? "/login" : `/login?redirect=${encodeURIComponent(redirectPath)}`}
-                                className="underline text-[#767676] hover:text-[#111] transition-colors"
+                                className="underline text-[#767676] dark:text-zinc-400 hover:text-[#111] dark:hover:text-white transition-colors"
                             >
                                 Connexion
                             </Link>
@@ -139,19 +139,19 @@ function JoinForm() {
                     <OAuthButtons redirectPath={redirectPath} onError={setError} action="S'inscrire" />
 
                     {error && (
-                        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
+                        <div className="mb-6 p-4 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-md text-red-600 dark:text-red-400 text-sm">
                             {error}
                         </div>
                     )}
 
                     {success && (
-                        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md text-green-600 text-sm">
+                        <div className="mb-6 p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-900 rounded-md text-green-600 dark:text-green-400 text-sm">
                             Compte créé avec succès ! Redirection...
                         </div>
                     )}
 
                     {success && usernameWarning && (
-                        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-md text-amber-700 text-sm">
+                        <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-900 rounded-md text-amber-700 dark:text-amber-400 text-sm">
                             Le nom d&apos;utilisateur choisi était déjà pris : un autre a été attribué.
                             Vous pourrez le changer dans vos paramètres.
                         </div>
@@ -160,41 +160,41 @@ function JoinForm() {
                     <form onSubmit={handleSignUp} className="space-y-6">
                         <div className="grid grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-sm text-[#111] mb-1.5">Prénom</label>
+                                <label className="block text-sm text-[#111] dark:text-zinc-100 mb-1.5">Prénom</label>
                                 <input
                                     type="text"
                                     value={firstName}
                                     onChange={(e) => setFirstName(e.target.value)}
                                     required
-                                    className="w-full h-10 px-3 rounded-[4px] border border-[#d1d1d1] text-[#111] focus:border-[#767676] outline-none transition-colors"
+                                    className="w-full h-10 px-3 rounded-[4px] border border-[#d1d1d1] dark:border-zinc-700 bg-white dark:bg-zinc-900 text-[#111] dark:text-zinc-100 focus:border-[#767676] dark:focus:border-zinc-400 outline-none transition-colors"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm text-[#111] mb-1.5">Nom</label>
+                                <label className="block text-sm text-[#111] dark:text-zinc-100 mb-1.5">Nom</label>
                                 <input
                                     type="text"
                                     value={lastName}
                                     onChange={(e) => setLastName(e.target.value)}
                                     required
-                                    className="w-full h-10 px-3 rounded-[4px] border border-[#d1d1d1] text-[#111] focus:border-[#767676] outline-none transition-colors"
+                                    className="w-full h-10 px-3 rounded-[4px] border border-[#d1d1d1] dark:border-zinc-700 bg-white dark:bg-zinc-900 text-[#111] dark:text-zinc-100 focus:border-[#767676] dark:focus:border-zinc-400 outline-none transition-colors"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-sm text-[#111] mb-1.5">E-mail</label>
+                            <label className="block text-sm text-[#111] dark:text-zinc-100 mb-1.5">E-mail</label>
                             <input
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
-                                className="w-full h-10 px-3 rounded-[4px] border border-[#d1d1d1] text-[#111] focus:border-[#767676] outline-none transition-colors"
+                                className="w-full h-10 px-3 rounded-[4px] border border-[#d1d1d1] dark:border-zinc-700 bg-white dark:bg-zinc-900 text-[#111] dark:text-zinc-100 focus:border-[#767676] dark:focus:border-zinc-400 outline-none transition-colors"
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm text-[#111] mb-1.5">
-                                Nom d&apos;utilisateur <span className="text-[#767676] font-normal">(n&apos;utilisez que des lettres, des chiffres ou des tirets)</span>
+                            <label className="block text-sm text-[#111] dark:text-zinc-100 mb-1.5">
+                                Nom d&apos;utilisateur <span className="text-[#767676] dark:text-zinc-400 font-normal">(n&apos;utilisez que des lettres, des chiffres ou des tirets)</span>
                             </label>
                             <input
                                 type="text"
@@ -202,13 +202,13 @@ function JoinForm() {
                                 onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/\s+/g, '_'))}
                                 required
                                 pattern="[a-zA-Z0-9_-]+"
-                                className="w-full h-10 px-3 rounded-[4px] border border-[#d1d1d1] text-[#111] focus:border-[#767676] outline-none transition-colors"
+                                className="w-full h-10 px-3 rounded-[4px] border border-[#d1d1d1] dark:border-zinc-700 bg-white dark:bg-zinc-900 text-[#111] dark:text-zinc-100 focus:border-[#767676] dark:focus:border-zinc-400 outline-none transition-colors"
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm text-[#111] mb-1.5">
-                                Mot de passe <span className="text-[#767676] font-normal">(8 car. minimum)</span>
+                            <label className="block text-sm text-[#111] dark:text-zinc-100 mb-1.5">
+                                Mot de passe <span className="text-[#767676] dark:text-zinc-400 font-normal">(8 car. minimum)</span>
                             </label>
                             <div className="relative">
                                 <input
@@ -217,12 +217,12 @@ function JoinForm() {
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
                                     minLength={8}
-                                    className="w-full h-10 px-3 pr-10 rounded-[4px] border border-[#d1d1d1] text-[#111] focus:border-[#767676] outline-none transition-colors"
+                                    className="w-full h-10 px-3 pr-10 rounded-[4px] border border-[#d1d1d1] dark:border-zinc-700 bg-white dark:bg-zinc-900 text-[#111] dark:text-zinc-100 focus:border-[#767676] dark:focus:border-zinc-400 outline-none transition-colors"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-zinc-500 hover:text-gray-600 dark:hover:text-zinc-300 focus:outline-none"
                                 >
                                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
@@ -241,14 +241,14 @@ function JoinForm() {
                         <button
                             type="submit"
                             disabled={loading || !turnstileToken}
-                            className="w-full bg-[#111] text-white h-11 rounded-[4px] font-medium hover:bg-black transition-all active:scale-[0.99] mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-[#111] dark:bg-white text-white dark:text-black h-11 rounded-[4px] font-medium hover:bg-black dark:hover:bg-zinc-200 transition-all active:scale-[0.99] mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading ? "Création en cours..." : "S'inscrire"}
                         </button>
                     </form>
 
-                    <p className="mt-8 text-center text-[#767676] text-xs leading-relaxed max-w-[400px] mx-auto">
-                        En vous inscrivant, vous acceptez les <Link href="#" className="underline hover:text-[#111]">Conditions</Link> et la <Link href="#" className="underline hover:text-[#111]">Charte de protection des données</Link>.
+                    <p className="mt-8 text-center text-[#767676] dark:text-zinc-400 text-xs leading-relaxed max-w-[400px] mx-auto">
+                        En vous inscrivant, vous acceptez les <Link href="#" className="underline hover:text-[#111] dark:hover:text-white">Conditions</Link> et la <Link href="#" className="underline hover:text-[#111] dark:hover:text-white">Charte de protection des données</Link>.
                     </p>
                 </div>
             </div>
@@ -260,8 +260,8 @@ export default function JoinPageClient() {
     return (
         <Suspense
             fallback={
-                <div className="min-h-screen flex items-center justify-center bg-white">
-                    <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
+                <div className="min-h-screen flex items-center justify-center bg-white dark:bg-zinc-950">
+                    <Loader2 className="w-8 h-8 animate-spin text-gray-300 dark:text-zinc-600" />
                 </div>
             }
         >

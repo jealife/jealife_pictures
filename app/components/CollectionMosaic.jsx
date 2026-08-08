@@ -14,7 +14,7 @@ export default function CollectionMosaic({ images = [], alt = "", className = ""
 
     if (!first) {
         return (
-            <div className={`flex items-center justify-center bg-gray-100 text-gray-300 ${className}`}>
+            <div className={`flex items-center justify-center bg-gray-100 dark:bg-zinc-800 text-gray-300 dark:text-zinc-600 ${className}`}>
                 <Layers className="w-8 h-8" />
             </div>
         );
@@ -22,7 +22,7 @@ export default function CollectionMosaic({ images = [], alt = "", className = ""
 
     if (!second) {
         return (
-            <div className={`relative bg-gray-100 ${className}`}>
+            <div className={`relative bg-gray-100 dark:bg-zinc-800 ${className}`}>
                 <Image src={first} alt={alt} fill sizes="(max-width: 640px) 100vw, 33vw" className="object-cover" />
             </div>
         );
@@ -31,7 +31,7 @@ export default function CollectionMosaic({ images = [], alt = "", className = ""
     if (!third) {
         return (
             <div
-                className={`grid grid-cols-2 gap-[3px] bg-gray-100 ${className}`}
+                className={`grid grid-cols-2 gap-[3px] bg-gray-100 dark:bg-zinc-800 ${className}`}
                 style={{ gridTemplateRows: "1fr" }}
             >
                 <div className="relative h-full w-full">
@@ -51,7 +51,7 @@ export default function CollectionMosaic({ images = [], alt = "", className = ""
     // chargées avec succès.
     return (
         <div
-            className={`grid gap-[3px] bg-gray-100 ${className}`}
+            className={`grid gap-[3px] bg-gray-100 dark:bg-zinc-800 ${className}`}
             style={{ gridTemplateColumns: "2fr 1fr", gridTemplateRows: "1fr 1fr" }}
         >
             <div className="relative row-span-2 h-full w-full">
