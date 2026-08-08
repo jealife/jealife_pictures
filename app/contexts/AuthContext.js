@@ -84,21 +84,39 @@ export function AuthProvider({ children }) {
             }
         }
 
-        // 1. Initialisation de la session
-        async function init() {
+        // `getSession()` plutôt que `getUser()` pour ces trois vérifications :
+        // `getSession()` rafraîchit silencieusement un jeton d'accès expiré
+        // tant que le refresh token reste valide, alors que `getUser()` se
+        // contente de vérifier le jeton courant tel quel contre le serveur.
+        // Un onglet mis en arrière-plan (changement d'app, verrouillage
+        // d'écran) voit son minuteur de rafraîchissement automatique
+        // ralenti par le navigateur — au retour, le jeton d'accès est
+        // souvent expiré alors que la session, elle, reste valide.
+        // Appeler `getUser()` dans ce cas renvoyait une vraie erreur
+        // d'authentification et déconnectait l'utilisateur pour rien.
+        async function revalidateSession() {
             try {
-                const { data: { user: authUser }, error } = await supabase.auth.getUser();
-                if (error || !authUser) {
-                    await syncAuthAndProfile(null);
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (isCancelled) return;
+                if (isNetworkAuthError(error)) return;
+                if (error || !session) {
+                    setUser(null);
+                    setProfile(null);
+                    setLoading(false);
                 } else {
-                    await syncAuthAndProfile(authUser);
+                    await syncAuthAndProfile(session.user);
                 }
-            } catch {
-                await syncAuthAndProfile(null);
+            } catch (err) {
+                if (isCancelled) return;
+                console.error("Erreur lors de la vérification de session :", err);
+                setUser(null);
+                setProfile(null);
+                setLoading(false);
             }
         }
 
-        init();
+        // 1. Initialisation de la session
+        revalidateSession();
 
         // 2. Écoute des événements d'authentification
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -126,33 +144,13 @@ export function AuthProvider({ children }) {
         // 3. Validation au retour de mise en veille (PWA / changement d'onglet)
         function handleVisibilityChange() {
             if (document.visibilityState === 'visible') {
-                supabase.auth.getUser().then(({ data: { user: freshUser }, error }) => {
-                    if (isCancelled) return;
-                    if (isNetworkAuthError(error)) return;
-                    if (error || !freshUser) {
-                        setUser(null);
-                        setProfile(null);
-                        setLoading(false);
-                    } else {
-                        syncAuthAndProfile(freshUser);
-                    }
-                });
+                revalidateSession();
             }
         }
 
         // 4. Validation au retour de la connexion réseau
         function handleOnline() {
-            supabase.auth.getUser().then(({ data: { user: freshUser }, error }) => {
-                if (isCancelled) return;
-                if (isNetworkAuthError(error)) return;
-                if (error || !freshUser) {
-                    setUser(null);
-                    setProfile(null);
-                    setLoading(false);
-                } else {
-                    syncAuthAndProfile(freshUser);
-                }
-            });
+            revalidateSession();
         }
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
