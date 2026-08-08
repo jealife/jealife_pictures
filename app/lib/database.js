@@ -894,11 +894,23 @@ export async function getUserDownloadHistory(userId, { limit = PAGE_SIZE } = {})
 // propriétaire : les compteurs restaient donc figés à zéro.
 // ---------------------------------------------------------------------------
 
+// Passe par une route serveur plutôt qu'un appel RPC direct : c'est le seul
+// endroit qui voit l'IP de l'appelant, nécessaire pour dédupliquer les vues
+// anonymes (voir migration 0014 — sans ça, rafraîchir une fiche photo
+// gonflait son compteur de vues à volonté).
 export async function incrementViews(mediaId) {
     try {
-        const { error } = await supabase.rpc('increment_views', { media_id: Number(mediaId) });
-        if (error) throw error;
-        return true;
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch('/api/track-view', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+            },
+            body: JSON.stringify({ mediaId: Number(mediaId) }),
+        });
+        const data = await res.json();
+        return !!data.success;
     } catch (error) {
         logQueryError('Error incrementing views:', error);
         return false;
