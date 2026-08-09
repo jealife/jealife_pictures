@@ -50,11 +50,14 @@ export default function SettingsPage() {
         if (!user?.id) return;
         try {
             setLoading(true);
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', user.id)
-                .maybeSingle();
+            // Un `race` contre un délai : une requête qui ne répond jamais
+            // (verrou interne bloqué, requête réseau sans réponse) ne doit
+            // jamais laisser `loading` bloqué à `true` indéfiniment — voir
+            // le même filet de sécurité dans AuthContext.
+            const { data, error } = await Promise.race([
+                supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000)),
+            ]);
 
             if (error) throw error;
 

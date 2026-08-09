@@ -17,6 +17,19 @@ function isNetworkAuthError(error) {
     return error?.name === 'AuthRetryableFetchError';
 }
 
+// Filet de sécurité : `getSession()` et la requête `profiles` qu'elle
+// déclenche ensuite peuvent, dans de rares cas (verrou interne de
+// supabase-js bloqué, requête réseau qui ne répond jamais), ne JAMAIS se
+// résoudre ni rejeter — contrairement à une erreur classique, ce cas
+// échappe à tout `try/catch` et laissait `loading` bloqué à `true` pour
+// toujours, quel que soit le nombre de rafraîchissements de la page.
+function withTimeout(promise, ms) {
+    return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms)),
+    ]);
+}
+
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
@@ -38,7 +51,7 @@ export function AuthProvider({ children }) {
 
         const promise = (async () => {
             try {
-                const profileData = await getProfileById(userId);
+                const profileData = await withTimeout(getProfileById(userId), 10000);
                 setProfile(profileData);
                 return profileData;
             } catch (err) {
@@ -105,7 +118,7 @@ export function AuthProvider({ children }) {
         // connecté à l'écran.
         async function revalidateSession(isInitial) {
             try {
-                const { data: { session }, error } = await supabase.auth.getSession();
+                const { data: { session }, error } = await withTimeout(supabase.auth.getSession(), 10000);
                 if (isCancelled) return;
                 if (isNetworkAuthError(error)) {
                     if (isInitial) setLoading(false);
@@ -132,7 +145,7 @@ export function AuthProvider({ children }) {
 
         // 2. Écoute des événements d'authentification
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            async (event, session) => {
+            (event, session) => {
                 if (isCancelled) return;
 
                 const newUser = session?.user ?? null;
@@ -149,7 +162,19 @@ export function AuthProvider({ children }) {
                     return;
                 }
 
-                await syncAuthAndProfile(newUser);
+                // supabase-js le documente explicitement : ce callback s'exécute
+                // pendant que le client tient son verrou interne d'authentification
+                // (déclenché par ex. par `updateUser()` lors de l'enregistrement du
+                // profil, via l'événement `USER_UPDATED`). Y attendre une AUTRE
+                // requête Supabase de façon synchrone — ici `syncAuthAndProfile`,
+                // qui va chercher le profil et a donc besoin du même verrou pour
+                // obtenir un jeton d'accès — provoque un interblocage : la requête
+                // attend un verrou que ce callback ne libèrera qu'une fois fini, et
+                // ce callback attend que la requête se termine. `setTimeout` sort la
+                // suite du callback de cette section critique.
+                setTimeout(() => {
+                    if (!isCancelled) syncAuthAndProfile(newUser);
+                }, 0);
             }
         );
 
