@@ -29,17 +29,29 @@ export const r2Client = r2Configured
     })
     : null;
 
-/** URL signée valable 5 minutes pour un PUT direct depuis le navigateur. */
-export async function getR2UploadUrl(key, contentType) {
+/**
+ * URL signée valable 5 minutes pour un PUT direct depuis le navigateur.
+ *
+ * `contentLength` fait partie de la signature : sans lui, l'URL signée
+ * acceptait un corps de n'importe quelle taille. Le plafond de 50 Mo n'existait
+ * alors que dans le formulaire, donc côté client — c'est-à-dire nulle part
+ * d'opposable. R2 rejette désormais tout envoi dont la taille diffère de
+ * celle qui a été signée.
+ */
+export async function getR2UploadUrl(key, contentType, contentLength) {
     if (!r2Client) throw new Error("Cloudflare R2 n'est pas configuré.");
 
     const command = new PutObjectCommand({
         Bucket: R2_BUCKET_NAME,
         Key: key,
         ContentType: contentType,
+        ContentLength: contentLength,
     });
 
-    return getSignedUrl(r2Client, command, { expiresIn: 300 });
+    return getSignedUrl(r2Client, command, {
+        expiresIn: 300,
+        signableHeaders: new Set(["content-length", "content-type"]),
+    });
 }
 
 /** URL publique définitive d'un fichier une fois envoyé. */

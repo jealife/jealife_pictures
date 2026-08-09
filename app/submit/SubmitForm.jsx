@@ -67,6 +67,23 @@ async function fetchWithRetry(url, options, retries = 2) {
     }
 }
 
+// Distance de Hamming entre deux empreintes hexadécimales de 64 bits : le
+// serveur ne compare qu'aux médias DÉJÀ publiés, donc deux images identiques
+// envoyées dans le même lot passaient toutes les deux — ni l'une ni l'autre
+// n'était encore en base au moment où l'autre était contrôlée.
+function phashDistance(a, b) {
+    let x = BigInt(`0x${a}`) ^ BigInt(`0x${b}`);
+    let count = 0;
+    while (x > 0n) {
+        count += Number(x & 1n);
+        x >>= 1n;
+    }
+    return count;
+}
+
+// Doit rester aligné sur DUPLICATE_HAMMING_THRESHOLD (/api/moderate-upload).
+const DUPLICATE_THRESHOLD = 4;
+
 async function runWithConcurrency(list, limit, worker) {
     let cursor = 0;
     const runners = Array.from({ length: Math.min(limit, list.length) }, async () => {
@@ -756,12 +773,17 @@ export default function SubmitForm() {
      * ligne `media`. Chaque image est indépendante — l'échec de l'une
      * n'empêche pas les autres d'être publiées.
      */
-    const publishItem = async (item) => {
+    const publishItem = async (item, batchHashes) => {
         const goToStage = (key) =>
             patchItem(item.id, { stage: UPLOAD_STAGES[key].label, percent: UPLOAD_STAGES[key].percent });
 
         goToStage("quality");
         const phash = await runQualityCheck(item.processed, item.type);
+
+        if (batchHashes.some((seen) => phashDistance(seen, phash) <= DUPLICATE_THRESHOLD)) {
+            throw new Error("Cette image fait doublon avec une autre du même envoi. Retirez-la.");
+        }
+        batchHashes.push(phash);
 
         const folder = `${user.id}/${Date.now()}-${item.id}`;
         const { extension, mimeType } = item.processed;
@@ -780,7 +802,9 @@ export default function SubmitForm() {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${session.access_token}`,
                 },
-                body: JSON.stringify({ path, contentType }),
+                // La taille fait partie de la signature côté serveur : R2
+                // refusera un corps différent de celui annoncé ici.
+                body: JSON.stringify({ path, contentType, contentLength: body.size }),
             });
             const { uploadUrl, publicUrl, error } = await res.json();
             if (!res.ok) throw new Error(error || "Impossible de préparer l'envoi.");
@@ -953,9 +977,13 @@ export default function SubmitForm() {
         }
 
         const succeeded = new Set();
+        // Partagé entre les images du lot : chacune y ajoute son empreinte une
+        // fois le contrôle qualité passé, et se compare à celles qui l'ont
+        // précédée.
+        const batchHashes = [];
         await runWithConcurrency(pending, CONCURRENCY, async (item) => {
             try {
-                const published = await publishItem(item);
+                const published = await publishItem(item, batchHashes);
                 succeeded.add(item.id);
                 patchItem(item.id, { status: "done", published, percent: 100, stage: "" });
             } catch (err) {

@@ -63,8 +63,8 @@ export async function POST(request) {
         }
 
         const { error } = await supabase.rpc("record_view", {
-            media_id: mediaId,
-            viewer_key: viewerKey,
+            p_media_id: mediaId,
+            p_viewer_key: viewerKey,
         });
         if (error) throw error;
 

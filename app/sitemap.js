@@ -59,8 +59,19 @@ export default async function sitemap() {
         safeQuery(() =>
             supabase.from("profiles").select("username, updated_at").limit(5000)
         ),
+        // Seules les catégories, jamais les mots-clés libres : `topics` se
+        // remplit tout seul à chaque publication (chaque tag saisi y crée une
+        // ligne), et ces pages `/themes/<slug>` partaient à l'indexation sans
+        // que personne ne les ait décidées. Aucune surface de navigation ne
+        // les affiche — TopicBar, FeaturedTopics et /themes filtrent tous sur
+        // `kind = 'category'` —, seul le sitemap les exposait encore.
         safeQuery(() =>
-            supabase.from("topics").select("slug").gt("total_media", 0).limit(500)
+            supabase
+                .from("topics")
+                .select("slug")
+                .eq("kind", "category")
+                .gt("total_media", 0)
+                .limit(500)
         ),
         // `countries` n'a pas de compteur de médias comme `topics` : contrairement
         // aux thèmes, rien ici n'empêchait un pays sans la moindre photo de se

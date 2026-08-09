@@ -16,9 +16,9 @@ import ReportDialog from "../../components/ReportDialog";
 import PhotoCard from "../../components/PhotoCard";
 import { useAuth } from "../../contexts/AuthContext";
 import {
-    getRelatedMedia, hasUserLikedMedia, incrementViews,
+    getMediaById, getRelatedMedia, hasUserLikedMedia, incrementViews,
 } from "../../lib/database";
-import { normalizeMedia, normalizeMediaList, formatCount, locationLabel, mediaUrl } from "../../lib/media";
+import { normalizeMedia, normalizeMediaList, formatCount, locationLabel, parseMediaId, mediaUrl } from "../../lib/media";
 
 /**
  * `initialPhoto` est la ligne déjà chargée par le composant serveur (voir
@@ -34,8 +34,20 @@ export default function PhotoDetail({ initialPhoto }) {
     const pathname = usePathname();
     const { user } = useAuth();
 
-    const raw = initialPhoto;
-    const photo = useMemo(() => (initialPhoto ? normalizeMedia(initialPhoto) : null), [initialPhoto]);
+    // Le composant serveur interroge Supabase sans session : la RLS ne lui
+    // laisse voir que les médias publiés. Une photo en attente de modération
+    // ou rejetée revient donc vide côté serveur, alors que son auteur (et un
+    // admin) a parfaitement le droit de la consulter — c'est le lien « Voir
+    // mon envoi » affiché juste après une publication en mode manuel. On ne
+    // retombe sur une requête client, porteuse de la session, que dans ce cas
+    // précis : une photo publiée, soit l'écrasante majorité, n'en paie jamais
+    // le coût. `undefined` = pas encore vérifié, `null` = introuvable.
+    const [fallback, setFallback] = useState(undefined);
+    const source = initialPhoto ?? (fallback === undefined ? null : fallback);
+    const checkingFallback = !initialPhoto && Boolean(user) && fallback === undefined;
+
+    const raw = source;
+    const photo = useMemo(() => (source ? normalizeMedia(source) : null), [source]);
 
     const [related, setRelated] = useState([]);
     const [liked, setLiked] = useState(false);
@@ -44,6 +56,15 @@ export default function PhotoDetail({ initialPhoto }) {
     const [copied, setCopied] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
     const [showConnect, setShowConnect] = useState(false);
+
+    useEffect(() => {
+        if (initialPhoto || !user) return;
+        let cancelled = false;
+        getMediaById(parseMediaId(rawId)).then((data) => {
+            if (!cancelled) setFallback(data ?? null);
+        });
+        return () => { cancelled = true; };
+    }, [initialPhoto, user, rawId]);
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -98,6 +119,14 @@ export default function PhotoDetail({ initialPhoto }) {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
+
+    if (!photo && checkingFallback) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-white dark:bg-zinc-950">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-300 dark:border-zinc-700" />
+            </div>
+        );
+    }
 
     if (!photo) {
         return (

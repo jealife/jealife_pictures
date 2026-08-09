@@ -40,16 +40,6 @@ const MIN_SHARPNESS_VARIANCE = 45;
 const DUPLICATE_HAMMING_THRESHOLD = 4;
 const TRUSTED_PUBLISHED_COUNT = 15;
 
-function hammingDistance(a, b) {
-    let x = a ^ b;
-    let count = 0n;
-    while (x > 0n) {
-        count += x & 1n;
-        x >>= 1n;
-    }
-    return Number(count);
-}
-
 /**
  * dHash 64 bits : 9×8 en niveaux de gris, un bit par comparaison de deux
  * pixels adjacents sur chaque ligne. Insensible aux petites recompressions,
@@ -135,10 +125,17 @@ export async function POST(request) {
         // boucle peut faire exploser la facture. La fonction échoue ouverte
         // (autorise) si la table de comptage n'est pas encore migrée, plutôt
         // que de casser tous les envois en attendant.
+        // 30 et non 10 : le formulaire accepte un envoi groupé de MAX_FILES
+        // (10) images, dont chacune passe ici. À 10, un seul lot épuisait
+        // exactement le quota de la fenêtre — la moindre image ajoutée
+        // ensuite, ou une reprise réseau qui recompte, se voyait refusée.
+        // Trois lots complets par fenêtre laissent de la marge sans ouvrir la
+        // facture Gemini : au-delà de 15 publications, le compte devient de
+        // confiance et ne déclenche plus du tout l'appel IA.
         const { data: withinLimit, error: rateLimitError } = await supabase.rpc("check_rate_limit", {
             p_key: user.id,
             p_bucket: "moderate-upload",
-            p_max_count: 10,
+            p_max_count: 30,
             p_window_seconds: 300,
         });
         if (rateLimitError) {
@@ -206,22 +203,20 @@ export async function POST(request) {
         }
 
         const phash = await computeDHash(buffer);
-        const candidateHash = BigInt(`0x${phash}`);
 
-        const { data: existing, error: existingError } = await supabase
-            .from("media")
-            .select("phash")
-            .eq("status", "published")
-            .not("phash", "is", null)
-            .order("created_at", { ascending: false })
-            .limit(5000);
-
-        if (existingError) throw existingError;
-
-        const isDuplicate = (existing || []).some(
-            (row) => hammingDistance(candidateHash, BigInt(`0x${row.phash}`)) <= DUPLICATE_HAMMING_THRESHOLD
-        );
-        if (isDuplicate) {
+        // Comparaison faite dans Postgres (migration 0018) : seul un booléen
+        // traverse le réseau, et tout le catalogue publié est couvert — contre
+        // 5 000 empreintes rapatriées par image auparavant, avec un angle mort
+        // au-delà. En cas d'échec on laisse passer : le dédoublonnage est un
+        // confort de curation, pas un contrôle de sécurité, et bloquer tous
+        // les envois pour cela serait une réponse disproportionnée.
+        const { data: isDuplicate, error: duplicateError } = await supabase.rpc("phash_has_duplicate", {
+            p_phash: phash,
+            p_threshold: DUPLICATE_HAMMING_THRESHOLD,
+        });
+        if (duplicateError) {
+            console.error("Détection de doublon impossible :", duplicateError);
+        } else if (isDuplicate) {
             return NextResponse.json(
                 { error: "Cette image (ou une image très similaire) est déjà présente sur la plateforme." },
                 { status: 422 }
