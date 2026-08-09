@@ -43,6 +43,23 @@ const MEDIA_TYPES = [
     { key: "video", label: "Vidéo", icon: Video },
 ];
 
+// Sur données mobiles instables (public visé par le site), une coupure
+// passagère pendant l'envoi ne doit pas condamner toute la publication —
+// surtout après que l'utilisateur a rempli tout le formulaire. On ne
+// retente que les échecs réseau purs (`Failed to fetch` et apparentés,
+// voir errors.js) : une réponse HTTP d'erreur (400, 413…) est déjà arrivée
+// à destination et la retenter ne changerait rien.
+async function fetchWithRetry(url, options, retries = 2) {
+    for (let attempt = 0; ; attempt++) {
+        try {
+            return await fetch(url, options);
+        } catch (err) {
+            if (attempt >= retries || !/failed to fetch|network|load failed/i.test(err?.message || "")) throw err;
+            await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1)));
+        }
+    }
+}
+
 function blobToBase64(blob) {
     return new Promise((resolve) => {
         const reader = new FileReader();
@@ -63,7 +80,7 @@ async function runQualityCheck(processed, type) {
 
     const base64Image = await blobToBase64(processed.display);
 
-    const res = await fetch("/api/moderate-upload", {
+    const res = await fetchWithRetry("/api/moderate-upload", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -424,7 +441,7 @@ export default function SubmitForm() {
                 const { data: { session } } = await supabase.auth.getSession();
                 if (!session) throw new Error("Session expirée, reconnectez-vous.");
 
-                const res = await fetch("/api/r2-upload-url", {
+                const res = await fetchWithRetry("/api/r2-upload-url", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -435,7 +452,9 @@ export default function SubmitForm() {
                 const { uploadUrl, publicUrl, error } = await res.json();
                 if (!res.ok) throw new Error(error || "Impossible de préparer l'envoi.");
 
-                const putRes = await fetch(uploadUrl, {
+                // PUT vers une clé R2 fixe : rejouable sans risque, le second
+                // envoi remplace simplement le premier au même endroit.
+                const putRes = await fetchWithRetry(uploadUrl, {
                     method: "PUT",
                     headers: { "Content-Type": contentType },
                     body,
