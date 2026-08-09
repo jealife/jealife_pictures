@@ -94,11 +94,23 @@ export function AuthProvider({ children }) {
         // souvent expiré alors que la session, elle, reste valide.
         // Appeler `getUser()` dans ce cas renvoyait une vraie erreur
         // d'authentification et déconnectait l'utilisateur pour rien.
-        async function revalidateSession() {
+        // `isInitial` : au premier appel (montage), `loading` doit toujours finir
+        // par retomber à `false`, même sur un raté réseau — sinon la page reste
+        // bloquée sur son écran de chargement indéfiniment (c'était le cas ici :
+        // une erreur réseau passagère au tout premier chargement faisait sortir
+        // la fonction avant d'atteindre le moindre `setLoading(false)`). Aux
+        // appels suivants (retour de mise en veille, reconnexion réseau),
+        // `loading` est déjà à `false` depuis longtemps ; ne pas le toucher sur
+        // un raté réseau évite d'afficher un spinner pour un utilisateur déjà
+        // connecté à l'écran.
+        async function revalidateSession(isInitial) {
             try {
                 const { data: { session }, error } = await supabase.auth.getSession();
                 if (isCancelled) return;
-                if (isNetworkAuthError(error)) return;
+                if (isNetworkAuthError(error)) {
+                    if (isInitial) setLoading(false);
+                    return;
+                }
                 if (error || !session) {
                     setUser(null);
                     setProfile(null);
@@ -116,7 +128,7 @@ export function AuthProvider({ children }) {
         }
 
         // 1. Initialisation de la session
-        revalidateSession();
+        revalidateSession(true);
 
         // 2. Écoute des événements d'authentification
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -144,13 +156,13 @@ export function AuthProvider({ children }) {
         // 3. Validation au retour de mise en veille (PWA / changement d'onglet)
         function handleVisibilityChange() {
             if (document.visibilityState === 'visible') {
-                revalidateSession();
+                revalidateSession(false);
             }
         }
 
         // 4. Validation au retour de la connexion réseau
         function handleOnline() {
-            revalidateSession();
+            revalidateSession(false);
         }
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
