@@ -708,7 +708,15 @@ export default function SubmitForm() {
                     ...(exif?.tags?.length ? { tags: [...new Set(exif.tags)] } : {}),
                 });
             } catch (err) {
-                console.error("Image processing failed:", err);
+                // `console.warn`, pas `console.error` : Next.js intercepte ce
+                // dernier en développement et ouvre sa page d'erreur plein
+                // écran pour CHAQUE appel, même quand l'échec est déjà
+                // intercepté et déjà montré à l'utilisateur — ce qui est le
+                // cas ici (voir `patchItem` juste en dessous). Vaut pour les
+                // quatre échecs de ce fichier qui finissent sur une carte,
+                // pas pour le nettoyage R2 plus bas, dont l'échec ne
+                // s'affiche nulle part.
+                console.warn("Image processing failed:", err);
                 patchItem(item.id, {
                     processing: false,
                     error: "Cette image n'a pas pu être préparée. Retirez-la et essayez un autre fichier.",
@@ -760,7 +768,7 @@ export default function SubmitForm() {
                     : {}),
             });
         } catch (err) {
-            console.error("Génération de métadonnées impossible :", err);
+            console.warn("Génération de métadonnées impossible :", err);
             patchItem(item.id, {
                 generating: false,
                 error: friendlyErrorMessage(err, "La génération automatique a échoué. Décrivez l'image vous-même."),
@@ -969,7 +977,7 @@ export default function SubmitForm() {
                 if (!success) throw new Error(profileError);
             }
         } catch (err) {
-            console.error("Profile check failed:", err);
+            console.warn("Profile check failed:", err);
             setFormError(friendlyErrorMessage(err, "La publication a échoué. Réessayez."));
             setItems((prev) => prev.map((item) => (item.status === "uploading" ? { ...item, status: "idle" } : item)));
             setPublishing(false);
@@ -987,7 +995,7 @@ export default function SubmitForm() {
                 succeeded.add(item.id);
                 patchItem(item.id, { status: "done", published, percent: 100, stage: "" });
             } catch (err) {
-                console.error("Submission error:", err);
+                console.warn("Submission error:", err);
                 patchItem(item.id, {
                     status: "error",
                     stage: "",

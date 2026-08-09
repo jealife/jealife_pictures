@@ -59,17 +59,20 @@ export default function AdminAuditPage() {
             ) : (
                 <div className="space-y-2">
                     {entries.map((entry) => (
-                        <div key={entry.id} className="flex items-center gap-4 p-3 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm">
-                            <span className="text-gray-400 dark:text-zinc-500 shrink-0 w-40">
+                        <div
+                            key={entry.id}
+                            className="flex flex-col gap-1.5 sm:flex-row sm:items-center sm:gap-4 p-3 border border-gray-100 dark:border-zinc-800 rounded-xl text-sm"
+                        >
+                            <span className="text-xs sm:text-sm text-gray-400 dark:text-zinc-500 sm:shrink-0 sm:w-40">
                                 {new Date(entry.created_at).toLocaleString("fr-FR")}
                             </span>
-                            <span className="font-semibold text-gray-900 dark:text-zinc-100 shrink-0 w-56 truncate">
+                            <span className="font-semibold text-gray-900 dark:text-zinc-100 sm:shrink-0 sm:w-56 sm:truncate">
                                 {describe(entry)}
                             </span>
-                            <span className="text-gray-500 dark:text-zinc-400 shrink-0">
+                            <span className="text-gray-500 dark:text-zinc-400 sm:shrink-0">
                                 {entry.target_type} #{entry.target_id}
                             </span>
-                            <span className="ml-auto text-gray-500 dark:text-zinc-400 truncate">
+                            <span className="sm:ml-auto text-gray-500 dark:text-zinc-400 truncate">
                                 {entry.admin ? (
                                     <Link href={`/@${entry.admin.username}`} target="_blank" className="hover:underline">
                                         @{entry.admin.username}

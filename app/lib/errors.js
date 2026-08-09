@@ -41,9 +41,19 @@ const DEFAULT_FALLBACK = 'Une erreur est survenue. Réessayez dans un instant.';
 
 // Nos propres messages (levés côté client ou renvoyés par nos routes API)
 // sont toujours rédigés en français ; ceux de Supabase/Postgres/du
-// navigateur sont toujours en anglais sans accent. Ce test évite d'écraser
-// un message déjà correct par le message générique ci-dessous.
-const LOOKS_ALREADY_FRENCH = /[àâäéèêëïîôöùûüçÀÂÄÉÈÊËÏÎÔÖÙÛÜÇ]/;
+// navigateur sont toujours en anglais. Ce test évite d'écraser un message
+// déjà correct par le message générique ci-dessous.
+//
+// La seule présence d'un accent ne suffit pas : repéré en test réel sur
+// « Image trop petite (2700×1800px, 4.9 Mpx) : 5 Mpx minimum. » — une
+// phrase française sans le moindre accent, donc silencieusement remplacée
+// par « Une erreur est survenue » malgré son information précise et utile.
+// Plusieurs autres messages du même fichier (image floue, fichier trop
+// volumineux…) sont construits sans accent pour la même raison — mots
+// courts, gabarit avec un nombre. On ajoute donc la présence de mots
+// grammaticaux français comme second signal.
+const LOOKS_ALREADY_FRENCH =
+    /[àâäéèêëïîôöùûüçÀÂÄÉÈÊËÏÎÔÖÙÛÜÇ]|\b(le|la|les|un|une|des|du|est|sont|dans|pour|avec|sur|vous|votre|ne|pas|plus|trop|doit|cette|ce)\b/i;
 
 /**
  * Traduit une erreur technique en phrase lisible. Si elle ne correspond à

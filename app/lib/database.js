@@ -1606,10 +1606,37 @@ export async function rejectMedia(mediaId) {
     return result;
 }
 
+/**
+ * Contrairement à approveMedia/rejectMedia (simple changement de statut, la
+ * ligne reste inchangée sinon), removeMedia passe par une route serveur :
+ * elle seule a les identifiants Cloudflare R2 nécessaires pour retirer aussi
+ * les fichiers publiés. Sans ça, une photo « retirée » suite à un
+ * signalement restait accessible indéfiniment à son URL R2 directe — voir
+ * /api/remove-media pour le détail de cette distinction.
+ */
 export async function removeMedia(mediaId) {
-    const result = await updateMedia(mediaId, { status: 'removed' });
-    if (result.success) await logAdminAction('media.remove', 'media', mediaId);
-    return result;
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("Session expirée, reconnectez-vous.");
+
+        const res = await fetch('/api/remove-media', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ mediaId }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Impossible de retirer ce média.");
+
+        await logAdminAction('media.remove', 'media', mediaId);
+        return { success: true };
+    } catch (error) {
+        logQueryError('Error removing media:', error);
+        return { success: false, error: friendlyErrorMessage(error, "Impossible de retirer ce média.") };
+    }
 }
 
 export async function resolveReport(reportId) {
@@ -1674,6 +1701,38 @@ export async function setUserFlag(userId, field, value) {
     } catch (error) {
         logQueryError('Error updating user flag:', error);
         return { success: false, error: friendlyErrorMessage(error, "Impossible de mettre à jour ce compte.") };
+    }
+}
+
+/**
+ * Suppression définitive d'un compte : passe par une route serveur, seule à
+ * détenir la clé de service nécessaire pour supprimer le compte
+ * d'authentification lui-même (dont la suppression entraîne en cascade tout
+ * le reste — profil, photos, likes… voir migration 0001) et pour nettoyer
+ * ensuite les fichiers R2 de ses photos, qu'une cascade Postgres ne touche
+ * jamais. Irréversible : aucune corbeille, aucune restauration possible.
+ */
+export async function deleteUserAccount(userId) {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("Session expirée, reconnectez-vous.");
+
+        const res = await fetch('/api/delete-account', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ userId }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Impossible de supprimer ce compte.");
+
+        return { success: true };
+    } catch (error) {
+        logQueryError('Error deleting account:', error);
+        return { success: false, error: friendlyErrorMessage(error, "Impossible de supprimer ce compte.") };
     }
 }
 

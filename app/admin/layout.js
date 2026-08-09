@@ -149,18 +149,22 @@ export default function AdminLayout({ children }) {
                 style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
             >
                 <div className="grid grid-cols-5">
+                    {/* Icônes seules, sans libellé : 5 colonnes avec texte
+                        serraient trop pour rester lisibles à cette largeur.
+                        `aria-label` garde chaque onglet nommé pour un lecteur
+                        d'écran malgré l'absence de texte visible. */}
                     {TAB_ITEMS.map(({ href, label, icon: Icon }) => {
                         const active = isActive(href);
                         return (
                             <Link
                                 key={href}
                                 href={href}
-                                className={`flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium transition-colors ${
+                                aria-label={label}
+                                className={`flex items-center justify-center py-3.5 transition-colors ${
                                     active ? "text-black dark:text-white" : "text-gray-400 dark:text-zinc-500"
                                 }`}
                             >
-                                <Icon className="w-5 h-5" />
-                                {label}
+                                <Icon className="w-6 h-6" />
                             </Link>
                         );
                     })}
@@ -168,12 +172,12 @@ export default function AdminLayout({ children }) {
                         type="button"
                         onClick={() => setMoreOpen(true)}
                         aria-expanded={moreOpen}
-                        className={`flex flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-medium transition-colors ${
+                        aria-label="Plus"
+                        className={`flex items-center justify-center py-3.5 transition-colors ${
                             moreOpen || moreActive ? "text-black dark:text-white" : "text-gray-400 dark:text-zinc-500"
                         }`}
                     >
-                        <MoreHorizontal className="w-5 h-5" />
-                        Plus
+                        <MoreHorizontal className="w-6 h-6" />
                     </button>
                 </div>
             </nav>

@@ -3,16 +3,18 @@
 import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Search, ShieldCheck, BadgeCheck, Ban, Loader2 } from "lucide-react";
+import { Search, ShieldCheck, BadgeCheck, Ban, Trash2, Loader2 } from "lucide-react";
 import { getAdminUsers, setUserRole, setUserFlag } from "../../lib/database";
 import { avatarFallback } from "../../lib/media";
 import { useAuth } from "../../contexts/AuthContext";
+import DeleteAccountDialog from "../../components/DeleteAccountDialog";
 
 export default function AdminUsersPage() {
     const { profile: currentAdmin } = useAuth();
     const [search, setSearch] = useState("");
     const [users, setUsers] = useState(null);
     const [busyId, setBusyId] = useState(null);
+    const [deleteTarget, setDeleteTarget] = useState(null);
 
     const load = useCallback((term = "") => {
         getAdminUsers({ search: term, limit: 100 }).then(setUsers);
@@ -89,30 +91,36 @@ export default function AdminUsersPage() {
             ) : (
                 <div className="space-y-2">
                     {users.map((u) => (
-                        <div key={u.id} className="flex items-center gap-4 p-3 border border-gray-100 dark:border-zinc-800 rounded-xl">
-                            <Image
-                                src={u.avatar_url || avatarFallback(u.id)}
-                                alt=""
-                                width={40}
-                                height={40}
-                                unoptimized
-                                className="w-10 h-10 rounded-full object-cover shrink-0 bg-gray-100 dark:bg-zinc-800"
-                            />
-                            <div className="min-w-0 flex-1">
-                                <Link
-                                    href={`/@${u.username}`}
-                                    target="_blank"
-                                    className="font-semibold text-gray-900 dark:text-zinc-100 hover:underline truncate block"
-                                >
-                                    {u.full_name || u.username}
-                                    {u.is_suspended && (
-                                        <span className="ml-2 align-middle text-[10px] font-bold uppercase tracking-wide text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 px-1.5 py-0.5 rounded">
-                                            Suspendu
-                                        </span>
-                                    )}
-                                </Link>
-                                <p className="text-xs text-gray-500 dark:text-zinc-400">@{u.username}</p>
+                        <div
+                            key={u.id}
+                            className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 p-3 border border-gray-100 dark:border-zinc-800 rounded-xl"
+                        >
+                            <div className="flex items-center gap-4 min-w-0 flex-1">
+                                <Image
+                                    src={u.avatar_url || avatarFallback(u.id)}
+                                    alt=""
+                                    width={40}
+                                    height={40}
+                                    unoptimized
+                                    className="w-10 h-10 rounded-full object-cover shrink-0 bg-gray-100 dark:bg-zinc-800"
+                                />
+                                <div className="min-w-0 flex-1">
+                                    <Link
+                                        href={`/@${u.username}`}
+                                        target="_blank"
+                                        className="font-semibold text-gray-900 dark:text-zinc-100 hover:underline truncate block"
+                                    >
+                                        {u.full_name || u.username}
+                                        {u.is_suspended && (
+                                            <span className="ml-2 align-middle text-[10px] font-bold uppercase tracking-wide text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950 px-1.5 py-0.5 rounded">
+                                                Suspendu
+                                            </span>
+                                        )}
+                                    </Link>
+                                    <p className="text-xs text-gray-500 dark:text-zinc-400">@{u.username}</p>
+                                </div>
                             </div>
+                            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap sm:shrink-0">
                             <button
                                 disabled={busyId === u.id}
                                 onClick={() => toggleFlag(u, "is_verified")}
@@ -151,9 +159,35 @@ export default function AdminUsersPage() {
                             >
                                 <ShieldCheck className="w-4 h-4" /> {u.role === "admin" ? "Admin" : "Rendre admin"}
                             </button>
+                            <button
+                                disabled={busyId === u.id || u.id === currentAdmin?.id || u.role === "admin"}
+                                onClick={() => setDeleteTarget(u)}
+                                title={
+                                    u.id === currentAdmin?.id
+                                        ? "Impossible de supprimer votre propre compte ici"
+                                        : u.role === "admin"
+                                        ? "Retirez d'abord les droits admin avant de supprimer ce compte"
+                                        : "Supprimer définitivement ce compte"
+                                }
+                                className="p-2 rounded-lg text-gray-300 dark:text-zinc-600 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950 transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gray-300 dark:disabled:hover:text-zinc-600"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                            </div>
                         </div>
                     ))}
                 </div>
+            )}
+
+            {deleteTarget && (
+                <DeleteAccountDialog
+                    user={deleteTarget}
+                    onClose={() => setDeleteTarget(null)}
+                    onDeleted={() => {
+                        setDeleteTarget(null);
+                        load(search);
+                    }}
+                />
             )}
         </div>
     );
