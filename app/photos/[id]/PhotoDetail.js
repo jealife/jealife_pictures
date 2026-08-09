@@ -501,11 +501,21 @@ function ShareModal({ photo, copied, onCopy, onClose }) {
                 className="bg-white dark:bg-zinc-900 rounded-3xl w-full max-w-md p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200"
                 onClick={(event) => event.stopPropagation()}
             >
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-black text-gray-900 dark:text-zinc-100">Partager</h2>
                     <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-full transition-colors text-gray-600 dark:text-zinc-400" aria-label="Fermer">
                         <X className="w-5 h-5" />
                     </button>
+                </div>
+
+                <div className="flex justify-center mb-6">
+                    <Image
+                        src="/share.png"
+                        alt="Illustration Partager"
+                        width={140}
+                        height={140}
+                        className="w-32 h-auto object-contain"
+                    />
                 </div>
 
                 <div className="p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl border border-gray-100 dark:border-zinc-700 flex items-center justify-between gap-4 mb-6">
