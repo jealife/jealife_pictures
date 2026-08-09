@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -16,24 +16,29 @@ import ReportDialog from "../../components/ReportDialog";
 import PhotoCard from "../../components/PhotoCard";
 import { useAuth } from "../../contexts/AuthContext";
 import {
-    getMediaById, getRelatedMedia, hasUserLikedMedia, incrementViews,
+    getRelatedMedia, hasUserLikedMedia, incrementViews,
 } from "../../lib/database";
-import { normalizeMedia, normalizeMediaList, formatCount, locationLabel, parseMediaId, mediaUrl } from "../../lib/media";
+import { normalizeMedia, normalizeMediaList, formatCount, locationLabel, mediaUrl } from "../../lib/media";
 
-export default function PhotoDetail() {
+/**
+ * `initialPhoto` est la ligne déjà chargée par le composant serveur (voir
+ * page.js). La fiche part donc complète dès le premier rendu — image,
+ * titre et description sont dans le HTML initial, et le navigateur commence
+ * à télécharger l'image à l'analyse du document plutôt qu'après hydratation
+ * puis requête Supabase. Seuls les compléments non essentiels au premier
+ * affichage (images associées, état « j'aime ») restent chargés ensuite.
+ */
+export default function PhotoDetail({ initialPhoto }) {
     const { id: rawId } = useParams();
     const router = useRouter();
     const pathname = usePathname();
     const { user } = useAuth();
-    
-    // Extrait l'ID numérique du slug (ex: "123-paysage" -> 123)
-    const id = parseMediaId(rawId);
 
-    const [photo, setPhoto] = useState(null);
-    const [raw, setRaw] = useState(null);
+    const raw = initialPhoto;
+    const photo = useMemo(() => (initialPhoto ? normalizeMedia(initialPhoto) : null), [initialPhoto]);
+
     const [related, setRelated] = useState([]);
     const [liked, setLiked] = useState(false);
-    const [loading, setLoading] = useState(true);
     const [showShare, setShowShare] = useState(false);
     const [showReport, setShowReport] = useState(false);
     const [copied, setCopied] = useState(false);
@@ -42,47 +47,28 @@ export default function PhotoDetail() {
 
     useEffect(() => {
         window.scrollTo(0, 0);
-        let cancelled = false;
+        if (!photo) return;
 
-        async function load() {
-            setLoading(true);
-            const data = await getMediaById(id);
-            if (cancelled) return;
-
-            if (!data) {
-                setPhoto(null);
-                setLoading(false);
-                return;
-            }
-
-            const normalized = normalizeMedia(data);
-            const canonicalPath = mediaUrl(normalized);
-
-            // Redirection canonique silencieuse si l'URL ne correspond pas au
-            // slug : on s'arrête là et on laisse cet effet se redéclencher
-            // une fois `pathname` mis à jour (il est dans les dépendances).
-            // Continuer ici en plus de ce second passage comptait chaque vue
-            // deux fois pour toute entrée par une URL non canonique (lien
-            // brut `/photos/123`, ancien lien partagé avant renommage…).
-            if (pathname !== canonicalPath) {
-                router.replace(canonicalPath, { scroll: false });
-                return;
-            }
-
-            setRaw(data);
-            setPhoto(normalized);
-            setLoading(false);
-
-            incrementViews(id);
-
-            getRelatedMedia(data).then((rows) => {
-                if (!cancelled) setRelated(normalizeMediaList(rows));
-            });
+        // Redirection canonique silencieuse si l'URL ne correspond pas au
+        // slug : on s'arrête là et on laisse cet effet se redéclencher une
+        // fois `pathname` mis à jour (il est dans les dépendances). Continuer
+        // ici en plus de ce second passage comptait chaque vue deux fois pour
+        // toute entrée par une URL non canonique (lien brut `/photos/123`,
+        // ancien lien partagé avant renommage…).
+        const canonicalPath = mediaUrl(photo);
+        if (pathname !== canonicalPath) {
+            router.replace(canonicalPath, { scroll: false });
+            return;
         }
 
-        load();
+        incrementViews(photo.id);
+
+        let cancelled = false;
+        getRelatedMedia(initialPhoto).then((rows) => {
+            if (!cancelled) setRelated(normalizeMediaList(rows));
+        });
         return () => { cancelled = true; };
-    }, [id, pathname, router]);
+    }, [initialPhoto, photo, pathname, router]);
 
     useEffect(() => {
         if (!user || !photo) return;
@@ -113,8 +99,6 @@ export default function PhotoDetail() {
         setTimeout(() => setCopied(false), 2000);
     };
 
-    if (loading) return <DetailSkeleton />;
-
     if (!photo) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-zinc-950 text-center px-4">
@@ -129,6 +113,21 @@ export default function PhotoDetail() {
     const isOwner = user?.id === raw?.user_id;
     const place = locationLabel(photo);
     const topics = (raw?.media_topics || []).map((link) => link.topics).filter(Boolean);
+    // Réglages relevés dans l'EXIF au moment du dépôt (migration 0016).
+    // Focale et ouverture partagent une ligne : c'est ainsi qu'un
+    // photographe les lit (« 35.0mm f/2.4 »).
+    const exposure = [raw?.focal_length, raw?.aperture].filter(Boolean).join(" ");
+    const shootingDetails = [
+        { label: "Appareil photo", value: raw?.camera },
+        { label: "Objectif", value: raw?.lens },
+        { label: "Exposition", value: [exposure, raw?.shutter_speed].filter(Boolean).join(" · ") },
+        { label: "ISO", value: raw?.iso ? String(raw.iso) : null },
+        {
+            label: "Dimensions",
+            value: raw?.width && raw?.height ? `${raw.width} × ${raw.height}` : null,
+        },
+    ].filter((detail) => detail.value);
+
     const publishedOn = raw?.created_at
         ? new Date(raw.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
         : null;
@@ -363,9 +362,30 @@ export default function PhotoDetail() {
                             </div>
                         )}
                         {raw?.camera && (
-                            <div className="flex items-center gap-3 text-[14px] text-gray-500 dark:text-zinc-400">
-                                <Camera className="w-4 h-4" />
-                                <span>{raw.camera}</span>
+                            // Réglages de prise de vue au survol : ils encombreraient
+                            // la fiche affichés en permanence, mais renseignent le
+                            // photographe qui vient précisément voir comment
+                            // l'image a été faite. `focus-within` double le survol
+                            // pour le clavier et le tactile.
+                            <div className="relative group w-fit">
+                                <div
+                                    tabIndex={0}
+                                    className="flex items-center gap-3 text-[14px] text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white transition-colors outline-none"
+                                >
+                                    <Camera className="w-4 h-4" />
+                                    <span>{raw.camera}</span>
+                                </div>
+
+                                {shootingDetails.length > 0 && (
+                                    <div className="absolute left-0 bottom-full mb-2 z-30 w-max max-w-xs hidden group-hover:block group-focus-within:block bg-gray-900 dark:bg-zinc-800 text-white rounded-xl shadow-xl px-4 py-3 space-y-2.5">
+                                        {shootingDetails.map(({ label, value }) => (
+                                            <div key={label}>
+                                                <p className="text-[11px] text-gray-400 dark:text-zinc-500">{label}</p>
+                                                <p className="text-[13px] font-medium leading-snug">{value}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
                         <div className="flex items-center gap-3 text-[14px] text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white transition-colors">
@@ -485,43 +505,6 @@ function ShareModal({ photo, copied, onCopy, onClose }) {
                             <span className="text-xs font-bold text-gray-700 dark:text-zinc-300">{target.label}</span>
                         </a>
                     ))}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function DetailSkeleton() {
-    return (
-        <div className="min-h-screen bg-white dark:bg-zinc-950">
-            <div className="sticky top-16 z-30 bg-white dark:bg-zinc-950 border-b border-gray-100 dark:border-zinc-800 px-4 h-[72px] flex items-center justify-between animate-pulse">
-                <div className="flex items-center gap-4">
-                    <div className="w-9 h-9 bg-gray-100 dark:bg-zinc-800 rounded-full" />
-                    <div className="w-10 h-10 bg-gray-100 dark:bg-zinc-800 rounded-full" />
-                    <div className="space-y-2">
-                        <div className="w-24 h-3 bg-gray-100 dark:bg-zinc-800 rounded" />
-                        <div className="w-16 h-2 bg-gray-50 dark:bg-zinc-800 rounded" />
-                    </div>
-                </div>
-                <div className="flex gap-2">
-                    <div className="w-20 h-10 bg-gray-100 dark:bg-zinc-800 rounded-xl" />
-                    <div className="w-32 h-10 bg-gray-100 dark:bg-zinc-800 rounded-xl" />
-                </div>
-            </div>
-
-            <div className="w-full bg-gray-900 min-h-[50vh] animate-pulse" />
-
-            <div className="max-w-[1200px] mx-auto px-4 py-16">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
-                    <div className="lg:col-span-2 space-y-6">
-                        <div className="w-3/4 h-12 bg-gray-100 dark:bg-zinc-800 rounded-xl animate-pulse" />
-                        <div className="w-full h-4 bg-gray-50 dark:bg-zinc-800 rounded animate-pulse" />
-                        <div className="w-5/6 h-4 bg-gray-50 dark:bg-zinc-800 rounded animate-pulse" />
-                    </div>
-                    <div className="space-y-4">
-                        <div className="w-full h-24 bg-gray-50 dark:bg-zinc-800 rounded-2xl animate-pulse" />
-                        <div className="w-full h-48 bg-gray-50 dark:bg-zinc-800 rounded-2xl animate-pulse" />
-                    </div>
                 </div>
             </div>
         </div>

@@ -155,7 +155,12 @@ export default async function Page({ params }) {
                         dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
                     />
                 ))}
-            <PhotoDetail />
+            {/* La fiche est déjà chargée ici (métadonnées, JSON-LD) : la
+                transmettre évite au navigateur de la redemander après
+                hydratation. C'est ce second aller-retour qui faisait passer la
+                page par un écran squelette avant même de commencer à
+                télécharger l'image. */}
+            <PhotoDetail initialPhoto={photo} />
         </>
     );
 }
