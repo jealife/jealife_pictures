@@ -634,6 +634,45 @@ export default function SubmitForm() {
     const [dbTopics, setDbTopics] = useState([]);
     const [moderationMode, setModerationMode] = useState("auto");
 
+    // Le quota Gemini est partagé par tout le site, pas par image : une fois
+    // atteint, chaque tentative échoue à l'identique tant qu'il n'est pas
+    // reconstitué. Inutile de laisser chaque bouton « Générer avec l'IA »
+    // retenter et échouer un par un — on le désactive partout dès la
+    // première 429, et on le réactive tout seul passé le délai. `localStorage`
+    // fait survivre ce délai à un rechargement de page : sans lui, F5 rendait
+    // le bouton actif à nouveau alors que le quota, côté Google, restait
+    // épuisé.
+    const [aiQuotaExhaustedUntil, setAiQuotaExhaustedUntil] = useState(0);
+    const aiQuotaExhausted = aiQuotaExhaustedUntil > Date.now();
+
+    const markAiQuotaExhausted = (retryAfterMs) => {
+        const until = Date.now() + (retryAfterMs || 2 * 60 * 1000);
+        setAiQuotaExhaustedUntil(until);
+        try {
+            localStorage.setItem(AI_QUOTA_STORAGE_KEY, String(until));
+        } catch {
+            /* stockage indisponible (navigation privée…) : tant pis, l'état en mémoire suffit pour cette session */
+        }
+    };
+
+    // Reprend un délai déjà enregistré (rechargement de page) et programme sa
+    // propre expiration : c'est ce `setTimeout` qui fait « réapparaître » le
+    // bouton tout seul, sans action de l'utilisateur.
+    useEffect(() => {
+        let stored = 0;
+        try {
+            stored = Number(localStorage.getItem(AI_QUOTA_STORAGE_KEY)) || 0;
+        } catch {
+            /* ignore */
+        }
+        if (stored > Date.now()) setAiQuotaExhaustedUntil(stored);
+
+        if (aiQuotaExhaustedUntil <= Date.now()) return;
+        const timer = setTimeout(() => setAiQuotaExhaustedUntil(0), aiQuotaExhaustedUntil - Date.now());
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [aiQuotaExhaustedUntil]);
+
     const fileInputRef = useRef(null);
     const addMoreInputRef = useRef(null);
 

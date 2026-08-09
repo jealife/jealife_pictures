@@ -90,7 +90,7 @@ export default async function UserPhotosPage({ params }) {
             sameAs: [
                 profile.website,
                 profile.instagram_username && `https://instagram.com/${profile.instagram_username}`,
-                profile.twitter_username && `https://x.com/${profile.twitter_username}`,
+                profile.facebook_username && `https://facebook.com/${profile.facebook_username}`,
             ].filter(Boolean),
         },
     };

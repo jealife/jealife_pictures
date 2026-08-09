@@ -76,31 +76,60 @@ export async function POST(request) {
             }
         `;
 
-        const response = await ai.models.generateContent({
-            model: "gemini-flash-latest",
-            contents: [
-                prompt,
-                {
-                    inlineData: {
-                        data: image,
-                        mimeType: mimeType || "image/jpeg",
+        let response;
+        try {
+            response = await ai.models.generateContent({
+                model: "gemini-flash-latest",
+                contents: [
+                    prompt,
+                    {
+                        inlineData: {
+                            data: image,
+                            mimeType: mimeType || "image/jpeg",
+                        }
                     }
+                ],
+                config: {
+                    responseMimeType: "application/json",
                 }
-            ],
-            config: {
-                responseMimeType: "application/json",
+            });
+        } catch (err) {
+            // `ApiError.status` (voir @google/genai) porte le code HTTP réel de
+            // Gemini, contrairement à `err.message` qui n'est que le corps JSON
+            // de l'erreur mis en chaîne — inutilisable pour un `if` fiable.
+            // Un 429 ici n'est pas la limite de débit maison ci-dessus (déjà
+            // traitée plus haut) mais celle de Google elle-même. Son quota
+            // gratuit se compte par JOUR ("...PerDay..." dans le détail de
+            // l'erreur) : le `retryDelay` que Gemini suggère (quelques
+            // secondes) n'a de sens que pour une rafale, pas pour un quota
+            // journalier déjà épuisé — le client ne doit pas s'y fier pour
+            // décider quand réessayer.
+            if (err?.status === 429) {
+                const isDailyQuota = /PerDay/i.test(err.message || "");
+                console.warn("Quota Gemini atteint :", err.message);
+                return NextResponse.json(
+                    {
+                        error: isDailyQuota
+                            ? "Quota de génération IA atteint pour aujourd'hui. Décrivez l'image vous-même, ou réessayez plus tard."
+                            : "Trop de demandes de génération IA en ce moment. Réessayez dans quelques minutes.",
+                        quotaExceeded: true,
+                        retryAfterMs: isDailyQuota ? 6 * 60 * 60 * 1000 : 2 * 60 * 1000,
+                    },
+                    { status: 429 }
+                );
             }
-        });
+            throw err;
+        }
 
         let text = response.text;
-        
+
         // Supprimer le bloc de code markdown si présent
         if (text && text.startsWith("```json")) {
             text = text.replace(/^```json\n?/, "").replace(/\n?```$/, "");
         } else if (text && text.startsWith("```")) {
             text = text.replace(/^```\n?/, "").replace(/\n?```$/, "");
         }
-        
+
         const data = JSON.parse(text);
 
         return NextResponse.json(data);

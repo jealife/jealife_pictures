@@ -167,12 +167,12 @@ export default function UserProfileLayout({ children }) {
                                                             <ImageIcon className="w-4 h-4 text-gray-400 dark:text-zinc-500" /> Instagram
                                                         </a>
                                                     )}
-                                                    {profileUser.twitter_username && (
-                                                        <a href={`https://twitter.com/${profileUser.twitter_username}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
-                                                            <Mail className="w-4 h-4 text-gray-400 dark:text-zinc-500" /> Twitter
+                                                    {profileUser.facebook_username && (
+                                                        <a href={`https://facebook.com/${profileUser.facebook_username}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-4 py-2.5 text-[13px] text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors">
+                                                            <Mail className="w-4 h-4 text-gray-400 dark:text-zinc-500" /> Facebook
                                                         </a>
                                                     )}
-                                                    {!profileUser.email && !profileUser.website && !profileUser.instagram_username && !profileUser.twitter_username && (
+                                                    {!profileUser.email && !profileUser.website && !profileUser.instagram_username && !profileUser.facebook_username && (
                                                         <div className="px-4 py-3 text-[13px] text-gray-500 dark:text-zinc-400 italic">
                                                             Aucun lien de contact renseigné.
                                                         </div>

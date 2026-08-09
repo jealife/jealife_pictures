@@ -97,7 +97,7 @@ export function normalizeMedia(row) {
             isVerified: !!profile.is_verified,
             website: profile.website || null,
             instagramUsername: profile.instagram_username || null,
-            twitterUsername: profile.twitter_username || null,
+            facebookUsername: profile.facebook_username || null,
         },
     };
 }

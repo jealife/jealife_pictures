@@ -23,7 +23,7 @@ export default function SettingsPage() {
         location: "",
         website: "",
         instagram_username: "",
-        twitter_username: "",
+        facebook_username: "",
         avatar_url: "",
         is_available_for_hire: false
     });
@@ -69,7 +69,7 @@ export default function SettingsPage() {
                     location: data.location || "",
                     website: data.website || "",
                     instagram_username: data.instagram_username || "",
-                    twitter_username: data.twitter_username || "",
+                    facebook_username: data.facebook_username || "",
                     avatar_url: data.avatar_url || "",
                     is_available_for_hire: data.is_available_for_hire || false
                 });
@@ -136,7 +136,7 @@ export default function SettingsPage() {
                 location: profile.location,
                 website: profile.website,
                 instagram_username: profile.instagram_username,
-                twitter_username: profile.twitter_username,
+                facebook_username: profile.facebook_username,
                 avatar_url: finalAvatarUrl,
                 is_available_for_hire: profile.is_available_for_hire
             };
@@ -385,7 +385,7 @@ export default function SettingsPage() {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 dark:text-zinc-300 mb-1 flex items-center gap-2">
-                                            Twitter / X
+                                            Facebook
                                         </label>
                                         <div className="flex">
                                             <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400 text-sm">
@@ -393,8 +393,8 @@ export default function SettingsPage() {
                                             </span>
                                             <input
                                                 type="text"
-                                                value={profile.twitter_username}
-                                                onChange={(e) => setProfile({ ...profile, twitter_username: e.target.value })}
+                                                value={profile.facebook_username}
+                                                onChange={(e) => setProfile({ ...profile, facebook_username: e.target.value })}
                                                 placeholder="votre_pseudo"
                                                 className="w-full px-4 py-3 border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 rounded-r-lg focus:ring-1 focus:ring-black dark:focus:ring-white focus:border-black dark:focus:border-white outline-hidden transition-all text-sm"
                                             />

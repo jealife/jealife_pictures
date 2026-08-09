@@ -19,7 +19,7 @@ const DETAIL_SELECT = `
   profiles:user_id (
     id, username, full_name, avatar_url, bio, location,
     is_verified, total_views, total_downloads,
-    website, instagram_username, twitter_username
+    website, instagram_username, facebook_username
   ),
   countries:country_code ( code, name_fr, slug, region ),
   media_topics ( topics ( id, name, slug ) )
