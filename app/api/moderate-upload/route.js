@@ -194,6 +194,12 @@ export async function POST(request) {
 
         if (!isVideo) {
             const sharpness = await measureSharpness(buffer);
+            // Log toujours la valeur mesurée : en production, ces lignes
+            // permettent d'ajuster MIN_SHARPNESS_VARIANCE sur des données
+            // réelles (faux positifs = photos nettes rejetées, faux négatifs
+            // = photos floues acceptées). Format tabulaire pour grep facile :
+            //   grep 'sharpness' vercel.log | awk '{print $NF}' | sort -n
+            console.log(`[moderate-upload] sharpness=${sharpness.toFixed(1)} threshold=${MIN_SHARPNESS_VARIANCE} result=${sharpness < MIN_SHARPNESS_VARIANCE ? 'FAIL' : 'PASS'} user=${user.id}`);
             if (sharpness < MIN_SHARPNESS_VARIANCE) {
                 return NextResponse.json(
                     { error: "Cette image semble floue ou mal mise au point. Essayez une prise plus nette." },

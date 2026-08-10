@@ -296,9 +296,11 @@ export default function PhotoDetail({ initialPhoto }) {
                     {isOwner && (
                         <Link
                             href={`/photos/${rawId}/edit`}
-                            className="hidden sm:flex items-center gap-2 h-9 px-3 border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 rounded-md text-[13px] font-medium text-gray-700 dark:text-zinc-300 hover:border-gray-900 hover:text-gray-900 dark:hover:border-zinc-400 dark:hover:text-white transition-all shadow-sm"
+                            className="flex items-center gap-2 h-9 px-2.5 sm:px-3 border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 rounded-md text-[13px] font-medium text-gray-700 dark:text-zinc-300 hover:border-gray-900 hover:text-gray-900 dark:hover:border-zinc-400 dark:hover:text-white transition-all shadow-sm"
+                            title="Modifier l'image"
                         >
-                            <Edit2 className="w-3.5 h-3.5" /> Modifier l&apos;image
+                            <Edit2 className="w-3.5 h-3.5 shrink-0" />
+                            <span className="hidden sm:inline">Modifier l&apos;image</span>
                         </Link>
                     )}
 

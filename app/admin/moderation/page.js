@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { CheckCircle2, XCircle, Trash2, Loader2, ExternalLink } from "lucide-react";
+import { CheckCircle2, XCircle, Trash2, Loader2, ExternalLink, ChevronDown } from "lucide-react";
 import {
     getPendingMedia, getOpenReports,
     approveMedia, rejectMedia, removeMedia, resolveReport,
@@ -18,23 +18,60 @@ const REASON_LABELS = {
     autre: "Autre",
 };
 
+const PAGE_SIZE = 20;
+
 export default function ModerationPage() {
     const [pending, setPending] = useState(null);
+    const [pendingOffset, setPendingOffset] = useState(0);
+    const [pendingHasMore, setPendingHasMore] = useState(false);
+    const [pendingLoading, setPendingLoading] = useState(false);
+
     const [reports, setReports] = useState(null);
+    const [reportsOffset, setReportsOffset] = useState(0);
+    const [reportsHasMore, setReportsHasMore] = useState(false);
+    const [reportsLoading, setReportsLoading] = useState(false);
+
     const [busyKey, setBusyKey] = useState(null);
 
-    const load = useCallback(() => {
-        getPendingMedia({ limit: 50 }).then(setPending);
-        getOpenReports({ limit: 50 }).then(setReports);
+    // Charge le premier lot au montage.
+    useEffect(() => {
+        getPendingMedia({ limit: PAGE_SIZE, offset: 0 }).then((data) => {
+            setPending(data);
+            setPendingHasMore(data.length === PAGE_SIZE);
+        });
+        getOpenReports({ limit: PAGE_SIZE, offset: 0 }).then((data) => {
+            setReports(data);
+            setReportsHasMore(data.length === PAGE_SIZE);
+        });
     }, []);
 
-    useEffect(() => { load(); }, [load]);
+    const loadMorePending = async () => {
+        setPendingLoading(true);
+        const nextOffset = pendingOffset + PAGE_SIZE;
+        const data = await getPendingMedia({ limit: PAGE_SIZE, offset: nextOffset });
+        setPending((prev) => [...(prev || []), ...data]);
+        setPendingOffset(nextOffset);
+        setPendingHasMore(data.length === PAGE_SIZE);
+        setPendingLoading(false);
+    };
 
-    const runAction = async (key, action) => {
+    const loadMoreReports = async () => {
+        setReportsLoading(true);
+        const nextOffset = reportsOffset + PAGE_SIZE;
+        const data = await getOpenReports({ limit: PAGE_SIZE, offset: nextOffset });
+        setReports((prev) => [...(prev || []), ...data]);
+        setReportsOffset(nextOffset);
+        setReportsHasMore(data.length === PAGE_SIZE);
+        setReportsLoading(false);
+    };
+
+    // Retire l'item localement sans recharger toute la liste :
+    // préserve la position de scroll et les pages déjà chargées.
+    const runAction = async (key, action, removeFromList) => {
         setBusyKey(key);
         await action();
         setBusyKey(null);
-        load();
+        removeFromList(key);
     };
 
     return (
@@ -88,14 +125,25 @@ export default function ModerationPage() {
                                         </Link>
                                         <button
                                             disabled={busyKey === key}
-                                            onClick={() => runAction(key, () => approveMedia(item.id))}
+                                            onClick={() => runAction(
+                                                key,
+                                                () => approveMedia(item.id),
+                                                (k) => setPending((prev) => prev.filter((i) => `media-${i.id}` !== k))
+                                            )}
                                             className="px-3 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-bold rounded-lg hover:bg-gray-800 dark:hover:bg-zinc-200 disabled:opacity-50 flex items-center gap-1.5"
                                         >
                                             <CheckCircle2 className="w-4 h-4" /> Publier
                                         </button>
                                         <button
                                             disabled={busyKey === key}
-                                            onClick={() => runAction(key, () => rejectMedia(item.id))}
+                                            onClick={() => {
+                                                if (!window.confirm(`Rejeter « ${item.title || item.alt_text || "Sans titre"} » ? Cette action est définitive.`)) return;
+                                                runAction(
+                                                    key,
+                                                    () => rejectMedia(item.id),
+                                                    (k) => setPending((prev) => prev.filter((i) => `media-${i.id}` !== k))
+                                                );
+                                            }}
                                             className="px-3 py-2 border border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 text-xs font-bold rounded-lg hover:border-red-300 dark:hover:border-red-800 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50 flex items-center gap-1.5"
                                         >
                                             <XCircle className="w-4 h-4" /> Rejeter
@@ -104,6 +152,17 @@ export default function ModerationPage() {
                                 </div>
                             );
                         })}
+
+                        {pendingHasMore && (
+                            <button
+                                onClick={loadMorePending}
+                                disabled={pendingLoading}
+                                className="mt-2 flex items-center gap-2 px-4 py-2.5 border border-gray-200 dark:border-zinc-700 rounded-lg text-sm font-medium text-gray-600 dark:text-zinc-400 hover:border-gray-400 dark:hover:border-zinc-500 hover:text-black dark:hover:text-white disabled:opacity-50 transition-colors"
+                            >
+                                {pendingLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronDown className="w-4 h-4" />}
+                                Voir plus
+                            </button>
+                        )}
                     </div>
                 )}
             </section>
@@ -160,7 +219,11 @@ export default function ModerationPage() {
                                         </Link>
                                         <button
                                             disabled={busyKey === key}
-                                            onClick={() => runAction(key, () => resolveReport(report.id))}
+                                            onClick={() => runAction(
+                                                key,
+                                                () => resolveReport(report.id),
+                                                (k) => setReports((prev) => prev.filter((r) => `report-${r.id}` !== k))
+                                            )}
                                             className="px-3 py-2 border border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 text-xs font-bold rounded-lg hover:border-gray-400 dark:hover:border-zinc-500 disabled:opacity-50"
                                         >
                                             Ignorer
@@ -172,7 +235,7 @@ export default function ModerationPage() {
                                                 runAction(key, async () => {
                                                     await removeMedia(report.media.id);
                                                     await resolveReport(report.id);
-                                                });
+                                                }, (k) => setReports((prev) => prev.filter((r) => `report-${r.id}` !== k)));
                                             }}
                                             className="px-3 py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-1.5"
                                         >
@@ -182,6 +245,17 @@ export default function ModerationPage() {
                                 </div>
                             );
                         })}
+
+                        {reportsHasMore && (
+                            <button
+                                onClick={loadMoreReports}
+                                disabled={reportsLoading}
+                                className="mt-2 flex items-center gap-2 px-4 py-2.5 border border-gray-200 dark:border-zinc-700 rounded-lg text-sm font-medium text-gray-600 dark:text-zinc-400 hover:border-gray-400 dark:hover:border-zinc-500 hover:text-black dark:hover:text-white disabled:opacity-50 transition-colors"
+                            >
+                                {reportsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronDown className="w-4 h-4" />}
+                                Voir plus
+                            </button>
+                        )}
                     </div>
                 )}
             </section>
