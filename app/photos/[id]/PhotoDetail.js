@@ -221,7 +221,7 @@ export default function PhotoDetail({ initialPhoto }) {
                             width={36}
                             height={36}
                             unoptimized
-                            className="rounded-full object-cover shrink-0 ring-1 ring-gray-200 dark:ring-zinc-700 group-hover:ring-gray-300 dark:group-hover:ring-zinc-600 transition-all"
+                            className="w-9 h-9 rounded-full object-cover shrink-0 ring-1 ring-gray-200 dark:ring-zinc-700 group-hover:ring-gray-300 dark:group-hover:ring-zinc-600 transition-all"
                         />
                     </Link>
                     <div className="flex flex-col min-w-0">
@@ -237,7 +237,7 @@ export default function PhotoDetail({ initialPhoto }) {
                                 className="flex text-[13px] text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 font-medium truncate items-center gap-1 transition-colors"
                             >
                                
-                                {photo.author.isAvailableForHire ? "Disponible à l'embauche" : "Contacter"}
+                                {photo.author.isAvailableForHire ? "Disponible" : "Contacter"}
                                 <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${showConnect ? "rotate-180" : ""}`} />
                             </button>
 

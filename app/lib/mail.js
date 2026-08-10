@@ -22,22 +22,22 @@ const transporter = nodemailer.createTransport({
 });
 
 /** Adresse et nom affichés dans le champ « De : » de tous les emails. */
-const FROM = `"JEaLiFe Stock" <${process.env.MAIL_USER || "notifications@jealife.com"}>`;
+const FROM = `"JEaLiFe Stock" <${process.env.MAIL_USER || "notifications@stock.jealife.com"}>`;
 
 /** URL de base du site, sans slash final. */
-const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://jealife.com").replace(/\/$/, "");
-
-
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://stock.jealife.com").replace(/\/$/, "");
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Template de base respectant la charte graphique JEaLiFe Stock
+// Template de base respectant la charte graphique Noir & Blanc JEaLiFe Stock
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Enveloppe HTML haute fidélité alignée sur la charte graphique JEaLiFe Stock.
- * Noir profond #09090b, typographie claire, bordures subtiles #e4e4e7, CTA haute lisibilité.
+ * Enveloppe HTML haute fidélité monochrome (Noir & Blanc strict).
+ * Intègre le logo officiel du site (JEaLiFe-Stock-Logo-transparent-blanc.png).
  */
 function wrap(body, previewText = "") {
+    const logoUrl = `${SITE_URL}/JEaLiFe-Stock-Logo-transparent-blanc.png`;
+
     return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -53,18 +53,18 @@ function wrap(body, previewText = "") {
       <td align="center">
         <table width="580" cellpadding="0" cellspacing="0" style="max-width:580px;width:100%;background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.06);border:1px solid #e4e4e7;">
 
-          <!-- Header aux couleurs de la marque -->
+          <!-- Header Noir & Blanc avec Logo du site -->
           <tr>
-            <td style="background-color:#09090b;padding:28px 36px;border-bottom:3px solid #d97706;">
+            <td style="background-color:#09090b;padding:28px 36px;border-bottom:1px solid #27272a;">
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td>
                     <a href="${SITE_URL}" style="text-decoration:none;display:inline-block;">
-                      <span style="font-size:20px;font-weight:900;color:#ffffff;letter-spacing:-0.5px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">JEaLiFe <span style="color:#d97706;font-weight:400;">Stock</span></span>
+                      <img src="${logoUrl}" alt="JEaLiFe Stock" height="34" style="height:34px;width:auto;display:block;border:0;" />
                     </a>
                   </td>
                   <td align="right">
-                    <span style="font-size:11px;font-weight:700;color:#a1a1aa;text-transform:uppercase;letter-spacing:1px;background:rgba(255,255,255,0.08);padding:4px 10px;border-radius:20px;">Service Modération</span>
+                    <span style="font-size:11px;font-weight:700;color:#a1a1aa;text-transform:uppercase;letter-spacing:1px;background:rgba(255,255,255,0.1);padding:5px 12px;border-radius:20px;">Modération</span>
                   </td>
                 </tr>
               </table>
@@ -78,14 +78,14 @@ function wrap(body, previewText = "") {
             </td>
           </tr>
 
-          <!-- Footer Officiel -->
+          <!-- Footer Monochrome Officiel -->
           <tr>
             <td style="padding:24px 36px;border-top:1px solid #f4f4f5;background-color:#fafafa;">
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="font-size:12px;color:#71717a;line-height:1.6;">
-                    <p style="margin:0 0 6px;font-weight:600;color:#3f3f46;">JEaLiFe Stock — Banque d'images & Médias</p>
-                    <p style="margin:0;">Vous recevez ce message automatique concernant vos contributions sur <a href="${SITE_URL}" style="color:#09090b;text-decoration:underline;">jealife.com</a>.</p>
+                    <p style="margin:0 0 6px;font-weight:600;color:#18181b;">JEaLiFe Stock — Banque d'images & Médias</p>
+                    <p style="margin:0;">Vous recevez ce message automatique concernant vos contributions sur <a href="${SITE_URL}" style="color:#09090b;text-decoration:underline;">stock.jealife.com</a>.</p>
                   </td>
                 </tr>
               </table>
@@ -101,16 +101,16 @@ function wrap(body, previewText = "") {
 }
 
 /**
- * Email de félicitations envoyé à la publication d'un média.
+ * Email de félicitations envoyé à la publication d'un média (Style Noir & Blanc).
  */
 export function buildApprovedEmail({ title, photoUrl, mediaPageUrl }) {
-    const subject = `🎉 Votre photo « ${title || "Sans titre"} » est en ligne !`;
+    const subject = `[JEaLiFe Stock] Votre photo « ${title || "Sans titre"} » est en ligne`;
     const previewText = "Votre contenu a passé la modération et est désormais visible par tous sur JEaLiFe Stock.";
 
     const html = wrap(`
       <div style="margin-bottom:24px;">
-        <span style="display:inline-block;padding:6px 14px;background-color:#ecfdf5;color:#047857;border:1px solid #a7f3d0;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:16px;">
-          ✓ Publication Approuvée
+        <span style="display:inline-block;padding:6px 14px;background-color:#09090b;color:#ffffff;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:16px;">
+          ✓ PUBLIÉE SUR LE FEED
         </span>
         <h1 style="margin:0 0 12px;font-size:24px;font-weight:800;color:#09090b;letter-spacing:-0.5px;line-height:1.2;">
           Félicitations, votre photo est en ligne !
@@ -125,7 +125,7 @@ export function buildApprovedEmail({ title, photoUrl, mediaPageUrl }) {
         <img src="${photoUrl}" alt="${title || "Photo"}" width="508" style="width:100%;max-width:508px;height:auto;display:block;object-fit:cover;" />
       </div>` : ""}
 
-      <div style="background-color:#fafafa;border:1px solid #f4f4f5;border-radius:12px;padding:16px 20px;margin-bottom:28px;">
+      <div style="background-color:#fafafa;border:1px solid #e4e4e7;border-radius:12px;padding:16px 20px;margin-bottom:28px;">
         <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#a1a1aa;text-transform:uppercase;letter-spacing:0.8px;">Titre de l'image</p>
         <p style="margin:0;font-size:16px;font-weight:700;color:#09090b;">${title || "Sans titre"}</p>
       </div>
@@ -143,20 +143,20 @@ export function buildApprovedEmail({ title, photoUrl, mediaPageUrl }) {
 }
 
 /**
- * Email d'explications et conseils envoyé lorsqu'un média est refusé.
+ * Email d'explications et conseils envoyé lorsqu'un média est refusé (Style Noir & Blanc).
  */
 export function buildRejectedEmail({ title, photoUrl, reasonKey = "autre", customNote = "" }) {
     const reasonInfo = REJECTION_REASONS[reasonKey] || REJECTION_REASONS.autre;
-    const subject = `Information concernant votre envoi « ${title || "Photo"} » — JEaLiFe Stock`;
+    const subject = `[JEaLiFe Stock] Information concernant votre envoi « ${title || "Photo"} »`;
     const previewText = `Votre photo n'a pas été retenue pour la raison suivante : ${reasonInfo.emailTitle}.`;
 
     const html = wrap(`
       <div style="margin-bottom:24px;">
-        <span style="display:inline-block;padding:6px 14px;background-color:#fffbeb;color:#b45309;border:1px solid #fde68a;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:16px;">
-          • Modération Éditoriale
+        <span style="display:inline-block;padding:6px 14px;background-color:#f4f4f5;color:#09090b;border:1px solid #09090b;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:0.8px;text-transform:uppercase;margin-bottom:16px;">
+          • MODÉRATION ÉDITORIALE
         </span>
         <h1 style="margin:0 0 12px;font-size:24px;font-weight:800;color:#09090b;letter-spacing:-0.5px;line-height:1.2;">
-          Votre envoi n'a pas pu être retenu
+          Votre envoi n'a pas été retenu
         </h1>
         <p style="margin:0;font-size:15px;color:#52525b;line-height:1.6;">
           Merci pour votre proposition sur JEaLiFe Stock. Après examen par notre équipe, cette photo n'a pas été sélectionnée pour figurer sur la plateforme.
@@ -164,23 +164,23 @@ export function buildRejectedEmail({ title, photoUrl, reasonKey = "autre", custo
       </div>
 
       ${photoUrl ? `
-      <div style="margin:24px 0;border-radius:12px;overflow:hidden;background-color:#18181b;border:1px solid #e4e4e7;position:relative;">
+      <div style="margin:24px 0;border-radius:12px;overflow:hidden;background-color:#18181b;border:1px solid #e4e4e7;">
         <img src="${photoUrl}" alt="${title || "Photo"}" width="508" style="width:100%;max-width:508px;height:auto;display:block;object-fit:cover;opacity:0.75;" />
       </div>` : ""}
 
-      <!-- Bloc d'explications personnalisé selon la raison sélectionnée par l'admin -->
-      <div style="background-color:#fffdf5;border:1px solid #fef3c7;border-left:4px solid #d97706;border-radius:12px;padding:20px 24px;margin-bottom:28px;">
-        <p style="margin:0 0 6px;font-size:12px;font-weight:800;color:#b45309;text-transform:uppercase;letter-spacing:0.6px;">
+      <!-- Bloc d'explications monochrome -->
+      <div style="background-color:#fafafa;border:1px solid #e4e4e7;border-left:4px solid #09090b;border-radius:12px;padding:20px 24px;margin-bottom:28px;">
+        <p style="margin:0 0 6px;font-size:12px;font-weight:800;color:#09090b;text-transform:uppercase;letter-spacing:0.6px;">
           Motif principal : ${reasonInfo.emailTitle}
         </p>
-        <p style="margin:0 0 ${customNote ? "14px" : "0"};font-size:14px;color:#451a03;line-height:1.6;">
+        <p style="margin:0 0 ${customNote ? "14px" : "0"};font-size:14px;color:#3f3f46;line-height:1.6;">
           ${reasonInfo.advice}
         </p>
 
         ${customNote ? `
-        <div style="padding-top:12px;border-top:1px dashed #fde68a;">
-          <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;">Note de l'équipe de modération :</p>
-          <p style="margin:0;font-size:13px;font-style:italic;color:#78350f;line-height:1.5;">« ${customNote} »</p>
+        <div style="padding-top:12px;border-top:1px dashed #e4e4e7;">
+          <p style="margin:0 0 4px;font-size:11px;font-weight:700;color:#09090b;text-transform:uppercase;">Note de l'équipe de modération :</p>
+          <p style="margin:0;font-size:13px;font-style:italic;color:#27272a;line-height:1.5;">« ${customNote} »</p>
         </div>` : ""}
       </div>
 
@@ -219,4 +219,3 @@ export async function sendMail({ to, subject, html, text }) {
         return { ok: false, error: err.message };
     }
 }
-
