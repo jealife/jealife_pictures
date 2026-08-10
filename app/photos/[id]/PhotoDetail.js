@@ -205,7 +205,7 @@ export default function PhotoDetail({ initialPhoto }) {
 
             {/* Sticky Bar */}
             <div className="sticky top-16 z-30 bg-white dark:bg-zinc-950 px-4 h-[72px] flex items-center justify-between gap-3">
-                <div className="flex items-center gap-1 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
                     {/* <button
                         onClick={() => router.back()}
                         className="sm:hidden p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-black shrink-0"
@@ -236,11 +236,7 @@ export default function PhotoDetail({ initialPhoto }) {
                                 title="Contacter le photographe"
                                 className="flex text-[13px] text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 font-medium truncate items-center gap-1 transition-colors"
                             >
-                                {/* « Disponible » affiché pour tout le monde, y compris le compte
-                                    JEaLiFe Stock qui n'a jamais activé cette option, ne reflétait
-                                    rien — voir la même distinction sur la page de profil
-                                    ([handle]/layout.js). Le bouton reste cliquable dans tous les
-                                    cas (site web / réseaux restent joignables), seul le mot change. */}
+                               
                                 {photo.author.isAvailableForHire ? "Disponible à l'embauche" : "Contacter"}
                                 <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${showConnect ? "rotate-180" : ""}`} />
                             </button>

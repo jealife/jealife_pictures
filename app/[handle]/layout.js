@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getUserProfile, getUserStats } from "../lib/database";
-import { MapPin, Globe, Mail, Image as ImageIcon, Heart, Layers, BarChart3, Edit2 } from "lucide-react";
+import { MapPin, Globe, Mail, Image as ImageIcon, Heart, Layers, BarChart3, Coins, Edit2 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function UserProfileLayout({ children }) {
@@ -81,6 +81,7 @@ export default function UserProfileLayout({ children }) {
         // comme les j'aime reçus. Les deux sont désormais distincts.
         { id: 'likes', label: 'J\'aime', icon: Heart, count: profileUser.total_likes_given || 0, path: `/@${username}/likes` },
         { id: 'stats', label: 'Statistiques', icon: BarChart3, count: null, path: `/@${username}/stats` },
+        { id: 'gains', label: 'Gains', icon: Coins, count: null, path: `/@${username}/gains` },
     ];
 
     const tabs = isOwnProfile ? [...publicTabs, ...privateTabs] : publicTabs;

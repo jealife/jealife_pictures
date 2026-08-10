@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { signOut } from "../lib/auth";
 import UserMenu from "./UserMenu";
+import NotificationBell from "./NotificationBell";
 import { ThemeToggle, ThemeToggleIcon } from "./ThemeToggle";
 
 // Une seule source pour le menu bureau et le menu mobile : les deux listes
@@ -221,6 +222,8 @@ export default function Navbar() {
 
                 {/* Bottom Icons */}
                 <div className="flex flex-col gap-6 w-full items-center mb-2">
+                    <NotificationBell iconSize={22} panelClassName="left-16 bottom-0" />
+
                     {/* Profile/Login Icon with Avatar */}
                     {user ? (
                         <div className="relative" ref={desktopUserMenuRef}>
@@ -328,6 +331,8 @@ export default function Navbar() {
 
                         {/* Mobile Right - Profile Avatar/Icon + Menu Toggle */}
                         <div className="md:hidden flex items-center gap-2">
+                            <NotificationBell iconSize={22} panelClassName="right-0 top-12" />
+
                             {user ? (
                                 <div className="relative" ref={mobileUserMenuRef}>
                                     <button onClick={() => setUserMenuOpen(!userMenuOpen)} className="p-1 hover:opacity-80 transition-opacity">

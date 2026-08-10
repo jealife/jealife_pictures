@@ -286,6 +286,28 @@ export function formatCount(value) {
     return `${(number / 1000000).toFixed(1).replace(".0", "").replace(".", ",")} M`;
 }
 
+/** Coupe un texte à `maxLength`, sur une limite de mot si possible. */
+export function truncateText(text, maxLength = 40) {
+    if (!text || text.length <= maxLength) return text || "";
+    const cut = text.slice(0, maxLength);
+    const lastSpace = cut.lastIndexOf(" ");
+    return `${(lastSpace > maxLength * 0.6 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
+}
+
+/** « il y a 5 min », « il y a 3 j »… au-delà d'une semaine, une date courte. */
+export function timeAgo(iso) {
+    if (!iso) return "";
+    const diffMs = Date.now() - new Date(iso).getTime();
+    const minutes = Math.floor(diffMs / 60000);
+    if (minutes < 1) return "à l'instant";
+    if (minutes < 60) return `il y a ${minutes} min`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `il y a ${hours} h`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `il y a ${days} j`;
+    return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+}
+
 /** Libellé de lieu affichable : « Libreville, Gabon ». */
 export function locationLabel(media) {
     if (!media) return null;

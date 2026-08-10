@@ -2027,3 +2027,81 @@ export async function markPayoutPaid(contributorId, amountFcfa, note = null) {
         return { success: false, error: friendlyErrorMessage(error, "Impossible d'enregistrer ce versement.") };
     }
 }
+
+// ---------------------------------------------------------------------------
+// Activité / notifications (migration 0021) — façon Unsplash.
+//
+// Chaque ligne est créée automatiquement par un déclencheur Postgres (j'aime
+// reçu, ajout à une collection, vente Premium, versement confirmé) : rien
+// ici n'insère jamais de notification, ces fonctions ne font que lire son
+// propre flux (RLS, voir migration 0021) et le marquer lu.
+// ---------------------------------------------------------------------------
+
+const NOTIFICATION_SELECT = `
+    id, type, media_id, collection_id, details, read_at, created_at,
+    actor:actor_id ( id, username, full_name, avatar_url ),
+    media:media_id ( id, title, alt_text, thumbnail_url, url )
+`;
+
+/** Flux d'activité de l'utilisateur connecté, du plus récent au plus ancien. */
+export async function getNotifications({ limit = 20, offset = 0 } = {}) {
+    try {
+        const { data, error } = await supabase
+            .from('notifications')
+            .select(NOTIFICATION_SELECT)
+            .order('created_at', { ascending: false })
+            .range(offset, offset + limit - 1);
+
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        logQueryError('Error fetching notifications:', error);
+        return [];
+    }
+}
+
+/** Nombre de notifications non lues — pour le badge de la cloche. */
+export async function getUnreadNotificationCount() {
+    try {
+        const { count, error } = await supabase
+            .from('notifications')
+            .select('id', { count: 'exact', head: true })
+            .is('read_at', null);
+
+        if (error) throw error;
+        return count || 0;
+    } catch (error) {
+        logQueryError('Error counting unread notifications:', error);
+        return 0;
+    }
+}
+
+export async function markNotificationRead(id) {
+    try {
+        const { error } = await supabase
+            .from('notifications')
+            .update({ read_at: new Date().toISOString() })
+            .eq('id', id)
+            .is('read_at', null);
+        if (error) throw error;
+        return true;
+    } catch (error) {
+        logQueryError('Error marking notification read:', error);
+        return false;
+    }
+}
+
+/** Marque tout le flux lu d'un coup (bouton « Tout marquer comme lu »). */
+export async function markAllNotificationsRead() {
+    try {
+        const { error } = await supabase
+            .from('notifications')
+            .update({ read_at: new Date().toISOString() })
+            .is('read_at', null);
+        if (error) throw error;
+        return true;
+    } catch (error) {
+        logQueryError('Error marking all notifications read:', error);
+        return false;
+    }
+}
