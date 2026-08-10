@@ -1606,18 +1606,44 @@ export async function approveMedia(mediaId) {
     return result;
 }
 
+/**
+ * Rejet d'un envoi encore en attente. Passe par une route serveur — elle
+ * seule a les identifiants Cloudflare R2 nécessaires pour retirer la
+ * version web et l'original (ce qui coûte réellement en stockage) ; la
+ * vignette reste, pour l'email de refus et l'audit — voir /api/reject-media
+ * pour le détail.
+ */
 export async function rejectMedia(mediaId) {
-    const result = await updateMedia(mediaId, { status: 'rejected' });
-    if (result.success) await logAdminAction('media.reject', 'media', mediaId);
-    return result;
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("Session expirée, reconnectez-vous.");
+
+        const res = await fetch('/api/reject-media', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ mediaId }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Impossible de rejeter ce média.");
+
+        await logAdminAction('media.reject', 'media', mediaId);
+        return { success: true };
+    } catch (error) {
+        logQueryError('Error rejecting media:', error);
+        return { success: false, error: friendlyErrorMessage(error, "Impossible de rejeter ce média.") };
+    }
 }
 
 /**
- * Contrairement à approveMedia/rejectMedia (simple changement de statut, la
- * ligne reste inchangée sinon), removeMedia passe par une route serveur :
- * elle seule a les identifiants Cloudflare R2 nécessaires pour retirer aussi
- * les fichiers publiés. Sans ça, une photo « retirée » suite à un
- * signalement restait accessible indéfiniment à son URL R2 directe — voir
+ * Contrairement à approveMedia (simple changement de statut, la ligne reste
+ * inchangée sinon), removeMedia passe par une route serveur : elle seule a
+ * les identifiants Cloudflare R2 nécessaires pour retirer aussi les
+ * fichiers publiés. Sans ça, une photo « retirée » suite à un signalement
+ * restait accessible indéfiniment à son URL R2 directe — voir
  * /api/remove-media pour le détail de cette distinction.
  */
 export async function removeMedia(mediaId) {

@@ -152,7 +152,7 @@ export function buildRejectedEmail({ title, photoUrl, reasonKey = "autre", custo
 
     const html = wrap(`
       <div style="margin-bottom:24px;">
-        <span style="display:inline-block;padding:6px 14px;background-color:#fffbeeb;color:#b45309;border:1px solid #fde68a;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:16px;">
+        <span style="display:inline-block;padding:6px 14px;background-color:#fffbeb;color:#b45309;border:1px solid #fde68a;border-radius:20px;font-size:12px;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:16px;">
           • Modération Éditoriale
         </span>
         <h1 style="margin:0 0 12px;font-size:24px;font-weight:800;color:#09090b;letter-spacing:-0.5px;line-height:1.2;">

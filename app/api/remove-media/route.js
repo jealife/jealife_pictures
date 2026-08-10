@@ -10,9 +10,9 @@ const SUPABASE_KEY =
 /**
  * Retrait admin d'un média publié (résolution d'un signalement) — distinct
  * de /api/delete-media (l'auteur supprime lui-même sa photo) et de
- * `rejectMedia` (un envoi encore en attente, jamais rendu public, décliné
- * avant publication : son auteur garde une bonne raison de revoir ce qu'il
- * avait soumis, donc ses fichiers restent).
+ * /api/reject-media (un envoi encore en attente, jamais rendu public,
+ * décliné avant publication — même nettoyage R2, mais la vignette y est
+ * volontairement épargnée pour l'email de refus).
  *
  * `removeMedia` ne faisait jusqu'ici qu'un `update status = 'removed'` :
  * la ligne disparaissait des pages publiques (RLS), mais les trois fichiers
