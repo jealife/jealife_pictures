@@ -10,7 +10,7 @@ export const PAGE_SIZE = 24;
 const CARD_SELECT = `
   id, type, url, thumbnail_url, blur_data_url, title, alt_text,
   location, city, country_code, geo_priority, width, height, duration,
-  likes_count, downloads_count, views_count, created_at,
+  likes_count, downloads_count, views_count, created_at, is_premium,
   profiles:user_id ( id, username, full_name, avatar_url, is_verified )
 `;
 
@@ -1795,5 +1795,204 @@ export async function deleteTopic(topicId) {
     } catch (error) {
         logQueryError('Error deleting topic:', error);
         return { success: false, error: friendlyErrorMessage(error, "Impossible de supprimer ce thème.") };
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Monétisation Premium (migration 0019) — crédits, tarifs, versements.
+//
+// Les soldes (`wallets`) vivent dans leur propre table, lecture seule côté
+// client (RLS) : toute écriture passe par une fonction `security definer`
+// (`get_my_wallet`, `spend_credits_for_download`, `mark_payout_paid`...),
+// jamais par un `.update()` direct depuis ce fichier.
+// ---------------------------------------------------------------------------
+
+/** Portefeuille de l'utilisateur connecté (créé à la volée s'il n'existe pas encore). */
+export async function getMyWallet() {
+    try {
+        const { data, error } = await supabase.rpc('get_my_wallet');
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        logQueryError('Error fetching wallet:', error);
+        return null;
+    }
+}
+
+/** Prix en crédits par type de média (photo/illustration/video), lecture publique. */
+export async function getPremiumPricing() {
+    try {
+        const { data, error } = await supabase
+            .from('premium_pricing')
+            .select('media_type, credits_cost');
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        logQueryError('Error fetching premium pricing:', error);
+        return [];
+    }
+}
+
+/** Lots de crédits à l'achat. Un visiteur ne voit que les lots actifs, un admin les voit tous (RLS). */
+export async function getCreditPacks() {
+    try {
+        const { data, error } = await supabase
+            .from('credit_packs')
+            .select('id, credits, price_fcfa, is_active, sort_order')
+            .order('sort_order', { ascending: true });
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        logQueryError('Error fetching credit packs:', error);
+        return [];
+    }
+}
+
+/**
+ * Enregistre une commande de crédits en attente (page /credits). Ne débite
+ * ni ne crédite rien tout seul : `purchase_credits` (migration 0019) insère
+ * une ligne `pending`, le point d'intégration du futur fournisseur Mobile
+ * Money qui la fera passer à `completed`.
+ */
+export async function purchaseCredits(packId) {
+    try {
+        const { data, error } = await supabase.rpc('purchase_credits', { p_pack_id: packId });
+        if (error) throw error;
+        return { success: true, purchase: data };
+    } catch (error) {
+        logQueryError('Error purchasing credits:', error);
+        return { success: false, error: friendlyErrorMessage(error, "Impossible d'enregistrer cet achat.") };
+    }
+}
+
+export async function setPremiumPricing(mediaType, creditsCost) {
+    try {
+        const { error } = await supabase.rpc('set_premium_pricing', {
+            p_media_type: mediaType,
+            p_credits_cost: creditsCost,
+        });
+        if (error) throw error;
+        await logAdminAction('pricing.update', 'premium_pricing', mediaType, { credits_cost: creditsCost });
+        return { success: true };
+    } catch (error) {
+        logQueryError('Error updating premium pricing:', error);
+        return { success: false, error: friendlyErrorMessage(error, "Impossible de mettre à jour ce tarif.") };
+    }
+}
+
+/** Crée un lot si `id` est absent, le met à jour sinon (voir `save_credit_pack`, migration 0019). */
+export async function saveCreditPack({ id = null, credits, priceFcfa, isActive = true }) {
+    try {
+        const { data, error } = await supabase.rpc('save_credit_pack', {
+            p_id: id,
+            p_credits: credits,
+            p_price_fcfa: priceFcfa,
+            p_is_active: isActive,
+        });
+        if (error) throw error;
+        await logAdminAction('credit_pack.save', 'credit_pack', data?.id ?? id, {
+            credits, price_fcfa: priceFcfa, is_active: isActive,
+        });
+        return { success: true, pack: data };
+    } catch (error) {
+        logQueryError('Error saving credit pack:', error);
+        return { success: false, error: friendlyErrorMessage(error, "Impossible d'enregistrer ce lot.") };
+    }
+}
+
+/**
+ * Dépense les crédits nécessaires pour débloquer un téléchargement Premium.
+ * Le solde insuffisant, le média non-premium, etc. sont vérifiés côté
+ * Postgres (voir `spend_credits_for_download`) — la seule source de vérité,
+ * jamais dupliquée ici.
+ */
+export async function spendCreditsForDownload(mediaId) {
+    try {
+        const { data, error } = await supabase.rpc('spend_credits_for_download', { p_media_id: mediaId });
+        if (error) throw error;
+        return { success: true, download: data };
+    } catch (error) {
+        logQueryError('Error spending credits for download:', error);
+        return { success: false, error: friendlyErrorMessage(error, "Impossible de finaliser ce téléchargement.") };
+    }
+}
+
+/** Solde en attente et historique des ventes Premium d'un contributeur (page /@handle/stats). */
+export async function getContributorEarnings(userId) {
+    const empty = { balance: 0, history: [] };
+    try {
+        const [walletRes, historyRes] = await Promise.all([
+            supabase.from('wallets').select('earnings_balance_fcfa').eq('user_id', userId).maybeSingle(),
+            supabase
+                .from('premium_downloads')
+                .select(`
+                    id, credits_spent, contributor_earning_fcfa, created_at,
+                    media ( id, title, thumbnail_url, url, type )
+                `)
+                .eq('contributor_id', userId)
+                .order('created_at', { ascending: false })
+                .limit(50),
+        ]);
+
+        if (walletRes.error) throw walletRes.error;
+        if (historyRes.error) throw historyRes.error;
+
+        return {
+            balance: walletRes.data?.earnings_balance_fcfa || 0,
+            history: historyRes.data || [],
+        };
+    } catch (error) {
+        logQueryError('Error fetching contributor earnings:', error);
+        return empty;
+    }
+}
+
+/** Versements déjà reçus par un contributeur (l'admin les enregistre une fois envoyés par Mobile Money). */
+export async function getContributorPayouts(userId) {
+    try {
+        const { data, error } = await supabase
+            .from('payouts')
+            .select('id, amount_fcfa, note, created_at, paid_at')
+            .eq('contributor_id', userId)
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        logQueryError('Error fetching contributor payouts:', error);
+        return [];
+    }
+}
+
+/** Contributeurs à payer (solde en attente > 0), pour la file de versements admin. */
+export async function getAdminPayoutsQueue() {
+    try {
+        const { data, error } = await supabase
+            .from('wallets')
+            .select('user_id, earnings_balance_fcfa, profiles:user_id ( id, username, full_name, avatar_url )')
+            .gt('earnings_balance_fcfa', 0)
+            .order('earnings_balance_fcfa', { ascending: false });
+
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        logQueryError('Error fetching payouts queue:', error);
+        return [];
+    }
+}
+
+/** Enregistre un versement déjà effectué à la main par Mobile Money, et décrémente le solde en attente. */
+export async function markPayoutPaid(contributorId, amountFcfa, note = null) {
+    try {
+        const { data, error } = await supabase.rpc('mark_payout_paid', {
+            p_contributor_id: contributorId,
+            p_amount_fcfa: amountFcfa,
+            p_note: note,
+        });
+        if (error) throw error;
+        await logAdminAction('payout.paid', 'user', contributorId, { amount_fcfa: amountFcfa, note });
+        return { success: true, payout: data };
+    } catch (error) {
+        logQueryError('Error marking payout as paid:', error);
+        return { success: false, error: friendlyErrorMessage(error, "Impossible d'enregistrer ce versement.") };
     }
 }

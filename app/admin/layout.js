@@ -8,7 +8,7 @@ import { signOut } from "../lib/auth";
 import { ThemeToggleIcon } from "../components/ThemeToggle";
 import {
     LayoutDashboard, ShieldAlert, Users, Tag, Layers, Settings, History,
-    BarChart3, Loader2, ExternalLink, MoreHorizontal, LogOut,
+    BarChart3, Loader2, ExternalLink, MoreHorizontal, LogOut, Banknote,
 } from "lucide-react";
 
 // `tab: true` marque les quatre entrées les plus utilisées au quotidien
@@ -22,6 +22,7 @@ const NAV = [
     { href: "/admin/reports", label: "Rapports", icon: BarChart3, tab: true },
     { href: "/admin/topics", label: "Thèmes", icon: Tag },
     { href: "/admin/collections", label: "Collections", icon: Layers },
+    { href: "/admin/monetization", label: "Monétisation", icon: Banknote },
     { href: "/admin/audit", label: "Journal d'audit", icon: History },
     { href: "/admin/settings", label: "Réglages", icon: Settings },
 ];

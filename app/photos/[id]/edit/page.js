@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "../../../contexts/AuthContext";
-import { deleteMedia, getMediaById, updateMedia, syncTopics, getCountries } from "../../../lib/database";
+import { deleteMedia, getMediaById, updateMedia, syncTopics, getCountries, getPremiumPricing } from "../../../lib/database";
 import { slugifyClient, parseMediaId } from "../../../lib/media";
-import { ArrowLeft, Save, MapPin, Camera, Tag, Loader2, CheckCircle2, AlertCircle, Plus, Trash2, Globe2, Accessibility } from "lucide-react";
+import { ArrowLeft, Save, MapPin, Camera, Tag, Loader2, CheckCircle2, AlertCircle, Plus, Trash2, Globe2, Accessibility, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 export default function EditPhotoPage() {
@@ -29,13 +29,23 @@ export default function EditPhotoPage() {
         city: "",
         country_code: "",
         camera: "",
-        tags: []
+        tags: [],
+        is_premium: false,
     });
     const [countries, setCountries] = useState([]);
     const [newTag, setNewTag] = useState("");
     const [photoUrl, setPhotoUrl] = useState("");
+    // Non modifiable ici, seulement affiché : le type détermine le tarif en
+    // crédits, décidé une fois pour toutes à l'envoi (voir SubmitForm).
+    const [mediaType, setMediaType] = useState("photo");
+    const [premiumPricing, setPremiumPricing] = useState({});
 
-    useEffect(() => { getCountries().then(setCountries); }, []);
+    useEffect(() => {
+        getCountries().then(setCountries);
+        getPremiumPricing().then((rows) => {
+            setPremiumPricing(Object.fromEntries(rows.map((r) => [r.media_type, r.credits_cost])));
+        });
+    }, []);
 
     useEffect(() => {
         if (!authLoading) {
@@ -65,8 +75,10 @@ export default function EditPhotoPage() {
                     city: data.city || "",
                     country_code: data.country_code || "",
                     camera: data.camera || "",
-                    tags: data.tags || []
+                    tags: data.tags || [],
+                    is_premium: !!data.is_premium,
                 });
+                setMediaType(data.type || "photo");
                 setPhotoUrl(data.thumbnail_url || data.url);
             } else {
                 router.push('/');
@@ -189,6 +201,40 @@ export default function EditPhotoPage() {
                                     placeholder="Donnez un titre accrocheur..."
                                     required
                                 />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-bold text-gray-900 dark:text-zinc-100 flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4" /> Accès
+                                </label>
+                                <div className="flex gap-1.5">
+                                    {[
+                                        { key: false, label: "Gratuit" },
+                                        {
+                                            key: true,
+                                            label: premiumPricing[mediaType]
+                                                ? `Premium · ${premiumPricing[mediaType]} crédit${premiumPricing[mediaType] > 1 ? "s" : ""}`
+                                                : "Premium",
+                                        },
+                                    ].map(({ key, label }) => (
+                                        <button
+                                            key={String(key)}
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, is_premium: key })}
+                                            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all ${
+                                                formData.is_premium === key
+                                                    ? "border-black dark:border-white bg-black dark:bg-white text-white dark:text-black"
+                                                    : "border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 hover:border-gray-400 dark:hover:border-zinc-500"
+                                            }`}
+                                        >
+                                            {key && <Sparkles className="w-4 h-4" />} {label}
+                                        </button>
+                                    ))}
+                                </div>
+                                <p className="text-xs text-gray-400 dark:text-zinc-500">
+                                    En Premium, les visiteurs dépensent des crédits pour la télécharger et vous
+                                    touchez une part de chaque achat.
+                                </p>
                             </div>
 
                             <div className="space-y-2">

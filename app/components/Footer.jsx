@@ -25,6 +25,7 @@ const SECTIONS = [
         title: "Communauté",
         links: [
             { label: "Publier une image", href: "/submit" },
+            { label: "Crédits", href: "/credits" },
             { label: "Créer un compte", href: "/join" },
             { label: "Se connecter", href: "/login" },
             { label: "Centre d'aide", href: "/help" },

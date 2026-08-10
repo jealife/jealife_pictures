@@ -3,7 +3,7 @@
 import {
     UploadCloud, CheckCircle2, Camera, Tag, X, Info,
     Image as ImageIcon, Video, Palette, Loader2, Accessibility,
-    PartyPopper, ArrowRight, Plus, ChevronDown, AlertCircle,
+    PartyPopper, ArrowRight, Plus, ChevronDown, AlertCircle, Sparkles,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -11,7 +11,7 @@ import ExifReader from "exifreader";
 import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
 import { upsertProfile } from "../lib/auth";
-import { syncTopics, getTopics, getCountries, getPlatformStats, getSetting } from "../lib/database";
+import { syncTopics, getTopics, getCountries, getPlatformStats, getSetting, getPremiumPricing } from "../lib/database";
 import { processImage, formatFileSize } from "../lib/images";
 import { slugifyClient } from "../lib/media";
 import { friendlyErrorMessage } from "../lib/errors";
@@ -167,6 +167,10 @@ function createItem(file) {
         // personne ne l'ait choisi, et fausserait le classement géographique
         // pour toute photo dont le lieu n'a pas été renseigné.
         countryCode: "",
+        // Tout contenu déjà publié reste gratuit pour toujours (voir migration
+        // 0019) : ce choix ne s'applique qu'à cet envoi, il est modifiable
+        // ensuite depuis la page de modification.
+        isPremium: false,
         camera: "",
         // Relevés dans l'EXIF, jamais saisis : ce sont les réglages de
         // l'appareil au déclenchement, affichés tels quels sur la fiche photo.
@@ -243,8 +247,10 @@ async function readExif(file) {
     }
 }
 
-function ItemCard({ item, index, countries, dbTopics, onPatch, onRemove, onGenerate, disabled, aiQuotaExhausted }) {
+function ItemCard({ item, index, countries, dbTopics, premiumPricing, onPatch, onRemove, onGenerate, disabled, aiQuotaExhausted }) {
     const { africanCountries, otherCountries } = countries;
+
+    const premiumCost = premiumPricing[item.type];
 
     const countryName =
         [...africanCountries, ...otherCountries].find((c) => c.code === item.countryCode)?.name_fr || null;
@@ -447,6 +453,40 @@ function ItemCard({ item, index, countries, dbTopics, onPatch, onRemove, onGener
                                 ))}
                             </div>
 
+                            <div>
+                                <div className="flex gap-1.5">
+                                    {[
+                                        { key: false, label: "Gratuit" },
+                                        {
+                                            key: true,
+                                            label: premiumCost
+                                                ? `Premium · ${premiumCost} crédit${premiumCost > 1 ? "s" : ""}`
+                                                : "Premium",
+                                        },
+                                    ].map(({ key, label }) => (
+                                        <button
+                                            key={String(key)}
+                                            type="button"
+                                            disabled={disabled}
+                                            onClick={() => onPatch({ isPremium: key })}
+                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] font-medium transition-all disabled:opacity-60 ${
+                                                item.isPremium === key
+                                                    ? "border-black dark:border-white bg-black dark:bg-white text-white dark:text-black"
+                                                    : "border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 hover:border-gray-400 dark:hover:border-zinc-500"
+                                            }`}
+                                        >
+                                            {key && <Sparkles className="w-3.5 h-3.5" />} {label}
+                                        </button>
+                                    ))}
+                                </div>
+                                {item.isPremium && (
+                                    <p className="text-[11px] text-gray-400 dark:text-zinc-500 mt-1.5">
+                                        Les visiteurs devront dépenser des crédits pour la télécharger ; vous
+                                        touchez une part de chaque achat.
+                                    </p>
+                                )}
+                            </div>
+
                             <textarea
                                 rows={2}
                                 value={item.description}
@@ -558,6 +598,7 @@ export default function SubmitForm() {
     const [countries, setCountries] = useState([]);
     const [dbTopics, setDbTopics] = useState([]);
     const [moderationMode, setModerationMode] = useState("auto");
+    const [premiumPricing, setPremiumPricing] = useState({});
 
     // Le quota Gemini est partagé par tout le site, pas par image : une fois
     // atteint, chaque tentative échoue à l'identique tant qu'il n'est pas
@@ -615,6 +656,9 @@ export default function SubmitForm() {
         getTopics({ limit: 200 }).then((data) => setDbTopics(data.map((t) => t.name)));
         getCountries().then(setCountries);
         getSetting("moderation_mode").then((mode) => { if (mode) setModerationMode(mode); });
+        getPremiumPricing().then((rows) => {
+            setPremiumPricing(Object.fromEntries(rows.map((r) => [r.media_type, r.credits_cost])));
+        });
     }, []);
 
     const patchItem = (id, patch) =>
@@ -858,6 +902,7 @@ export default function SubmitForm() {
                 location: item.location.trim() || null,
                 city: item.city.trim() || null,
                 country_code: item.countryCode || null,
+                is_premium: item.isPremium,
                 width: item.processed.width,
                 height: item.processed.height,
                 // Lue sur la vidéo pendant l'extraction de l'aperçu ; nulle
@@ -1301,6 +1346,7 @@ export default function SubmitForm() {
                                     index={index}
                                     countries={countryGroups}
                                     dbTopics={dbTopics}
+                                    premiumPricing={premiumPricing}
                                     disabled={publishing}
                                     aiQuotaExhausted={aiQuotaExhausted}
                                     onPatch={(patch) => patchItem(item.id, patch)}

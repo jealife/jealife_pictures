@@ -86,6 +86,7 @@ export function normalizeMedia(row) {
         downloads: row.downloads_count || 0,
         views: row.views_count || 0,
         createdAt: row.created_at || null,
+        isPremium: !!row.is_premium,
 
         author: {
             id: profile.id || row.user_id || null,

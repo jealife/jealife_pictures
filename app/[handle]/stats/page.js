@@ -2,11 +2,14 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getUserProfile, getUserStats, getUserDownloadsTrend, getUserMilestones } from "../../lib/database";
+import {
+    getUserProfile, getUserStats, getUserDownloadsTrend, getUserMilestones,
+    getContributorEarnings, getContributorPayouts,
+} from "../../lib/database";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
 import Link from "next/link";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, Coins, Banknote } from "lucide-react";
 import TrendChart from "../../components/charts/TrendChart";
 import RankingBars from "../../components/charts/RankingBars";
 import MilestonesGrid from "../../components/MilestonesGrid";
@@ -37,6 +40,8 @@ export default function UserStatsPage() {
     const [rangeDays, setRangeDays] = useState(30);
     const [downloadsTrend, setDownloadsTrend] = useState(null);
     const [milestones, setMilestones] = useState([]);
+    const [earnings, setEarnings] = useState({ balance: 0, history: [] });
+    const [payouts, setPayouts] = useState([]);
 
     useEffect(() => {
         const checkOwnership = async () => {
@@ -54,6 +59,8 @@ export default function UserStatsPage() {
                     if (userStats) setStats(userStats);
 
                     getUserMilestones().then(setMilestones);
+                    getContributorEarnings(profile.id).then(setEarnings);
+                    getContributorPayouts(profile.id).then(setPayouts);
 
                     const { data: vData } = await supabase
                         .from('media')
@@ -157,6 +164,70 @@ export default function UserStatsPage() {
                         Total cumulé, toutes vos photos confondues.
                     </p>
                 </div>
+            </div>
+
+            <div className="mt-12">
+                <div className="flex items-center gap-2 mb-6">
+                    <Coins className="w-4 h-4 text-gray-400 dark:text-zinc-500" />
+                    <span className="font-bold text-gray-900 dark:text-zinc-100">Gains Premium</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="border border-gray-100 dark:border-zinc-800 rounded-2xl p-5 bg-white dark:bg-zinc-900">
+                        <span className="text-sm font-bold text-gray-900 dark:text-zinc-100">Solde en attente</span>
+                        <p className="text-2xl font-extrabold text-gray-900 dark:text-zinc-100 mt-1 tabular-nums">
+                            {Number(earnings.balance || 0).toLocaleString('fr-FR')} FCFA
+                        </p>
+                        <p className="text-sm text-gray-400 dark:text-zinc-500 mt-3">
+                            Reçu de vos ventes Premium ; versé à la main par Mobile Money, puis
+                            enregistré ici par l&apos;équipe.
+                        </p>
+                    </div>
+
+                    <div className="border border-gray-100 dark:border-zinc-800 rounded-2xl p-5 bg-white dark:bg-zinc-900">
+                        <span className="text-sm font-bold text-gray-900 dark:text-zinc-100 flex items-center gap-2">
+                            <Banknote className="w-3.5 h-3.5 text-gray-400 dark:text-zinc-500" /> Versements reçus
+                        </span>
+                        {payouts.length === 0 ? (
+                            <p className="text-sm text-gray-400 dark:text-zinc-500 mt-3">Aucun versement pour l&apos;instant.</p>
+                        ) : (
+                            <ul className="mt-3 space-y-2.5">
+                                {payouts.slice(0, 5).map((payout) => (
+                                    <li key={payout.id} className="flex items-center justify-between text-sm">
+                                        <span className="text-gray-500 dark:text-zinc-400">
+                                            {new Date(payout.paid_at || payout.created_at).toLocaleDateString('fr-FR')}
+                                        </span>
+                                        <span className="font-semibold text-gray-900 dark:text-zinc-100 tabular-nums">
+                                            {Number(payout.amount_fcfa).toLocaleString('fr-FR')} FCFA
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
+                </div>
+
+                {earnings.history.length > 0 && (
+                    <div className="mt-8 border border-gray-100 dark:border-zinc-800 rounded-2xl p-5 bg-white dark:bg-zinc-900">
+                        <span className="text-sm font-bold text-gray-900 dark:text-zinc-100">Ventes récentes</span>
+                        <ul className="mt-3 divide-y divide-gray-50 dark:divide-zinc-800">
+                            {earnings.history.slice(0, 8).map((sale) => (
+                                <li key={sale.id} className="flex items-center gap-3 py-2.5">
+                                    {sale.media?.thumbnail_url && (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img src={sale.media.thumbnail_url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                                    )}
+                                    <span className="flex-1 min-w-0 text-sm text-gray-700 dark:text-zinc-300 truncate">
+                                        {sale.media?.title || 'Média supprimé'}
+                                    </span>
+                                    <span className="text-sm font-semibold text-gray-900 dark:text-zinc-100 tabular-nums shrink-0">
+                                        +{Number(sale.contributor_earning_fcfa).toLocaleString('fr-FR')} FCFA
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">

@@ -1,8 +1,12 @@
 "use client";
 
-import { Download, Loader2, ChevronDown, ChevronRight } from "lucide-react";
+import { Download, Loader2, ChevronDown, ChevronRight, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { downloadOptionsFor, downloadMedia } from "../lib/media";
+import { useAuth } from "../contexts/AuthContext";
+import { getSetting, getPremiumPricing, spendCreditsForDownload } from "../lib/database";
+import { downloadOptionsFor, downloadMedia, mediaUrl } from "../lib/media";
 
 /**
  * Téléchargement avec choix de format.
@@ -11,8 +15,162 @@ import { downloadOptionsFor, downloadMedia } from "../lib/media";
  * récupéraient le fichier d'origine. Chaque taille est désormais réellement
  * produite avant l'enregistrement — et les options proposées dépendent du
  * type de média : une vidéo ne se redimensionne pas dans un navigateur.
+ *
+ * Contenu Premium (migration 0019) : la variante compacte (cartes de grille)
+ * n'offre plus jamais le téléchargement gratuit direct — un média premium y
+ * renvoie vers sa fiche, seul endroit qui affiche le prix et gère l'achat.
+ * Sans ça, le petit bouton de téléchargement des grilles aurait continué à
+ * distribuer gratuitement un contenu que son auteur a choisi de vendre.
  */
 export default function DownloadButton({ media, variant = "compact", onDownloaded }) {
+    if (media?.isPremium) {
+        return variant === "primary"
+            ? <PremiumDownload media={media} onDownloaded={onDownloaded} />
+            : <PremiumCompactLink media={media} />;
+    }
+    return <FreeDownloadButton media={media} variant={variant} onDownloaded={onDownloaded} />;
+}
+
+function PremiumCompactLink({ media }) {
+    return (
+        <Link
+            href={mediaUrl(media)}
+            onClick={(event) => event.stopPropagation()}
+            title="Contenu Premium — voir la fiche pour le débloquer"
+            aria-label="Contenu Premium — voir la fiche pour le débloquer"
+            className="bg-white hover:bg-gray-100 text-amber-600 p-2.5 rounded-full transition-all shadow-lg active:scale-95 flex items-center justify-center"
+        >
+            <Sparkles className="w-4 h-4" />
+        </Link>
+    );
+}
+
+/**
+ * Bouton principal (fiche photo) pour un média Premium. Tant que
+ * `payments_enabled` est faux (réglage admin, migration 0019), rien n'est
+ * cliquable : juste le badge « Bientôt disponible » promis aux contributeurs
+ * en attendant un fournisseur Mobile Money. Une fois activé, le clic dépense
+ * les crédits avant de déclencher le téléchargement réel — jamais l'inverse.
+ */
+function PremiumDownload({ media, onDownloaded }) {
+    const { user } = useAuth();
+    const router = useRouter();
+    // Le contributeur consulte aussi la fiche de son propre média : la
+    // fonction SQL refuse à dessein qu'il s'achète lui-même (voir migration
+    // 0019), donc l'achat ne doit même pas lui être proposé — juste un
+    // téléchargement direct, comme pour un média gratuit.
+    const isOwner = !!user && user.id === media.author?.id;
+    const [settings, setSettings] = useState(null);
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        if (isOwner) return;
+        Promise.all([getSetting("payments_enabled"), getPremiumPricing()]).then(([enabled, rows]) => {
+            setSettings({
+                paymentsEnabled: enabled === "true",
+                creditsCost: rows.find((r) => r.media_type === media.type)?.credits_cost || null,
+            });
+        });
+    }, [media.type, isOwner]);
+
+    const downloadOwnMedia = async () => {
+        setBusy(true);
+        setError(null);
+        try {
+            await downloadMedia(media, "original");
+            window.dispatchEvent(new CustomEvent("show-thanks-modal", { detail: media }));
+            onDownloaded?.();
+        } catch (err) {
+            console.error("Download failed:", err);
+            setError("Téléchargement impossible");
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const purchase = async () => {
+        if (!user) {
+            router.push(`/login?redirect=${encodeURIComponent(mediaUrl(media))}`);
+            return;
+        }
+        setBusy(true);
+        setError(null);
+
+        const result = await spendCreditsForDownload(media.id);
+        if (result.success) {
+            await downloadMedia(media, "original");
+            window.dispatchEvent(new CustomEvent("show-thanks-modal", { detail: media }));
+            onDownloaded?.();
+        } else {
+            setError(result.error);
+        }
+        setBusy(false);
+    };
+
+    if (isOwner) {
+        return (
+            <div className="flex flex-col items-end gap-1">
+                <button
+                    onClick={downloadOwnMedia}
+                    disabled={busy}
+                    className="h-9 px-3 sm:px-4 bg-green-600 text-white rounded-md font-medium text-[13px] hover:bg-green-700 transition-all shadow-sm flex items-center gap-2 disabled:opacity-70"
+                >
+                    {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                    <span className="hidden sm:inline">Télécharger votre média</span>
+                    <span className="sm:hidden">Télécharger</span>
+                </button>
+                {error && <span className="text-xs text-red-600 dark:text-red-400">{error}</span>}
+            </div>
+        );
+    }
+
+    if (!settings) {
+        return (
+            <div className="h-9 px-4 bg-gray-100 dark:bg-zinc-800 rounded-md flex items-center justify-center">
+                <Loader2 className="w-4 h-4 animate-spin text-gray-400 dark:text-zinc-500" />
+            </div>
+        );
+    }
+
+    if (!settings.paymentsEnabled) {
+        return (
+            <div
+                title="Le paiement en ligne n'est pas encore activé sur JEaLiFe Stock. Vous pourrez bientôt débloquer ce fichier avec des crédits, achetés via Mobile Money."
+                className="h-9 px-3 sm:px-4 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-900 rounded-md font-medium text-[13px] flex items-center gap-2 cursor-default"
+            >
+                <Sparkles className="w-4 h-4" />
+                <span className="hidden sm:inline">Premium · Bientôt disponible</span>
+                <span className="sm:hidden">Bientôt</span>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col items-end gap-1.5">
+            <button
+                onClick={purchase}
+                disabled={busy}
+                className="h-9 px-3 sm:px-4 bg-amber-500 text-white rounded-md font-medium text-[13px] hover:bg-amber-600 transition-all shadow-sm flex items-center gap-2 disabled:opacity-70"
+            >
+                {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                {settings.creditsCost
+                    ? `Télécharger (${settings.creditsCost} crédit${settings.creditsCost > 1 ? "s" : ""})`
+                    : "Télécharger"}
+            </button>
+            {error && (
+                <p className="text-[11px] text-red-600 dark:text-red-400 text-right max-w-56">
+                    {error}{" "}
+                    {error === "Crédits insuffisants." && (
+                        <Link href="/credits" className="underline font-semibold">Acheter des crédits</Link>
+                    )}
+                </p>
+            )}
+        </div>
+    );
+}
+
+function FreeDownloadButton({ media, variant = "compact", onDownloaded }) {
     const options = downloadOptionsFor(media);
     const isVideo = media?.type === "video";
     const [open, setOpen] = useState(false);
