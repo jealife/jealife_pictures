@@ -4,6 +4,19 @@ import { NextResponse } from "next/server";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
+// Le prompt demande déjà un titre court, mais c'est une consigne, pas une
+// garantie — Gemini l'a parfois ignorée (jusqu'à 235 caractères observés en
+// base). Filet de sécurité côté serveur : coupe à la dernière limite de mot
+// avant la limite plutôt qu'en plein milieu, pour ne pas couper un mot.
+const MAX_TITLE_LENGTH = 70;
+
+function truncateTitle(title) {
+    if (title.length <= MAX_TITLE_LENGTH) return title;
+    const cut = title.slice(0, MAX_TITLE_LENGTH);
+    const lastSpace = cut.lastIndexOf(" ");
+    return `${(lastSpace > 20 ? cut.slice(0, lastSpace) : cut).trimEnd()}…`;
+}
+
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY =
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
@@ -131,6 +144,7 @@ export async function POST(request) {
         }
 
         const data = JSON.parse(text);
+        if (typeof data.title === "string") data.title = truncateTitle(data.title.trim());
 
         return NextResponse.json(data);
     } catch (error) {

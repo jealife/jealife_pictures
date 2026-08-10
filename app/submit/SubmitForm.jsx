@@ -733,7 +733,15 @@ export default function SubmitForm() {
 
             patchItem(item.id, {
                 generating: false,
-                ...(data.description || data.title ? { altText: data.description || data.title } : {}),
+                // `title` (court, sert aussi de texte alternatif) et
+                // `description` (1-2 phrases, va dans « Contexte ») sont deux
+                // champs distincts côté Gemini comme côté base — les inverser
+                // mettait la description entière dans le titre. C'est ce qui
+                // produisait des titres de plus de 200 caractères : ce n'est
+                // pas Gemini qui ignorait la consigne de longueur, c'est le
+                // mauvais champ qui atterrissait dans `altText`.
+                ...(data.title ? { altText: data.title } : {}),
+                ...(data.description ? { description: data.description } : {}),
                 ...(Array.isArray(data.tags) && data.tags.length
                     ? {
                           tags: [
