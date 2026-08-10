@@ -222,7 +222,7 @@ export default function Navbar() {
 
                 {/* Bottom Icons */}
                 <div className="flex flex-col gap-6 w-full items-center mb-2">
-                    <NotificationBell iconSize={22} panelClassName="left-16 bottom-0" />
+                    <NotificationBell iconSize={22} panelClassName="absolute left-16 bottom-0 w-80 max-w-[90vw]" />
 
                     {/* Profile/Login Icon with Avatar */}
                     {user ? (
@@ -331,7 +331,7 @@ export default function Navbar() {
 
                         {/* Mobile Right - Profile Avatar/Icon + Menu Toggle */}
                         <div className="md:hidden flex items-center gap-2">
-                            <NotificationBell iconSize={22} panelClassName="right-0 top-12" />
+                            <NotificationBell iconSize={22} panelClassName="fixed top-16 inset-x-4" />
 
                             {user ? (
                                 <div className="relative" ref={mobileUserMenuRef}>

@@ -50,12 +50,19 @@ function notificationHref(n, username) {
 /**
  * Cloche d'activité façon Unsplash — reçoit ses lignes déjà toutes faites
  * (déclencheurs Postgres, voir migration 0021) : ce composant ne fait que
- * les afficher, marquer lu, et rediriger. `panelClassName` positionne le
- * panneau différemment selon l'endroit où la cloche est montée (rail
- * bureau vs barre du haut mobile, voir Navbar.jsx) : deux contextes trop
- * différents pour une seule règle responsive.
+ * les afficher, marquer lu, et rediriger.
+ *
+ * `panelClassName` fixe entièrement le positionnement ET la taille du
+ * panneau (rien n'est plus codé en dur ici) : sur le rail bureau, la cloche
+ * est le seul élément de sa ligne, un `absolute` ancré sur elle-même
+ * suffit. Dans la barre du haut mobile, la cloche n'est PAS l'élément le
+ * plus à droite (avatar et menu la suivent) — un `absolute right-0` s'y
+ * ancre alors sur la cloche elle-même, pas sur le bord de l'écran, et le
+ * panneau déborde à gauche de l'écran. Il faut donc l'ancrer sur la
+ * fenêtre (`fixed`), indépendamment de la position réelle du bouton — voir
+ * les deux montages dans Navbar.jsx.
  */
-export default function NotificationBell({ iconSize = 24, panelClassName = "right-0 top-12" }) {
+export default function NotificationBell({ iconSize = 24, panelClassName = "absolute right-0 top-12 w-80 max-w-[90vw]" }) {
     const { user, profile } = useAuth();
     const router = useRouter();
     const [open, setOpen] = useState(false);
@@ -126,7 +133,7 @@ export default function NotificationBell({ iconSize = 24, panelClassName = "righ
             </button>
 
             {open && (
-                <div className={`absolute ${panelClassName} w-80 max-w-[90vw] bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden z-70 animate-in fade-in zoom-in-95 duration-200`}>
+                <div className={`${panelClassName} bg-white dark:bg-zinc-900 rounded-xl shadow-2xl border border-gray-100 dark:border-zinc-800 overflow-hidden z-70 animate-in fade-in zoom-in-95 duration-200`}>
                     <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-zinc-800">
                         <span className="font-bold text-sm text-gray-900 dark:text-zinc-100">Activité</span>
                         {unreadCount > 0 && (
