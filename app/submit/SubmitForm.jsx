@@ -344,6 +344,44 @@ function ItemCard({ item, index, countries, dbTopics, premiumPricing, onPatch, o
                         </p>
                     </div>
 
+                    {/* Toujours visible, pas dans « Plus de détails » : c'est
+                        un choix à part entière pour chaque image, pas un
+                        réglage secondaire — le contributeur doit le voir sans
+                        avoir à déplier quoi que ce soit. */}
+                    <div>
+                        <div className="flex gap-1.5">
+                            {[
+                                { key: false, label: "Gratuit" },
+                                {
+                                    key: true,
+                                    label: premiumCost
+                                        ? `Premium · ${premiumCost} crédit${premiumCost > 1 ? "s" : ""}`
+                                        : "Premium",
+                                },
+                            ].map(({ key, label }) => (
+                                <button
+                                    key={String(key)}
+                                    type="button"
+                                    disabled={disabled}
+                                    onClick={() => onPatch({ isPremium: key })}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] font-medium transition-all disabled:opacity-60 ${
+                                        item.isPremium === key
+                                            ? "border-black dark:border-white bg-black dark:bg-white text-white dark:text-black"
+                                            : "border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 hover:border-gray-400 dark:hover:border-zinc-500"
+                                    }`}
+                                >
+                                    {key && <Sparkles className="w-3.5 h-3.5" />} {label}
+                                </button>
+                            ))}
+                        </div>
+                        {item.isPremium && (
+                            <p className="text-[11px] text-gray-400 dark:text-zinc-500 mt-1.5">
+                                Les visiteurs devront dépenser des crédits pour la télécharger ; vous
+                                touchez une part de chaque achat.
+                            </p>
+                        )}
+                    </div>
+
                     <LocationInput
                         value={item.location}
                         onPatch={onPatch}
@@ -451,40 +489,6 @@ function ItemCard({ item, index, countries, dbTopics, premiumPricing, onPatch, o
                                         <Icon className="w-3.5 h-3.5" /> {label}
                                     </button>
                                 ))}
-                            </div>
-
-                            <div>
-                                <div className="flex gap-1.5">
-                                    {[
-                                        { key: false, label: "Gratuit" },
-                                        {
-                                            key: true,
-                                            label: premiumCost
-                                                ? `Premium · ${premiumCost} crédit${premiumCost > 1 ? "s" : ""}`
-                                                : "Premium",
-                                        },
-                                    ].map(({ key, label }) => (
-                                        <button
-                                            key={String(key)}
-                                            type="button"
-                                            disabled={disabled}
-                                            onClick={() => onPatch({ isPremium: key })}
-                                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] font-medium transition-all disabled:opacity-60 ${
-                                                item.isPremium === key
-                                                    ? "border-black dark:border-white bg-black dark:bg-white text-white dark:text-black"
-                                                    : "border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 hover:border-gray-400 dark:hover:border-zinc-500"
-                                            }`}
-                                        >
-                                            {key && <Sparkles className="w-3.5 h-3.5" />} {label}
-                                        </button>
-                                    ))}
-                                </div>
-                                {item.isPremium && (
-                                    <p className="text-[11px] text-gray-400 dark:text-zinc-500 mt-1.5">
-                                        Les visiteurs devront dépenser des crédits pour la télécharger ; vous
-                                        touchez une part de chaque achat.
-                                    </p>
-                                )}
                             </div>
 
                             <textarea

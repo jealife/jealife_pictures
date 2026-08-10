@@ -14,6 +14,7 @@ import DownloadButton from "../../components/DownloadButton";
 import SaveToCollectionButton from "../../components/SaveToCollectionButton";
 import ReportDialog from "../../components/ReportDialog";
 import PhotoCard from "../../components/PhotoCard";
+import Watermark from "../../components/Watermark";
 import { useAuth } from "../../contexts/AuthContext";
 import {
     getMediaById, getRelatedMedia, hasUserLikedMedia, incrementViews,
@@ -312,7 +313,7 @@ export default function PhotoDetail({ initialPhoto }) {
             <div className="w-full bg-white dark:bg-zinc-950 sm:px-4 lg:px-8 py-0 sm:py-6 flex justify-center">
                 <div className="relative flex items-center justify-center bg-gray-50 dark:bg-zinc-900 overflow-hidden sm:rounded-[2px]">
                     {premiumLocked ? (
-                        <LockedPreview thumbnailUrl={photo.thumbnailUrl} width={photo.width} height={photo.height} />
+                        <LockedPreview mediaId={photo.id} thumbnailUrl={photo.thumbnailUrl} width={photo.width} height={photo.height} />
                     ) : isVideo ? (
                         <video
                             src={playbackUrl}
@@ -532,15 +533,17 @@ export default function PhotoDetail({ initialPhoto }) {
 
 /**
  * Aperçu d'un média Premium non débloqué : la vignette (déjà publique,
- * 800px max, voir images.js) suffit à donner une idée de l'image sans
- * jamais remplacer l'achat — le flou appuie le message plutôt que de
- * compter dessus comme seule protection, qui tient déjà côté serveur
- * (voir /api/photo-access).
+ * 800px max, voir images.js) reste nette — comme sur Shutterstock ou Adobe
+ * Stock, l'acheteur doit voir précisément ce qu'il achète. Le filigrane est
+ * ce qui empêche un usage réel de cette vignette, pas un flou qui
+ * masquerait la composition ; la vraie protection reste côté serveur (voir
+ * /api/photo-access), le filigrane n'est qu'une dissuasion supplémentaire
+ * si quelqu'un l'enregistrait quand même.
  */
-function LockedPreview({ thumbnailUrl, width, height }) {
+function LockedPreview({ mediaId, thumbnailUrl, width, height }) {
     return (
         <div
-            className="relative w-full max-w-2xl overflow-hidden bg-gray-100 dark:bg-zinc-800 flex items-center justify-center sm:rounded-sm"
+            className="relative w-full max-w-3xl overflow-hidden bg-gray-100 dark:bg-zinc-800 flex items-center justify-center sm:rounded-sm"
             style={width && height ? { aspectRatio: `${width} / ${height}` } : { minHeight: 320 }}
         >
             {thumbnailUrl && (
@@ -549,17 +552,13 @@ function LockedPreview({ thumbnailUrl, width, height }) {
                     src={thumbnailUrl}
                     alt=""
                     aria-hidden="true"
-                    className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-70"
+                    className="absolute inset-0 w-full h-full object-cover"
                 />
             )}
-            <div className="relative flex flex-col items-center gap-3 text-center px-6 py-10 mx-4 bg-black/45 backdrop-blur-sm rounded-2xl">
-                <div className="w-12 h-12 bg-white/15 rounded-full flex items-center justify-center">
-                    <Sparkles className="w-6 h-6 text-white" />
-                </div>
-                <p className="text-white font-bold">Contenu Premium</p>
-                <p className="text-white/80 text-sm max-w-xs">
-                    Débloquez cette image en pleine résolution avec des crédits.
-                </p>
+            <Watermark mediaId={mediaId} />
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 bg-black/55 backdrop-blur-sm rounded-full whitespace-nowrap">
+                <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
+                <span className="text-white text-xs font-semibold">Aperçu Premium — débloquez la version complète avec des crédits</span>
             </div>
         </div>
     );

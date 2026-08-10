@@ -55,7 +55,7 @@ export async function POST(request) {
     }
 
     // ── 3. Lecture du corps de la requête ────────────────────────────────────
-    const { mediaId, action } = await request.json();
+    const { mediaId, action, reasonKey, customNote } = await request.json();
     if (!mediaId || !["approved", "rejected"].includes(action)) {
         return NextResponse.json({ ok: false, error: "Paramètres invalides (mediaId, action)." }, { status: 400 });
     }
@@ -93,7 +93,7 @@ export async function POST(request) {
         const mediaPageUrl = `${(process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "")}${mediaUrl({ id: media.id, title, alt: media.alt_text })}`;
         emailPayload = buildApprovedEmail({ title, photoUrl, mediaPageUrl });
     } else {
-        emailPayload = buildRejectedEmail({ title, photoUrl });
+        emailPayload = buildRejectedEmail({ title, photoUrl, reasonKey, customNote });
     }
 
     const result = await sendMail({ to: contributor.email, ...emailPayload });

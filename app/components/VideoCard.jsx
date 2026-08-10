@@ -7,6 +7,7 @@ import { Play, MapPin } from "lucide-react";
 import LikeButton from "./LikeButton";
 import SaveToCollectionButton from "./SaveToCollectionButton";
 import ImageLoader from "./ImageLoader";
+import Watermark from "./Watermark";
 import { locationLabel, mediaUrl } from "../lib/media";
 
 export default function VideoCard({ video, liked = false }) {
@@ -52,6 +53,7 @@ export default function VideoCard({ video, liked = false }) {
                         )}
                     </div>
                 </Link>
+                {video.isPremium && <Watermark mediaId={video.id} />}
 
                 <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/0 to-black/30 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
