@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { CheckCircle2, XCircle, Trash2, Loader2, ExternalLink, ChevronDown } from "lucide-react";
+import { CheckCircle2, XCircle, Trash2, Loader2, ExternalLink, ChevronDown, AlertTriangle } from "lucide-react";
 import {
     getPendingMedia, getOpenReports,
     approveMedia, rejectMedia, removeMedia, resolveReport,
 } from "../../lib/database";
 import { mediaUrl } from "../../lib/media";
+import { supabase } from "../../lib/supabase";
 
 const REASON_LABELS = {
     droits: "Droits non respectés",
@@ -19,6 +20,31 @@ const REASON_LABELS = {
 };
 
 const PAGE_SIZE = 20;
+
+/**
+ * Notifie le contributeur par email après une décision de modération.
+ * Best-effort : un échec d'envoi ne révoque pas la décision.
+ * @returns {Promise<string|null>} message d'erreur ou null si succès
+ */
+async function notifyContributor(mediaId, action) {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return "Session expirée.";
+
+        const res = await fetch("/api/notify-contributor", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ mediaId, action }),
+        });
+        const data = await res.json();
+        return data.ok ? null : (data.error || "Erreur inconnue.");
+    } catch (err) {
+        return err.message || "Erreur réseau.";
+    }
+}
 
 export default function ModerationPage() {
     const [pending, setPending] = useState(null);
@@ -32,6 +58,8 @@ export default function ModerationPage() {
     const [reportsLoading, setReportsLoading] = useState(false);
 
     const [busyKey, setBusyKey] = useState(null);
+    const [mailWarning, setMailWarning] = useState(null);
+    const warningTimer = useRef(null);
 
     // Charge le premier lot au montage.
     useEffect(() => {
@@ -67,15 +95,34 @@ export default function ModerationPage() {
 
     // Retire l'item localement sans recharger toute la liste :
     // préserve la position de scroll et les pages déjà chargées.
-    const runAction = async (key, action, removeFromList) => {
+    const runAction = async (key, action, removeFromList, notifyArgs) => {
         setBusyKey(key);
         await action();
         setBusyKey(null);
         removeFromList(key);
+
+        // Notification email asynchrone (best-effort).
+        if (notifyArgs) {
+            const mailError = await notifyContributor(notifyArgs.mediaId, notifyArgs.action);
+            if (mailError) {
+                clearTimeout(warningTimer.current);
+                setMailWarning(`Email non envoyé : ${mailError}`);
+                warningTimer.current = setTimeout(() => setMailWarning(null), 6000);
+            }
+        }
     };
 
     return (
         <div className="space-y-16">
+
+            {/* Toast d'avertissement email (best-effort — ne bloque pas l'action) */}
+            {mailWarning && (
+                <div className="fixed bottom-6 right-6 z-50 flex items-start gap-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200 rounded-xl px-4 py-3 shadow-lg max-w-sm text-sm">
+                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{mailWarning}</span>
+                </div>
+            )}
+
             <section>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-1">En attente de publication</h2>
                 <p className="text-gray-500 dark:text-zinc-400 text-sm mb-6">
@@ -128,7 +175,8 @@ export default function ModerationPage() {
                                             onClick={() => runAction(
                                                 key,
                                                 () => approveMedia(item.id),
-                                                (k) => setPending((prev) => prev.filter((i) => `media-${i.id}` !== k))
+                                                (k) => setPending((prev) => prev.filter((i) => `media-${i.id}` !== k)),
+                                                { mediaId: item.id, action: "approved" }
                                             )}
                                             className="px-3 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-bold rounded-lg hover:bg-gray-800 dark:hover:bg-zinc-200 disabled:opacity-50 flex items-center gap-1.5"
                                         >
@@ -141,7 +189,8 @@ export default function ModerationPage() {
                                                 runAction(
                                                     key,
                                                     () => rejectMedia(item.id),
-                                                    (k) => setPending((prev) => prev.filter((i) => `media-${i.id}` !== k))
+                                                    (k) => setPending((prev) => prev.filter((i) => `media-${i.id}` !== k)),
+                                                    { mediaId: item.id, action: "rejected" }
                                                 );
                                             }}
                                             className="px-3 py-2 border border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-400 text-xs font-bold rounded-lg hover:border-red-300 dark:hover:border-red-800 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50 flex items-center gap-1.5"
