@@ -1,5 +1,34 @@
 import { incrementDownloads } from "./database";
 import { resizeRemoteImage } from "./images";
+import { supabase } from "./supabase";
+
+/**
+ * Vérifie, à l'instant présent et côté serveur, si le visiteur courant a le
+ * droit de voir l'adresse réelle d'un média Premium (propriétaire, admin,
+ * ou achat déjà effectué) — voir /api/photo-access. Ne renvoie jamais rien
+ * pour un média Premium tant que ce n'est pas le cas : `url`/`originalUrl`
+ * valent alors `null`, jamais une valeur de repli qui laisserait deviner
+ * l'adresse.
+ */
+export async function fetchPhotoAccess(mediaId) {
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch("/api/photo-access", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+            },
+            body: JSON.stringify({ mediaId }),
+        });
+        if (!res.ok) return { url: null, originalUrl: null };
+        const data = await res.json();
+        return { url: data.url || null, originalUrl: data.originalUrl || null };
+    } catch (error) {
+        console.error("Vérification d'accès média impossible :", error);
+        return { url: null, originalUrl: null };
+    }
+}
 
 /**
  * Slug ASCII côté client — miroir de la fonction SQL `slugify()`.

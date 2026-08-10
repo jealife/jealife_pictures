@@ -7,7 +7,7 @@ import Image from "next/image";
 import {
     MapPin, Camera, Eye, Download, ArrowLeft, Edit2, Check, Copy,
     Share2, Flag, Globe2, X, MoreHorizontal, ShieldCheck, Calendar, Info,
-    Mail, Twitter, Instagram, ChevronDown
+    Mail, Twitter, Instagram, ChevronDown, Sparkles
 } from "lucide-react";
 import LikeButton from "../../components/LikeButton";
 import DownloadButton from "../../components/DownloadButton";
@@ -18,7 +18,10 @@ import { useAuth } from "../../contexts/AuthContext";
 import {
     getMediaById, getRelatedMedia, hasUserLikedMedia, incrementViews,
 } from "../../lib/database";
-import { normalizeMedia, normalizeMediaList, formatCount, locationLabel, parseMediaId, mediaUrl } from "../../lib/media";
+import {
+    normalizeMedia, normalizeMediaList, formatCount, locationLabel, parseMediaId, mediaUrl,
+    fetchPhotoAccess,
+} from "../../lib/media";
 
 /**
  * `initialPhoto` est la ligne déjà chargée par le composant serveur (voir
@@ -96,6 +99,24 @@ export default function PhotoDetail({ initialPhoto }) {
         hasUserLikedMedia(photo.id, user.id).then(setLiked);
     }, [user, photo]);
 
+    // `initialPhoto` arrive déjà amputé de `url`/`original_url` pour un média
+    // Premium (voir page.js, aucune session côté serveur) : on revérifie ici
+    // avec la session du navigateur, seule à pouvoir prouver la propriété ou
+    // un achat. Tant que ce n'est pas résolu, `premiumAccess` reste `null` et
+    // la fiche affiche l'aperçu verrouillé.
+    const [premiumAccess, setPremiumAccess] = useState(null);
+    useEffect(() => {
+        // Rien à vérifier pour un média gratuit : `premiumAccess` reste
+        // inutilisé dans ce cas (voir `premiumLocked` plus bas), inutile de
+        // le remettre à `null` en plus.
+        if (!photo?.isPremium) return;
+        let cancelled = false;
+        fetchPhotoAccess(photo.id).then((result) => {
+            if (!cancelled) setPremiumAccess(result);
+        });
+        return () => { cancelled = true; };
+    }, [photo?.id, photo?.isPremium]);
+
     const share = async () => {
         const shareData = {
             title: photo.title || "Photo sur JEaLiFe Stock",
@@ -162,6 +183,21 @@ export default function PhotoDetail({ initialPhoto }) {
         : null;
 
     const isVideo = photo.type === "video";
+
+    // Tant que `premiumAccess` n'a pas confirmé un droit d'accès (achat,
+    // propriété, admin), aucune adresse réelle n'est affichée — seule la
+    // vignette (déjà publique) sert d'aperçu flouté. `photo.url` vaut déjà
+    // `null` pour un média Premium non déverrouillé (voir page.js /
+    // normalizeMedia), donc `premiumAccess?.url` est la seule source valable
+    // une fois débloqué.
+    const premiumLocked = photo.isPremium && !premiumAccess?.url;
+    const displayUrl = photo.isPremium ? premiumAccess?.url : photo.url;
+    const playbackUrl = photo.isPremium ? premiumAccess?.originalUrl : photo.originalUrl;
+
+    const unlockPremiumPreview = () => {
+        if (!photo.isPremium) return;
+        fetchPhotoAccess(photo.id).then(setPremiumAccess);
+    };
 
     return (
         <div className="min-h-screen bg-white dark:bg-zinc-950">
@@ -266,17 +302,19 @@ export default function PhotoDetail({ initialPhoto }) {
                         </Link>
                     )}
 
-                    <DownloadButton media={photo} variant="primary" />
+                    <DownloadButton media={photo} variant="primary" onDownloaded={unlockPremiumPreview} />
                 </div>
             </div>
 
             {/* Unsplash-style Image Container */}
             <div className="w-full bg-white dark:bg-zinc-950 sm:px-4 lg:px-8 py-0 sm:py-6 flex justify-center">
                 <div className="relative flex items-center justify-center bg-gray-50 dark:bg-zinc-900 overflow-hidden sm:rounded-[2px]">
-                    {isVideo ? (
+                    {premiumLocked ? (
+                        <LockedPreview thumbnailUrl={photo.thumbnailUrl} width={photo.width} height={photo.height} />
+                    ) : isVideo ? (
                         <video
-                            src={photo.originalUrl}
-                            poster={photo.url}
+                            src={playbackUrl}
+                            poster={displayUrl || photo.thumbnailUrl}
                             controls
                             autoPlay
                             loop
@@ -287,7 +325,7 @@ export default function PhotoDetail({ initialPhoto }) {
                         />
                     ) : (
                         <Image
-                            src={photo.url}
+                            src={displayUrl}
                             alt={photo.alt}
                             width={photo.width || 1200}
                             height={photo.height || 800}
@@ -486,6 +524,41 @@ export default function PhotoDetail({ initialPhoto }) {
                     onClose={() => setShowReport(false)}
                 />
             )}
+        </div>
+    );
+}
+
+/**
+ * Aperçu d'un média Premium non débloqué : la vignette (déjà publique,
+ * 800px max, voir images.js) suffit à donner une idée de l'image sans
+ * jamais remplacer l'achat — le flou appuie le message plutôt que de
+ * compter dessus comme seule protection, qui tient déjà côté serveur
+ * (voir /api/photo-access).
+ */
+function LockedPreview({ thumbnailUrl, width, height }) {
+    return (
+        <div
+            className="relative w-full max-w-2xl overflow-hidden bg-gray-100 dark:bg-zinc-800 flex items-center justify-center sm:rounded-sm"
+            style={width && height ? { aspectRatio: `${width} / ${height}` } : { minHeight: 320 }}
+        >
+            {thumbnailUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                    src={thumbnailUrl}
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-70"
+                />
+            )}
+            <div className="relative flex flex-col items-center gap-3 text-center px-6 py-10 mx-4 bg-black/45 backdrop-blur-sm rounded-2xl">
+                <div className="w-12 h-12 bg-white/15 rounded-full flex items-center justify-center">
+                    <Sparkles className="w-6 h-6 text-white" />
+                </div>
+                <p className="text-white font-bold">Contenu Premium</p>
+                <p className="text-white/80 text-sm max-w-xs">
+                    Débloquez cette image en pleine résolution avec des crédits.
+                </p>
+            </div>
         </div>
     );
 }

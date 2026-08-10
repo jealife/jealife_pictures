@@ -176,6 +176,11 @@ export async function getHeroBackground() {
             .eq('status', 'published')
             .eq('type', 'photo')
             .eq('orientation', 'paysage')
+            // Cette page est rendue côté serveur et son `url` part telle
+            // quelle dans le HTML envoyé à chaque visiteur : un média Premium
+            // n'a rien à faire ici, ce serait son adresse réelle offerte à
+            // qui ne l'a pas achetée (voir /api/photo-access).
+            .eq('is_premium', false)
             .order('downloads_count', { ascending: false })
             .order('likes_count', { ascending: false })
             .limit(10);

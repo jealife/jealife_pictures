@@ -14,6 +14,25 @@ export const revalidate = 300;
 // d'aller la chercher deux fois par requête.
 const loadMedia = cache(async (rawId) => getMediaById(parseMediaId(rawId)));
 
+/**
+ * Aucune session ici : ce composant serveur interroge Supabase en anonyme
+ * (voir PhotoDetail.js), donc il ne peut jamais être le propriétaire d'un
+ * média Premium ni prouver un achat. `url`/`original_url` — l'adresse
+ * affichée en pleine taille et le fichier original — ne doivent donc jamais
+ * quitter le serveur pour un média Premium : ni dans les balises meta, ni
+ * dans le JSON-LD, ni dans les props d'hydratation envoyées au client. Le
+ * client revérifiera lui-même son droit d'accès via /api/photo-access, avec
+ * sa propre session.
+ */
+function previewImageFor(photo) {
+    return photo.is_premium ? photo.thumbnail_url || null : photo.url;
+}
+
+function redactPremiumMedia(photo) {
+    if (!photo?.is_premium) return photo;
+    return { ...photo, url: null, original_url: null };
+}
+
 export async function generateMetadata({ params }) {
     const { id } = await params;
     const photo = await loadMedia(id);
@@ -51,7 +70,7 @@ export async function generateMetadata({ params }) {
             description,
             images: [
                 {
-                    url: photo.url,
+                    url: previewImageFor(photo),
                     width: photo.width || 1200,
                     height: photo.height || 630,
                     alt: photo.alt_text || photo.title || "Image",
@@ -63,7 +82,7 @@ export async function generateMetadata({ params }) {
             card: "summary_large_image",
             title,
             description,
-            images: [photo.url],
+            images: [previewImageFor(photo)],
         },
     };
 }
@@ -85,11 +104,15 @@ function buildJsonLd(photo) {
         [photo.city, photo.countries?.name_fr].filter(Boolean).join(", ") || photo.location;
     const label = photo.title || mediaAlt(photo);
 
+    // Un média Premium n'a rien à annoncer comme `contentUrl` réel : c'est
+    // précisément l'adresse qu'on protège (voir /api/photo-access). Seule la
+    // vignette, publique par construction, sert d'aperçu aux moteurs de
+    // recherche et réseaux sociaux.
     const common = {
         name: label,
         description: photo.description || mediaAlt(photo),
         datePublished: photo.created_at,
-        thumbnailUrl: photo.thumbnail_url || photo.url,
+        thumbnailUrl: photo.thumbnail_url || (photo.is_premium ? null : photo.url),
         license: absoluteUrl("/licence"),
         acquireLicensePage: absoluteUrl("/licence"),
         creditText: author,
@@ -110,7 +133,7 @@ function buildJsonLd(photo) {
             "@context": "https://schema.org/",
             "@type": "VideoObject",
             ...common,
-            contentUrl: photo.original_url || photo.url,
+            ...(photo.is_premium ? {} : { contentUrl: photo.original_url || photo.url }),
             uploadDate: photo.created_at,
             duration: isoDuration(photo.duration),
         }
@@ -118,7 +141,7 @@ function buildJsonLd(photo) {
             "@context": "https://schema.org/",
             "@type": "ImageObject",
             ...common,
-            contentUrl: photo.url,
+            contentUrl: previewImageFor(photo),
         };
 
     const canonical = absoluteUrl(mediaUrl({ id: photo.id, title: photo.title, alt: mediaAlt(photo) }));
@@ -159,8 +182,13 @@ export default async function Page({ params }) {
                 transmettre évite au navigateur de la redemander après
                 hydratation. C'est ce second aller-retour qui faisait passer la
                 page par un écran squelette avant même de commencer à
-                télécharger l'image. */}
-            <PhotoDetail initialPhoto={photo} />
+                télécharger l'image. `redactPremiumMedia` retire `url`/
+                `original_url` avant que ces props n'atteignent le client :
+                ce composant n'a aucune session, il ne peut jamais prouver un
+                achat ou une propriété, donc rien de réel ne doit en sortir
+                pour un média Premium — PhotoDetail revérifie lui-même via
+                /api/photo-access, avec la session du navigateur. */}
+            <PhotoDetail initialPhoto={photo && redactPremiumMedia(photo)} />
         </>
     );
 }

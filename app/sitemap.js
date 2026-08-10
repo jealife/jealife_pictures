@@ -51,7 +51,7 @@ export default async function sitemap() {
         safeQuery(() =>
             supabase
                 .from("media")
-                .select("id, type, title, alt_text, url, thumbnail_url, original_url, updated_at, country_code")
+                .select("id, type, title, alt_text, url, thumbnail_url, original_url, updated_at, country_code, is_premium")
                 .eq("status", "published")
                 .order("created_at", { ascending: false })
                 .limit(20000)
@@ -137,18 +137,26 @@ export default async function sitemap() {
                 priority: 0.9,
             };
 
+            // Un média Premium ne doit jamais annoncer son adresse réelle
+            // dans un plan de site public — Google (et n'importe qui) le lit
+            // sans la moindre vérification d'accès. Seule la vignette, déjà
+            // publique, sert d'aperçu ; une vidéo Premium n'a simplement pas
+            // d'entrée vidéo (mieux vaut l'omettre que pointer vers un
+            // fichier qu'on protège par ailleurs).
             if (item.type === "video") {
-                // Pour une vidéo, `url` est l'image d'aperçu et le fichier
-                // lui-même vit dans `original_url` : les confondre ferait
-                // rejeter l'entrée par Google.
-                entry.videos = [{
-                    title: item.title || item.alt_text || "Vidéo",
-                    thumbnail_loc: item.thumbnail_url || item.url,
-                    description: item.alt_text || item.title || "Vidéo libre de droits",
-                    content_loc: item.original_url || item.url,
-                }];
+                if (!item.is_premium) {
+                    // Pour une vidéo, `url` est l'image d'aperçu et le fichier
+                    // lui-même vit dans `original_url` : les confondre ferait
+                    // rejeter l'entrée par Google.
+                    entry.videos = [{
+                        title: item.title || item.alt_text || "Vidéo",
+                        thumbnail_loc: item.thumbnail_url || item.url,
+                        description: item.alt_text || item.title || "Vidéo libre de droits",
+                        content_loc: item.original_url || item.url,
+                    }];
+                }
             } else {
-                entry.images = [item.url];
+                entry.images = [item.is_premium ? item.thumbnail_url : item.url].filter(Boolean);
             }
 
             return entry;

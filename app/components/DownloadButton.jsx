@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { getSetting, getPremiumPricing, spendCreditsForDownload } from "../lib/database";
-import { downloadOptionsFor, downloadMedia, mediaUrl } from "../lib/media";
+import { downloadOptionsFor, downloadMedia, mediaUrl, fetchPhotoAccess } from "../lib/media";
 
 /**
  * Téléchargement avec choix de format.
@@ -74,12 +74,20 @@ function PremiumDownload({ media, onDownloaded }) {
         });
     }, [media.type, isOwner]);
 
+    // `media.url`/`media.originalUrl` sont redactés à la source pour un
+    // média Premium (voir page.js) : ni le propriétaire ni l'acheteur ne
+    // peuvent s'en servir tels quels. `/api/photo-access` est le seul
+    // endroit qui accepte de rendre l'adresse réelle, une fois le droit
+    // d'accès vérifié côté serveur.
     const downloadOwnMedia = async () => {
         setBusy(true);
         setError(null);
         try {
-            await downloadMedia(media, "original");
-            window.dispatchEvent(new CustomEvent("show-thanks-modal", { detail: media }));
+            const access = await fetchPhotoAccess(media.id);
+            if (!access.originalUrl) throw new Error("Fichier indisponible.");
+            const unlocked = { ...media, url: access.url || media.thumbnailUrl, originalUrl: access.originalUrl };
+            await downloadMedia(unlocked, "original");
+            window.dispatchEvent(new CustomEvent("show-thanks-modal", { detail: unlocked }));
             onDownloaded?.();
         } catch (err) {
             console.error("Download failed:", err);
@@ -98,13 +106,23 @@ function PremiumDownload({ media, onDownloaded }) {
         setError(null);
 
         const result = await spendCreditsForDownload(media.id);
-        if (result.success) {
-            await downloadMedia(media, "original");
-            window.dispatchEvent(new CustomEvent("show-thanks-modal", { detail: media }));
-            onDownloaded?.();
-        } else {
+        if (!result.success) {
             setError(result.error);
+            setBusy(false);
+            return;
         }
+
+        const access = await fetchPhotoAccess(media.id);
+        if (!access.originalUrl) {
+            setError("Achat enregistré, mais le fichier est momentanément indisponible.");
+            setBusy(false);
+            return;
+        }
+
+        const unlocked = { ...media, url: access.url || media.thumbnailUrl, originalUrl: access.originalUrl };
+        await downloadMedia(unlocked, "original");
+        window.dispatchEvent(new CustomEvent("show-thanks-modal", { detail: unlocked }));
+        onDownloaded?.();
         setBusy(false);
     };
 
