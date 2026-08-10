@@ -199,7 +199,12 @@ export default function PhotoDetail({ initialPhoto }) {
                                 title="Contacter le photographe"
                                 className="flex text-[13px] text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-300 font-medium truncate items-center gap-1 transition-colors"
                             >
-                                Disponible
+                                {/* « Disponible » affiché pour tout le monde, y compris le compte
+                                    JEaLiFe Stock qui n'a jamais activé cette option, ne reflétait
+                                    rien — voir la même distinction sur la page de profil
+                                    ([handle]/layout.js). Le bouton reste cliquable dans tous les
+                                    cas (site web / réseaux restent joignables), seul le mot change. */}
+                                {photo.author.isAvailableForHire ? "Disponible à l'embauche" : "Contacter"}
                                 <ChevronDown className={`w-3 h-3 shrink-0 transition-transform ${showConnect ? "rotate-180" : ""}`} />
                             </button>
 

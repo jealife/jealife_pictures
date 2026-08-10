@@ -133,9 +133,23 @@ export default function UserProfileLayout({ children }) {
                                         </button>
                                     )}
                                     {profileUser.location && (
-                                        <span className="flex items-center gap-1.5">
-                                            <MapPin className="w-4 h-4 text-gray-400 dark:text-zinc-500" /> {profileUser.location}
-                                        </span>
+                                        // Cliquable seulement quand un pays est rattaché : la
+                                        // localisation reste du texte libre (ex. « Parc de la
+                                        // Lopé »), rien ne garantit qu'elle corresponde à un pays
+                                        // du site tant que ce lien structuré n'existe pas.
+                                        profileUser.countries ? (
+                                            <Link
+                                                href={`/pays/${profileUser.countries.slug}`}
+                                                className="flex items-center gap-1.5 hover:text-black dark:hover:text-white transition-colors"
+                                                title={`Voir les photos du ${profileUser.countries.name_fr}`}
+                                            >
+                                                <MapPin className="w-4 h-4 text-gray-400 dark:text-zinc-500" /> {profileUser.location}
+                                            </Link>
+                                        ) : (
+                                            <span className="flex items-center gap-1.5">
+                                                <MapPin className="w-4 h-4 text-gray-400 dark:text-zinc-500" /> {profileUser.location}
+                                            </span>
+                                        )
                                     )}
                                     <div className="relative">
                                         <button

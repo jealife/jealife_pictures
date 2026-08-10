@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
 import { upsertProfile } from "../lib/auth";
-import { getUserProfile } from "../lib/database";
+import { getUserProfile, getCountries } from "../lib/database";
+import LocationInput from "../components/LocationInput";
 import { friendlyErrorMessage } from "../lib/errors";
-import { Camera, MapPin, Globe, User, Mail, FileText, CheckCircle2, AlertCircle, Loader2, ChevronRight } from "lucide-react";
+import { Camera, Globe, User, Mail, FileText, CheckCircle2, AlertCircle, Loader2, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 export default function SettingsPage() {
@@ -21,6 +22,7 @@ export default function SettingsPage() {
         username: "",
         bio: "",
         location: "",
+        country_code: "",
         website: "",
         instagram_username: "",
         facebook_username: "",
@@ -32,8 +34,15 @@ export default function SettingsPage() {
     const [status, setStatus] = useState({ type: "", message: "" });
     const [avatarFile, setAvatarFile] = useState(null);
     const [avatarPreview, setAvatarPreview] = useState("");
+    const [countries, setCountries] = useState([]);
 
     const fileInputRef = useRef(null);
+
+    useEffect(() => {
+        getCountries().then(setCountries);
+    }, []);
+
+    const countryName = countries.find((c) => c.code === profile.country_code)?.name_fr || null;
 
     // Protection and Data Fetching
     useEffect(() => {
@@ -67,6 +76,7 @@ export default function SettingsPage() {
                     username: data.username || "",
                     bio: data.bio || "",
                     location: data.location || "",
+                    country_code: data.country_code || "",
                     website: data.website || "",
                     instagram_username: data.instagram_username || "",
                     facebook_username: data.facebook_username || "",
@@ -134,6 +144,7 @@ export default function SettingsPage() {
                 username: profile.username.toLowerCase(),
                 bio: profile.bio,
                 location: profile.location,
+                country_code: profile.country_code || null,
                 website: profile.website,
                 instagram_username: profile.instagram_username,
                 facebook_username: profile.facebook_username,
@@ -311,16 +322,23 @@ export default function SettingsPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
                                         <label className="text-sm font-semibold text-gray-900 dark:text-zinc-100">Localisation</label>
-                                        <div className="relative">
-                                            <MapPin className="absolute left-3 top-3.5 w-4 h-4 text-gray-400 dark:text-zinc-500" />
-                                            <input
-                                                type="text"
-                                                value={profile.location}
-                                                onChange={(e) => setProfile({ ...profile, location: e.target.value })}
-                                                className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 focus:border-black dark:focus:border-white focus:ring-1 focus:ring-black dark:focus:ring-white outline-hidden transition-all text-sm"
-                                                placeholder="Libreville, Gabon"
-                                            />
-                                        </div>
+                                        {/* Choisir une suggestion associe un pays (`country_code`)
+                                            à la localisation — c'est ce qui permet ensuite à votre
+                                            page de profil de proposer une recherche par pays sur ce
+                                            texte. Une saisie libre, sans suggestion choisie, reste
+                                            un simple texte non cliquable. */}
+                                        <LocationInput
+                                            value={profile.location}
+                                            onPatch={(patch) =>
+                                                setProfile((prev) => ({
+                                                    ...prev,
+                                                    location: patch.location ?? prev.location,
+                                                    ...(patch.countryCode ? { country_code: patch.countryCode } : {}),
+                                                }))
+                                            }
+                                            countryName={countryName}
+                                            placeholder="Libreville, Gabon"
+                                        />
                                     </div>
                                 </div>
 

@@ -95,6 +95,10 @@ export function normalizeMedia(row) {
             bio: profile.bio || null,
             location: profile.location || null,
             isVerified: !!profile.is_verified,
+            // Jamais vrai pour le compte JEaLiFe Stock lui-même (voir
+            // [handle]/layout.js) : c'est le compte de l'entreprise, pas un
+            // photographe indépendant à la recherche de missions.
+            isAvailableForHire: !!profile.is_available_for_hire && profile.role !== 'admin',
             website: profile.website || null,
             instagramUsername: profile.instagram_username || null,
             facebookUsername: profile.facebook_username || null,

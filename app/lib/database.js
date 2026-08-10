@@ -19,7 +19,8 @@ const DETAIL_SELECT = `
   profiles:user_id (
     id, username, full_name, avatar_url, bio, location,
     is_verified, total_views, total_downloads,
-    website, instagram_username, facebook_username
+    website, instagram_username, facebook_username,
+    is_available_for_hire, role
   ),
   countries:country_code ( code, name_fr, slug, region ),
   media_topics ( topics ( id, name, slug ) )
@@ -602,7 +603,7 @@ export async function getUserProfile(username) {
     try {
         const { data, error } = await supabase
             .from('profiles')
-            .select('*')
+            .select('*, countries:country_code ( code, name_fr, slug )')
             .ilike('username', username)
             .maybeSingle();
 
