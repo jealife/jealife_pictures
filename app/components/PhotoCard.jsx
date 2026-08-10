@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { BadgeCheck, MapPin } from "lucide-react";
+import { BadgeCheck, MapPin, Clock } from "lucide-react";
 import LikeButton from "./LikeButton";
 import DownloadButton from "./DownloadButton";
 import SaveToCollectionButton from "./SaveToCollectionButton";
@@ -22,6 +22,8 @@ export default function PhotoCard({ photo, liked = false, hideActions = false, p
 
     const place = locationLabel(photo);
     const hasDimensions = photo.width && photo.height;
+
+    const isPending = photo.status === 'pending';
 
     return (
         <div className="relative group mb-6 break-inside-avoid">
@@ -70,7 +72,22 @@ export default function PhotoCard({ photo, liked = false, hideActions = false, p
                     </Link>
                 </div>
 
-                {!hideActions && (
+                {/* Badge « En cours d'analyse » — visible uniquement par le contributeur
+                    sur son propre profil. N'est jamais rendu pour un visiteur ou dans le
+                    feed éditorial car ces photos ne sont pas requêtées dans ce contexte. */}
+                {isPending && (
+                    <div className="absolute inset-0 rounded-2xl pointer-events-none z-20">
+                        <div className="absolute inset-0 bg-black/40 rounded-2xl" />
+                        <div className="absolute top-3 left-3">
+                            <span className="inline-flex items-center gap-1.5 bg-amber-500/90 text-white text-[11px] font-semibold px-2.5 py-1 rounded-full shadow backdrop-blur-sm">
+                                <Clock className="w-3 h-3 shrink-0" />
+                                En cours d&apos;analyse
+                            </span>
+                        </div>
+                    </div>
+                )}
+
+                {!hideActions && !isPending && (
                     <>
                         <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
                             <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/0 to-black/30 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />

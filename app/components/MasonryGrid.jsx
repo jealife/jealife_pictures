@@ -41,6 +41,7 @@ export default function MasonryGrid({
     hideActions = false,
     emptyMessage = null,
     initialItems = null,
+    includeUnpublished = false,
 }) {
     const searchParams = useSearchParams();
     const { user } = useAuth();
@@ -87,12 +88,12 @@ export default function MasonryGrid({
                 country: activeCountry, sort: activeSort, orientation: activeOrientation,
             };
 
-            if (userId) return getUserMedia(userId, { type, limit: PAGE_SIZE, offset });
+            if (userId) return getUserMedia(userId, { type, limit: PAGE_SIZE, offset, includeUnpublished });
             if (topic) return getMediaByTopic(topic, options);
             if (query) return searchMedia(query, options);
             return getMedia(options);
         },
-        [type, topic, query, userId, activeCountry, activeSort, activeOrientation]
+        [type, topic, query, userId, activeCountry, activeSort, activeOrientation, includeUnpublished]
     );
 
     // Premier chargement, et rechargement complet à chaque changement de filtre.

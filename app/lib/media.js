@@ -116,6 +116,7 @@ export function normalizeMedia(row) {
         views: row.views_count || 0,
         createdAt: row.created_at || null,
         isPremium: !!row.is_premium,
+        status: row.status || 'published',
 
         author: {
             id: profile.id || row.user_id || null,

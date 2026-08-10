@@ -10,7 +10,7 @@ export const PAGE_SIZE = 24;
 const CARD_SELECT = `
   id, type, url, thumbnail_url, blur_data_url, title, alt_text,
   location, city, country_code, geo_priority, width, height, duration,
-  likes_count, downloads_count, views_count, created_at, is_premium,
+  likes_count, downloads_count, views_count, created_at, is_premium, status,
   profiles:user_id ( id, username, full_name, avatar_url, is_verified )
 `;
 
