@@ -33,6 +33,8 @@ const UPLOAD_STAGES = {
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 Mo, annoncé dans l'UI (voir zone de dépôt)
 const MAX_FILES = 10;
 
+const AI_QUOTA_STORAGE_KEY = "jealife_ai_quota_exhausted_until";
+
 // Chaque image est préparée dans le navigateur (redimensionnements canvas) puis
 // envoyée en trois fichiers. Tout lancer d'un coup saturerait la mémoire sur
 // mobile et la bande passante montante ; deux en parallèle garde l'attente
@@ -240,7 +242,7 @@ async function readExif(file) {
     }
 }
 
-function ItemCard({ item, index, countries, dbTopics, onPatch, onRemove, onGenerate, disabled }) {
+function ItemCard({ item, index, countries, dbTopics, onPatch, onRemove, onGenerate, disabled, aiQuotaExhausted }) {
     const { africanCountries, otherCountries } = countries;
 
     const [places, setPlaces] = useState([]);
@@ -352,11 +354,12 @@ function ItemCard({ item, index, countries, dbTopics, onPatch, onRemove, onGener
                             <button
                                 type="button"
                                 onClick={onGenerate}
-                                disabled={disabled || item.generating || !item.processed}
+                                disabled={disabled || aiQuotaExhausted || item.generating || !item.processed}
+                                title={aiQuotaExhausted ? "Quota de génération IA atteint pour le moment. Réessayez plus tard." : undefined}
                                 className="text-[12px] font-medium text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 disabled:opacity-50 flex items-center gap-1 shrink-0 transition-colors"
                             >
                                 {item.generating ? <Loader2 className="w-3 h-3 animate-spin" /> : "✨"}
-                                {item.generating ? "Génération…" : "Générer avec l'IA"}
+                                {item.generating ? "Génération…" : aiQuotaExhausted ? "IA indisponible" : "Générer avec l'IA"}
                             </button>
                         </div>
                         <input
@@ -668,9 +671,15 @@ export default function SubmitForm() {
         if (stored > Date.now()) setAiQuotaExhaustedUntil(stored);
 
         if (aiQuotaExhaustedUntil <= Date.now()) return;
-        const timer = setTimeout(() => setAiQuotaExhaustedUntil(0), aiQuotaExhaustedUntil - Date.now());
+        const timer = setTimeout(() => {
+            setAiQuotaExhaustedUntil(0);
+            try {
+                localStorage.removeItem(AI_QUOTA_STORAGE_KEY);
+            } catch {
+                /* ignore */
+            }
+        }, aiQuotaExhaustedUntil - Date.now());
         return () => clearTimeout(timer);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [aiQuotaExhaustedUntil]);
 
     const fileInputRef = useRef(null);
@@ -772,6 +781,10 @@ export default function SubmitForm() {
      */
     const generateForItem = async (item) => {
         if (!item.processed?.thumbnail) return;
+        // Filet de sécurité si l'état n'a pas encore basculé (plusieurs clics
+        // rapprochés avant le re-rendu) : le bouton est déjà censé être
+        // désactivé dans ce cas, voir `aiQuotaExhausted` plus bas.
+        if (aiQuotaExhaustedUntil > Date.now()) return;
         patchItem(item.id, { generating: true, error: null });
 
         try {
@@ -790,6 +803,10 @@ export default function SubmitForm() {
             });
 
             const data = await res.json();
+            if (res.status === 429 && data.quotaExceeded) {
+                markAiQuotaExhausted(data.retryAfterMs);
+                throw new Error(data.error);
+            }
             if (!res.ok) throw new Error(data.error || "Erreur lors de la génération.");
 
             patchItem(item.id, {
@@ -1224,9 +1241,47 @@ export default function SubmitForm() {
                             <PartyPopper className="w-10 h-10 text-green-600 dark:text-green-400" />
                         </div>
 
-                        <h1 className="text-4xl font-extrabold text-gray-900 dark:text-zinc-100 mb-4">
+                        <h1 className="text-4xl font-extrabold text-gray-900 dark:text-zinc-100 mb-6">
                             Merci pour votre contribution
                         </h1>
+
+                        {/* La preuve d'abord, l'explication ensuite : la photo
+                            elle-même confirme ce qui vient de se passer bien
+                            mieux qu'une phrase, et une seule image méritait
+                            mieux qu'une case à moitié d'une grille pensée pour
+                            plusieurs — recadrée en carré, à côté d'un vide.
+                            Son ratio réel est gardé (`object-contain`), comme
+                            partout ailleurs dans ce formulaire. */}
+                        {publishedItems.length === 1 ? (
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    router.push(`/photos/${publishedItems[0].published.id}-${publishedItems[0].published.slug}`)
+                                }
+                                className="block w-full max-w-sm mx-auto mb-8 rounded-2xl overflow-hidden bg-gray-100 dark:bg-zinc-800 ring-1 ring-black/5 dark:ring-white/10 hover:ring-black dark:hover:ring-white transition-all"
+                            >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={publishedItems[0].previewUrl}
+                                    alt={publishedItems[0].altText}
+                                    className="w-full h-auto max-h-96 object-contain"
+                                />
+                            </button>
+                        ) : (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+                                {publishedItems.map((item) => (
+                                    <button
+                                        key={item.id}
+                                        type="button"
+                                        onClick={() => router.push(`/photos/${item.published.id}-${item.published.slug}`)}
+                                        className="rounded-2xl overflow-hidden bg-gray-100 dark:bg-zinc-800 ring-1 ring-black/5 dark:ring-white/10 hover:ring-black dark:hover:ring-white transition-all"
+                                    >
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img src={item.previewUrl} alt={item.altText} className="w-full h-32 object-cover" />
+                                    </button>
+                                ))}
+                            </div>
+                        )}
 
                         {anyPending ? (
                             <p className="text-lg text-gray-500 dark:text-zinc-400 mb-10">
@@ -1265,20 +1320,6 @@ export default function SubmitForm() {
                                 enregistrés. Vous pouvez les ajouter depuis la page de modification.
                             </p>
                         )}
-
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-10">
-                            {publishedItems.map((item) => (
-                                <button
-                                    key={item.id}
-                                    type="button"
-                                    onClick={() => router.push(`/photos/${item.published.id}-${item.published.slug}`)}
-                                    className="rounded-2xl overflow-hidden bg-gray-100 dark:bg-zinc-800 ring-1 ring-black/5 dark:ring-white/10 hover:ring-black dark:hover:ring-white transition-all"
-                                >
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img src={item.previewUrl} alt={item.altText} className="w-full h-32 object-cover" />
-                                </button>
-                            ))}
-                        </div>
 
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             {publishedItems.length === 1 && (
@@ -1331,6 +1372,7 @@ export default function SubmitForm() {
                                     countries={countryGroups}
                                     dbTopics={dbTopics}
                                     disabled={publishing}
+                                    aiQuotaExhausted={aiQuotaExhausted}
                                     onPatch={(patch) => patchItem(item.id, patch)}
                                     onRemove={() => removeItem(item.id)}
                                     onGenerate={() => generateForItem(item)}
