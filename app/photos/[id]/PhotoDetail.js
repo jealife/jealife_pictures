@@ -328,16 +328,14 @@ export default function PhotoDetail({ initialPhoto }) {
                             alt={photo.alt}
                             width={photo.width || 1200}
                             height={photo.height || 800}
-                            // Borne la taille réellement demandée à l'optimiseur d'images
-                            // (lui-même adossé à R2 via next.config.js) : sans cet indice,
-                            // Next suppose par défaut une image sur 100 % de la largeur de
-                            // l'écran et va chercher une variante inutilement grande sur
-                            // desktop, alors que `max-height` limite déjà l'affichage réel.
-                            sizes="(max-width: 768px) 100vw, (max-width: 1536px) 90vw, 1600px"
+                            // `displayUrl` est la version web 2400 px (WebP/JPEG 0.85)
+                            // générée à l'upload côté client et stockée sur Supabase/R2.
+                            // Repasser par Vercel /_next/image ne ferait qu'encoder une
+                            // image déjà encodée et consommer le quota d'optimisation.
+                            unoptimized
                             className="w-auto h-auto max-w-full object-contain"
                             style={{ maxHeight: "calc(100vh - 140px)" }}
                             priority
-                            quality={90}
                             {...(photo.blurDataURL
                                 ? { placeholder: "blur", blurDataURL: photo.blurDataURL }
                                 : {})}

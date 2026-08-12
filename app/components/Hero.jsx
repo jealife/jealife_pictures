@@ -34,7 +34,7 @@ export default function Hero({ background }) {
                     alt=""
                     fill
                     priority
-                    quality={75}
+                    unoptimized
                     className="object-cover animate-in fade-in duration-1000"
                     sizes="100vw"
                 />
