@@ -29,7 +29,7 @@ export default function VideoCard({ video, liked = false }) {
                             alt={video.alt}
                             fill
                             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                            quality={85}
+                            unoptimized
                             className={`object-cover transition-all duration-700 group-hover:scale-105 ${
                                 loaded ? "opacity-90 group-hover:opacity-100" : "opacity-0"
                             }`}

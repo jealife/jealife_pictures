@@ -42,8 +42,8 @@ export default function PhotoCard({ photo, liked = false, hideActions = false, p
                                         loaded ? "opacity-100" : "opacity-0"
                                     }`}
                                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                                    quality={85}
                                     priority={priority}
+                                    unoptimized
                                     onLoad={() => setLoaded(true)}
                                     onError={() => setLoaded(true)}
                                     {...(photo.blurDataURL
@@ -63,8 +63,8 @@ export default function PhotoCard({ photo, liked = false, hideActions = false, p
                                     className={`w-full h-auto block object-cover transform transition-all duration-700 group-hover:scale-105 cursor-zoom-in ${
                                         loaded ? "opacity-100" : "opacity-0"
                                     }`}
-                                    quality={85}
                                     loading="lazy"
+                                    unoptimized
                                     onLoad={() => setLoaded(true)}
                                     onError={() => setLoaded(true)}
                                 />
