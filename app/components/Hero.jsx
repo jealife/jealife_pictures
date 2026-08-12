@@ -14,6 +14,7 @@ export default function Hero({ background }) {
     const router = useRouter();
     const [stats, setStats] = useState(null);
     const [term, setTerm] = useState("");
+    const [loaded, setLoaded] = useState(false);
 
     useEffect(() => { getPlatformStats().then(setStats); }, []);
 
@@ -29,14 +30,30 @@ export default function Hero({ background }) {
     return (
         <div className="relative h-[65vh] min-h-[500px] w-full flex flex-col items-center justify-center text-white mb-8 overflow-hidden">
             <div className="absolute inset-0 z-0">
+                {/* Couche de repli : thumbnail floutée chargée instantanément
+                    (souvent déjà en cache depuis la grille d'accueil). Elle est
+                    visible pendant le téléchargement du fond full-res, puis
+                    masquée par un fondu dès que ce dernier est prêt. */}
+                <div
+                    className="absolute inset-0 bg-cover bg-center transition-opacity duration-700"
+                    style={{
+                        backgroundImage: background.blurDataURL
+                            ? `url(${background.blurDataURL})`
+                            : `url(${background.thumbnailUrl})`,
+                        filter: "blur(12px)",
+                        transform: "scale(1.05)", /* masque les bords flous */
+                        opacity: loaded ? 0 : 1,
+                    }}
+                />
+                {/* Image full-res : s'affiche en fondu une fois chargée */}
                 <Image
                     src={background.url}
                     alt=""
                     fill
                     priority
                     unoptimized
-                    className="object-cover animate-in fade-in duration-1000"
-                    sizes="100vw"
+                    className={`object-cover transition-opacity duration-700 ${loaded ? "opacity-100" : "opacity-0"}`}
+                    onLoad={() => setLoaded(true)}
                 />
                 <div className="absolute inset-0 bg-black/35" />
                 <div className="absolute inset-0 bg-linear-to-b from-black/50 via-transparent to-black/60" />

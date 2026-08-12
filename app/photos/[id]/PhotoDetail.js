@@ -60,6 +60,10 @@ export default function PhotoDetail({ initialPhoto }) {
     const [copied, setCopied] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
     const [showConnect, setShowConnect] = useState(false);
+    // Chargement progressif de la photo full-res : la thumbnail (souvent déjà
+    // en cache depuis la grille) sert de placeholder flouté pendant que l'image
+    // display 2400 px se télécharge, puis disparaît en fondu.
+    const [imageLoaded, setImageLoaded] = useState(false);
 
     useEffect(() => {
         if (initialPhoto || !user) return;
@@ -323,23 +327,36 @@ export default function PhotoDetail({ initialPhoto }) {
                             style={{ maxHeight: "calc(100vh - 140px)" }}
                         />
                     ) : (
-                        <Image
-                            src={displayUrl}
-                            alt={photo.alt}
-                            width={photo.width || 1200}
-                            height={photo.height || 800}
-                            // `displayUrl` est la version web 2400 px (WebP/JPEG 0.85)
-                            // générée à l'upload côté client et stockée sur Supabase/R2.
-                            // Repasser par Vercel /_next/image ne ferait qu'encoder une
-                            // image déjà encodée et consommer le quota d'optimisation.
-                            unoptimized
-                            className="w-auto h-auto max-w-full object-contain"
-                            style={{ maxHeight: "calc(100vh - 140px)" }}
-                            priority
-                            {...(photo.blurDataURL
-                                ? { placeholder: "blur", blurDataURL: photo.blurDataURL }
-                                : {})}
-                        />
+                        <div className="relative w-full flex items-center justify-center"
+                             style={{ maxHeight: "calc(100vh - 140px)" }}>
+                            {/* Thumbnail floutée : placeholder visible jusqu'à
+                                ce que l'image display 2400 px soit chargée.   */}
+                            {!imageLoaded && (
+                                <div
+                                    className="absolute inset-0 bg-cover bg-center"
+                                    style={{
+                                        backgroundImage: photo.blurDataURL
+                                            ? `url(${photo.blurDataURL})`
+                                            : `url(${photo.thumbnailUrl})`,
+                                        filter: photo.blurDataURL ? "blur(0px)" : "blur(16px)",
+                                        transform: photo.blurDataURL ? "none" : "scale(1.03)",
+                                    }}
+                                />
+                            )}
+                            <Image
+                                src={displayUrl}
+                                alt={photo.alt}
+                                width={photo.width || 1200}
+                                height={photo.height || 800}
+                                unoptimized
+                                className={`w-auto h-auto max-w-full object-contain relative transition-opacity duration-500 ${
+                                    imageLoaded ? "opacity-100" : "opacity-0"
+                                }`}
+                                style={{ maxHeight: "calc(100vh - 140px)" }}
+                                priority
+                                onLoad={() => setImageLoaded(true)}
+                            />
+                        </div>
                     )}
                 </div>
             </div>

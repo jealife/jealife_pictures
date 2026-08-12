@@ -172,7 +172,7 @@ export async function getHeroBackground() {
     try {
         const { data, error } = await supabase
             .from('media')
-            .select('url, title, alt_text, profiles:user_id ( username, full_name )')
+            .select('url, thumbnail_url, blur_data_url, title, alt_text, profiles:user_id ( username, full_name )')
             .eq('status', 'published')
             .eq('type', 'photo')
             .eq('orientation', 'paysage')
@@ -190,6 +190,8 @@ export async function getHeroBackground() {
             const pick = data[Math.floor(Math.random() * data.length)];
             return {
                 url: pick.url,
+                thumbnailUrl: pick.thumbnail_url || pick.url,
+                blurDataURL: pick.blur_data_url || null,
                 photographer: pick.profiles?.full_name || 'JEaLiFe Stock',
                 photographer_url: pick.profiles?.username ? `/@${pick.profiles.username}` : null,
             };
