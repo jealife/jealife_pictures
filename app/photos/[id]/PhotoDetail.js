@@ -7,7 +7,7 @@ import Image from "next/image";
 import {
     MapPin, Camera, Eye, Download, ArrowLeft, Edit2, Check, Copy,
     Share2, Flag, Globe2, X, MoreHorizontal, ShieldCheck, Calendar, Info,
-    Mail, Twitter, Instagram, ChevronDown, Sparkles
+    Mail, Twitter, Instagram, ChevronDown, Sparkles, Tag, Plus, Loader2, CheckCircle2, AlertCircle,
 } from "lucide-react";
 import LikeButton from "../../components/LikeButton";
 import DownloadButton from "../../components/DownloadButton";
@@ -17,7 +17,7 @@ import PhotoCard from "../../components/PhotoCard";
 import Watermark from "../../components/Watermark";
 import { useAuth } from "../../contexts/AuthContext";
 import {
-    getMediaById, getRelatedMedia, hasUserLikedMedia, incrementViews,
+    getMediaById, getRelatedMedia, hasUserLikedMedia, incrementViews, syncTopics,
 } from "../../lib/database";
 import {
     normalizeMedia, normalizeMediaList, formatCount, locationLabel, parseMediaId, mediaUrl,
@@ -36,7 +36,8 @@ export default function PhotoDetail({ initialPhoto }) {
     const { id: rawId } = useParams();
     const router = useRouter();
     const pathname = usePathname();
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
+    const isAdmin = profile?.role === 'admin';
 
     // Le composant serveur interroge Supabase sans session : la RLS ne lui
     // laisse voir que les médias publiés. Une photo en attente de modération
@@ -64,6 +65,12 @@ export default function PhotoDetail({ initialPhoto }) {
     // en cache depuis la grille) sert de placeholder flouté pendant que l'image
     // display 2400 px se télécharge, puis disparaît en fondu.
     const [imageLoaded, setImageLoaded] = useState(false);
+
+    // Panneau de tags admin — visible uniquement pour role === 'admin'.
+    const [adminTags, setAdminTags] = useState([]);
+    const [adminTagInput, setAdminTagInput] = useState('');
+    const [adminSaving, setAdminSaving] = useState(false);
+    const [adminStatus, setAdminStatus] = useState(null); // null | 'success' | 'error'
 
     useEffect(() => {
         if (initialPhoto || !user) return;
@@ -122,6 +129,14 @@ export default function PhotoDetail({ initialPhoto }) {
         return () => { cancelled = true; };
     }, [photo?.id, photo?.isPremium]);
 
+    // Initialise les tags du panneau admin dès que la photo est disponible.
+    // Doit être déclaré avec les autres hooks, AVANT tout `return` conditionnel.
+    useEffect(() => {
+        if (!photo || !isAdmin) return;
+        const topicNames = (photo.tags || []);
+        setAdminTags(topicNames);
+    }, [photo?.id, isAdmin]);
+
     const share = async () => {
         const shareData = {
             title: photo.title || "Photo sur JEaLiFe Stock",
@@ -168,6 +183,30 @@ export default function PhotoDetail({ initialPhoto }) {
     const isOwner = user?.id === raw?.user_id;
     const place = locationLabel(photo);
     const topics = (raw?.media_topics || []).map((link) => link.topics).filter(Boolean);
+
+    // Initialise les tags admin à partir des données chargées (topics + tags libres).
+    // On ne le fait qu'une seule fois, dès que la photo est disponible.
+
+    const handleAdminSaveTags = async () => {
+        if (!photo?.id) return;
+        setAdminSaving(true);
+        setAdminStatus(null);
+        const result = await syncTopics(photo.id, adminTags);
+        setAdminSaving(false);
+        setAdminStatus(result.success ? 'success' : 'error');
+        setTimeout(() => setAdminStatus(null), 3000);
+    };
+
+    const handleAdminAddTag = (e) => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        const tag = adminTagInput.trim();
+        if (!tag) return;
+        if (!adminTags.some((t) => t.toLowerCase() === tag.toLowerCase())) {
+            setAdminTags([...adminTags, tag]);
+        }
+        setAdminTagInput('');
+    };
     // Réglages relevés dans l'EXIF au moment du dépôt (migration 0016).
     // Focale et ouverture partagent une ligne : c'est ainsi qu'un
     // photographe les lit (« 35.0mm f/2.4 »).
@@ -504,6 +543,87 @@ export default function PhotoDetail({ initialPhoto }) {
                                     {tag}
                                 </Link>
                             ))}
+                    </div>
+                )}
+
+                {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    Panneau admin — invisible pour les visiteurs et contributeurs.
+                    Permet d'ajouter/retirer des tags sur n'importe quelle photo
+                    sans passer par la page d'édition (réservée au propriétaire).
+                ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+                {isAdmin && (
+                    <div className="mt-10 border border-orange-200 dark:border-orange-800/50 rounded-2xl overflow-hidden">
+                        {/* Header */}
+                        <div className="flex items-center gap-2 px-5 py-3 bg-orange-50 dark:bg-orange-950/40 border-b border-orange-200 dark:border-orange-800/50">
+                            <Tag className="w-4 h-4 text-orange-600 dark:text-orange-400 shrink-0" />
+                            <span className="text-sm font-bold text-orange-700 dark:text-orange-300">Gestion des tags</span>
+                            <span className="ml-auto text-[10px] font-bold uppercase tracking-widest text-orange-500 dark:text-orange-500 bg-orange-100 dark:bg-orange-900/60 px-2 py-0.5 rounded-full">Admin</span>
+                        </div>
+
+                        <div className="p-5 space-y-4 bg-white dark:bg-zinc-950">
+                            {/* Tags actuels */}
+                            <div className="flex flex-wrap gap-2 min-h-[36px]">
+                                {adminTags.length === 0 ? (
+                                    <p className="text-sm text-gray-400 dark:text-zinc-500 italic">Aucun tag — ajoutez-en ci-dessous.</p>
+                                ) : (
+                                    adminTags.map((tag) => (
+                                        <span
+                                            key={tag}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 rounded-lg text-sm font-medium animate-in fade-in zoom-in-95 duration-150"
+                                        >
+                                            {tag}
+                                            <button
+                                                type="button"
+                                                onClick={() => setAdminTags(adminTags.filter((t) => t !== tag))}
+                                                className="hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                                                aria-label={`Retirer le tag ${tag}`}
+                                            >
+                                                <X className="w-3.5 h-3.5" />
+                                            </button>
+                                        </span>
+                                    ))
+                                )}
+                            </div>
+
+                            {/* Input nouveau tag */}
+                            <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <Plus className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-zinc-500 pointer-events-none" />
+                                    <input
+                                        type="text"
+                                        value={adminTagInput}
+                                        onChange={(e) => setAdminTagInput(e.target.value)}
+                                        onKeyDown={handleAdminAddTag}
+                                        placeholder="Nouveau tag (Entrée pour ajouter)"
+                                        className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 text-sm placeholder:text-gray-400 dark:placeholder:text-zinc-500 focus:border-orange-400 dark:focus:border-orange-500 focus:ring-1 focus:ring-orange-400/30 outline-none transition-all"
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleAdminSaveTags}
+                                    disabled={adminSaving}
+                                    className="flex items-center gap-2 px-5 py-2.5 bg-orange-600 hover:bg-orange-700 disabled:opacity-60 text-white rounded-xl text-sm font-bold transition-all active:scale-95"
+                                >
+                                    {adminSaving
+                                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                                        : <CheckCircle2 className="w-4 h-4" />}
+                                    {adminSaving ? 'Enregistrement…' : 'Enregistrer'}
+                                </button>
+                            </div>
+
+                            {/* Feedback */}
+                            {adminStatus && (
+                                <div className={`flex items-center gap-2 text-sm font-medium animate-in slide-in-from-top-1 duration-200 ${
+                                    adminStatus === 'success'
+                                        ? 'text-green-600 dark:text-green-400'
+                                        : 'text-red-600 dark:text-red-400'
+                                }`}>
+                                    {adminStatus === 'success'
+                                        ? <><CheckCircle2 className="w-4 h-4" /> Tags enregistrés avec succès.</>
+                                        : <><AlertCircle className="w-4 h-4" /> Erreur lors de l&apos;enregistrement.</>}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
             </div>
