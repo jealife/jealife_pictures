@@ -1,3 +1,8 @@
+// Regeneration ISR : Vercel sert une version cachée et la régénère en arrière-plan
+// toutes les 5 minutes. Sans ça, la page est figée au dernier déploiement et les
+// nouvelles images publiées n'apparaissent jamais en production.
+export const revalidate = 300;
+
 import { Suspense } from "react";
 import Link from "next/link";
 import Hero from "./components/Hero";
