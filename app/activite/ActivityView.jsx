@@ -3,58 +3,19 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Bell, Heart, FolderPlus, Sparkles, Banknote, CheckCheck, Loader2, ChevronDown } from "lucide-react";
+import { Bell, CheckCheck, Loader2, ChevronDown } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import {
     getNotifications, markNotificationRead, markAllNotificationsRead,
 } from "../lib/database";
-import { mediaUrl, timeAgo, truncateText } from "../lib/media";
+import NotificationRow from "../components/NotificationRow";
 
 const PAGE_SIZE = 30;
 
-const TYPE_ICON = {
-    like: Heart,
-    collection_add: FolderPlus,
-    premium_purchase: Sparkles,
-    payout_paid: Banknote,
-};
-
-function notificationText(n) {
-    const actorName = truncateText(n.actor?.full_name || n.actor?.username || "Quelqu'un", 30);
-    switch (n.type) {
-        case "like":
-            return <>{actorName} a aimé {n.media?.title ? <>« {truncateText(n.media.title, 50)} »</> : "votre photo"}</>;
-        case "collection_add":
-            return <>{actorName} a ajouté votre photo à la collection « {truncateText(n.details?.collection_title || "Sans titre", 30)} »</>;
-        case "premium_purchase":
-            return (
-                <>
-                    {actorName} a acheté votre photo pour {n.details?.credits_spent || "?"} crédit{n.details?.credits_spent > 1 ? "s" : ""}{" "}
-                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                        (+{Number(n.details?.earning_fcfa || 0).toLocaleString("fr-FR")} FCFA)
-                    </span>
-                </>
-            );
-        case "payout_paid":
-            return <>Votre versement de {Number(n.details?.amount_fcfa || 0).toLocaleString("fr-FR")} FCFA a été confirmé</>;
-        default:
-            return "Nouvelle activité";
-    }
-}
-
-function notificationHref(n, username) {
-    if (n.type === "payout_paid") return username ? `/@${username}/stats` : null;
-    if (n.media) return mediaUrl({ id: n.media_id, title: n.media.title, alt: n.media.alt_text });
-    return null;
-}
-
 /**
  * Historique complet de l'activité — la cloche du Navbar (NotificationBell)
- * n'en montre que les 8 dernières lignes. Toute la logique d'affichage est
- * volontairement dupliquée plutôt que partagée : `notificationText` mélange
- * JSX et données, et ce fichier vit dans `app/`, pas dans `lib/` (réservé au
- * code sans JSX dans ce projet) — le partager aurait demandé une nouvelle
- * convention pour une quinzaine de lignes utilisées à deux endroits.
+ * n'en montre qu'un extrait récent. Les deux partagent le rendu de chaque
+ * rangée via NotificationRow (app/components/NotificationRow.jsx).
  */
 export default function ActivityView() {
     const { user, profile, loading } = useAuth();
@@ -89,13 +50,10 @@ export default function ActivityView() {
 
     const unreadCount = (items || []).filter((n) => !n.read_at).length;
 
-    const openNotification = (n) => {
-        if (!n.read_at) {
-            setItems((prev) => prev.map((item) => (item.id === n.id ? { ...item, read_at: new Date().toISOString() } : item)));
-            markNotificationRead(n.id);
-        }
-        const href = notificationHref(n, profile?.username);
-        if (href) router.push(href);
+    const readNotification = (n) => {
+        if (n.read_at) return;
+        setItems((prev) => prev.map((item) => (item.id === n.id ? { ...item, read_at: new Date().toISOString() } : item)));
+        markNotificationRead(n.id);
     };
 
     const markAllRead = () => {
@@ -149,44 +107,9 @@ export default function ActivityView() {
                     </div>
                 ) : (
                     <div className="space-y-1">
-                        {items.map((n) => {
-                            const Icon = TYPE_ICON[n.type] || Bell;
-                            return (
-                                <button
-                                    key={n.id}
-                                    onClick={() => openNotification(n)}
-                                    className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-left transition-colors hover:bg-gray-50 dark:hover:bg-zinc-900 ${
-                                        !n.read_at ? "bg-amber-50/50 dark:bg-amber-950/10" : ""
-                                    }`}
-                                >
-                                    <span className="relative shrink-0">
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img
-                                            src={n.actor?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${n.actor?.id || n.id}`}
-                                            alt=""
-                                            className="w-11 h-11 rounded-full object-cover border border-gray-100 dark:border-zinc-700"
-                                        />
-                                        <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-white dark:bg-zinc-900 rounded-full flex items-center justify-center border border-gray-100 dark:border-zinc-800">
-                                            <Icon className="w-3 h-3 text-gray-500 dark:text-zinc-400" />
-                                        </span>
-                                    </span>
-
-                                    <span className="min-w-0 flex-1">
-                                        <span className="block text-[14px] text-gray-700 dark:text-zinc-300 leading-snug line-clamp-2">
-                                            {notificationText(n)}
-                                        </span>
-                                        <span className="block text-xs text-gray-400 dark:text-zinc-500 mt-1">
-                                            {timeAgo(n.created_at)}
-                                        </span>
-                                    </span>
-
-                                    {n.media?.thumbnail_url && (
-                                        // eslint-disable-next-line @next/next/no-img-element
-                                        <img src={n.media.thumbnail_url} alt="" className="w-16 h-16 rounded-xl object-cover shrink-0" />
-                                    )}
-                                </button>
-                            );
-                        })}
+                        {items.map((n) => (
+                            <NotificationRow key={n.id} n={n} username={profile?.username} onRead={readNotification} size="full" />
+                        ))}
                     </div>
                 )}
 

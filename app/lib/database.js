@@ -1693,7 +1693,7 @@ export async function getAdminUsers({ search = '', limit = 50, offset = 0 } = {}
     try {
         let query = supabase
             .from('profiles')
-            .select('id, username, full_name, avatar_url, role, is_verified, is_contributor, is_suspended, total_views, total_downloads, created_at')
+            .select('id, username, full_name, avatar_url, role, is_verified, is_contributor, is_suspended, can_price_premium, total_views, total_downloads, created_at')
             .order('created_at', { ascending: false });
 
         const term = search.trim();
@@ -1724,7 +1724,7 @@ export async function setUserRole(userId, role) {
 }
 
 export async function setUserFlag(userId, field, value) {
-    if (!['is_verified', 'is_contributor', 'is_suspended'].includes(field)) {
+    if (!['is_verified', 'is_contributor', 'is_suspended', 'can_price_premium'].includes(field)) {
         return { success: false, error: 'Champ non autorisé.' };
     }
     try {
@@ -1857,7 +1857,7 @@ export async function getPremiumPricing() {
     try {
         const { data, error } = await supabase
             .from('premium_pricing')
-            .select('media_type, credits_cost');
+            .select('media_type, credits_cost, min_credits_cost, max_credits_cost');
         if (error) throw error;
         return data || [];
     } catch (error) {
@@ -1898,14 +1898,18 @@ export async function purchaseCredits(packId) {
     }
 }
 
-export async function setPremiumPricing(mediaType, creditsCost) {
+export async function setPremiumPricing(mediaType, creditsCost, minCreditsCost, maxCreditsCost) {
     try {
         const { error } = await supabase.rpc('set_premium_pricing', {
             p_media_type: mediaType,
             p_credits_cost: creditsCost,
+            p_min_credits_cost: minCreditsCost,
+            p_max_credits_cost: maxCreditsCost,
         });
         if (error) throw error;
-        await logAdminAction('pricing.update', 'premium_pricing', mediaType, { credits_cost: creditsCost });
+        await logAdminAction('pricing.update', 'premium_pricing', mediaType, {
+            credits_cost: creditsCost, min_credits_cost: minCreditsCost, max_credits_cost: maxCreditsCost,
+        });
         return { success: true };
     } catch (error) {
         logQueryError('Error updating premium pricing:', error);

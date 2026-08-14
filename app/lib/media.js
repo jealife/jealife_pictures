@@ -116,6 +116,11 @@ export function normalizeMedia(row) {
         views: row.views_count || 0,
         createdAt: row.created_at || null,
         isPremium: !!row.is_premium,
+        // Prix choisi par le contributeur pour CE média précis, dans la
+        // fourchette fixée par l'admin (voir migration 0022) ; `null` tant
+        // qu'il n'a pas fixé de prix — le tarif par défaut du type
+        // s'applique alors (voir premium_pricing).
+        customCreditsCost: row.custom_credits_cost ?? null,
         status: row.status || 'published',
 
         author: {

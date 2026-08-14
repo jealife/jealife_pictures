@@ -44,7 +44,10 @@ export default function AdminMonetizationPage() {
             paymentsEnabled: enabled === "true",
             sharePercent: share || "35",
             creditValue: value || "500",
-            pricing: Object.fromEntries(pricingRows.map((r) => [r.media_type, String(r.credits_cost)])),
+            pricing: Object.fromEntries(pricingRows.map((r) => [
+                r.media_type,
+                { cost: String(r.credits_cost), min: String(r.min_credits_cost), max: String(r.max_credits_cost) },
+            ])),
             packs: packRows,
             payouts: payoutRows,
         });
@@ -80,10 +83,15 @@ export default function AdminMonetizationPage() {
     };
 
     const savePricing = async (mediaType) => {
-        const cost = Number(state.pricing[mediaType]);
+        const p = state.pricing[mediaType];
+        const cost = Number(p.cost);
+        const min = Number(p.min);
+        const max = Number(p.max);
         if (!Number.isFinite(cost) || cost <= 0) return;
+        if (!Number.isFinite(min) || min <= 0) return;
+        if (!Number.isFinite(max) || max < min) return;
         setSavingKey(`pricing:${mediaType}`);
-        const { success } = await setPremiumPricing(mediaType, cost);
+        const { success } = await setPremiumPricing(mediaType, cost, min, max);
         if (success) flashSaved(`pricing:${mediaType}`);
         setSavingKey(null);
     };
@@ -175,31 +183,63 @@ export default function AdminMonetizationPage() {
             <section className="max-w-xl">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-zinc-100 mb-1">Prix Premium par type</h3>
                 <p className="text-gray-500 dark:text-zinc-400 text-sm mb-5">
-                    Coût en crédits pour débloquer un téléchargement, selon le type de média.
+                    Le prix par défaut s&apos;applique à tous les contributeurs. Le minimum et le
+                    maximum ne servent qu&apos;aux contributeurs autorisés à fixer leur propre prix
+                    (onglet Utilisateurs, badge crédits) — ils ne peuvent pas en sortir.
                 </p>
 
-                <div className="space-y-2">
-                    {MEDIA_TYPE_ORDER.map((mediaType) => (
-                        <div key={mediaType} className="flex items-center gap-4 p-3 border border-gray-100 dark:border-zinc-800 rounded-xl">
-                            <span className="flex-1 font-semibold text-gray-900 dark:text-zinc-100">{MEDIA_TYPE_LABELS[mediaType]}</span>
-                            <input
-                                type="number" min="1" step="1"
-                                value={pricing[mediaType] ?? ""}
-                                onChange={(e) => setState((s) => ({ ...s, pricing: { ...s.pricing, [mediaType]: e.target.value } }))}
-                                className="w-24 px-3 py-1.5 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-zinc-100 rounded-lg text-sm focus:ring-2 focus:ring-black dark:focus:ring-white outline-none"
-                            />
-                            <span className="text-xs text-gray-400 dark:text-zinc-500">crédit{Number(pricing[mediaType]) > 1 ? "s" : ""}</span>
-                            <button
-                                type="button"
-                                onClick={() => savePricing(mediaType)}
-                                disabled={savingKey === `pricing:${mediaType}`}
-                                className="px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 rounded-lg text-xs font-bold hover:bg-gray-200 dark:hover:bg-zinc-700 disabled:opacity-50"
-                            >
-                                Enregistrer
-                            </button>
-                            {savedKey === `pricing:${mediaType}` && <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />}
-                        </div>
-                    ))}
+                <div className="space-y-3">
+                    {MEDIA_TYPE_ORDER.map((mediaType) => {
+                        const p = pricing[mediaType] || { cost: "", min: "", max: "" };
+                        const setField = (field) => (e) =>
+                            setState((s) => ({ ...s, pricing: { ...s.pricing, [mediaType]: { ...p, [field]: e.target.value } } }));
+                        return (
+                            <div key={mediaType} className="p-4 border border-gray-100 dark:border-zinc-800 rounded-xl">
+                                <div className="flex items-center justify-between mb-3">
+                                    <span className="font-semibold text-gray-900 dark:text-zinc-100">{MEDIA_TYPE_LABELS[mediaType]}</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => savePricing(mediaType)}
+                                        disabled={savingKey === `pricing:${mediaType}`}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-zinc-100 rounded-lg text-xs font-bold hover:bg-gray-200 dark:hover:bg-zinc-700 disabled:opacity-50"
+                                    >
+                                        Enregistrer
+                                        {savedKey === `pricing:${mediaType}` && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
+                                    </button>
+                                </div>
+                                <div className="flex flex-wrap items-end gap-4">
+                                    <label className="block">
+                                        <span className="block text-[11px] font-semibold text-gray-500 dark:text-zinc-400 mb-1">Prix par défaut</span>
+                                        <input
+                                            type="number" min="1" step="1"
+                                            value={p.cost}
+                                            onChange={setField("cost")}
+                                            className="w-20 px-2.5 py-1.5 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-zinc-100 rounded-lg text-sm focus:ring-2 focus:ring-black dark:focus:ring-white outline-none"
+                                        />
+                                    </label>
+                                    <label className="block">
+                                        <span className="block text-[11px] font-semibold text-gray-500 dark:text-zinc-400 mb-1">Minimum libre</span>
+                                        <input
+                                            type="number" min="1" step="1"
+                                            value={p.min}
+                                            onChange={setField("min")}
+                                            className="w-20 px-2.5 py-1.5 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-zinc-100 rounded-lg text-sm focus:ring-2 focus:ring-black dark:focus:ring-white outline-none"
+                                        />
+                                    </label>
+                                    <label className="block">
+                                        <span className="block text-[11px] font-semibold text-gray-500 dark:text-zinc-400 mb-1">Maximum libre</span>
+                                        <input
+                                            type="number" min="1" step="1"
+                                            value={p.max}
+                                            onChange={setField("max")}
+                                            className="w-20 px-2.5 py-1.5 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-zinc-100 rounded-lg text-sm focus:ring-2 focus:ring-black dark:focus:ring-white outline-none"
+                                        />
+                                    </label>
+                                    <span className="text-xs text-gray-400 dark:text-zinc-500 pb-2">crédits</span>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
             </section>
 

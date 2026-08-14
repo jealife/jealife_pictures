@@ -69,10 +69,13 @@ function PremiumDownload({ media, onDownloaded }) {
         Promise.all([getSetting("payments_enabled"), getPremiumPricing()]).then(([enabled, rows]) => {
             setSettings({
                 paymentsEnabled: enabled === "true",
-                creditsCost: rows.find((r) => r.media_type === media.type)?.credits_cost || null,
+                // Le contributeur peut avoir fixé son propre prix pour CE
+                // média précis (voir migration 0022) — il prime toujours sur
+                // le tarif par défaut du type.
+                creditsCost: media.customCreditsCost || rows.find((r) => r.media_type === media.type)?.credits_cost || null,
             });
         });
-    }, [media.type, isOwner]);
+    }, [media.type, media.customCreditsCost, isOwner]);
 
     // `media.url`/`media.originalUrl` sont redactés à la source pour un
     // média Premium (voir page.js) : ni le propriétaire ni l'acheteur ne

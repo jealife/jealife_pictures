@@ -171,6 +171,10 @@ function createItem(file) {
         // 0019) : ce choix ne s'applique qu'à cet envoi, il est modifiable
         // ensuite depuis la page de modification.
         isPremium: false,
+        // Uniquement utilisable par les contributeurs autorisés à fixer
+        // leur propre prix (voir migration 0022) ; `null` = prix par défaut
+        // du type de média.
+        customPrice: null,
         camera: "",
         // Relevés dans l'EXIF, jamais saisis : ce sont les réglages de
         // l'appareil au déclenchement, affichés tels quels sur la fiche photo.
@@ -247,10 +251,11 @@ async function readExif(file) {
     }
 }
 
-function ItemCard({ item, index, countries, dbTopics, premiumPricing, onPatch, onRemove, onGenerate, disabled, aiQuotaExhausted }) {
+function ItemCard({ item, index, countries, dbTopics, premiumPricing, canPricePremium, onPatch, onRemove, onGenerate, disabled, aiQuotaExhausted }) {
     const { africanCountries, otherCountries } = countries;
 
-    const premiumCost = premiumPricing[item.type];
+    const priceRange = premiumPricing[item.type];
+    const premiumCost = priceRange?.cost;
 
     const countryName =
         [...africanCountries, ...otherCountries].find((c) => c.code === item.countryCode)?.name_fr || null;
@@ -374,7 +379,35 @@ function ItemCard({ item, index, countries, dbTopics, premiumPricing, onPatch, o
                                 </button>
                             ))}
                         </div>
-                        {item.isPremium && (
+                        {item.isPremium && canPricePremium && priceRange && (
+                            <div className="flex items-center gap-2 mt-2">
+                                <label htmlFor={`price-${item.id}`} className="text-[11px] font-medium text-gray-500 dark:text-zinc-400">
+                                    Votre prix :
+                                </label>
+                                <input
+                                    id={`price-${item.id}`}
+                                    type="number"
+                                    min={priceRange.min}
+                                    max={priceRange.max}
+                                    step="1"
+                                    disabled={disabled}
+                                    value={item.customPrice ?? priceRange.cost}
+                                    onChange={(e) => onPatch({ customPrice: e.target.value })}
+                                    className="w-16 px-2 py-1 bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 text-gray-900 dark:text-zinc-100 rounded-lg text-[12px] focus:ring-2 focus:ring-black dark:focus:ring-white outline-none disabled:opacity-60"
+                                />
+                                <span className="text-[11px] text-gray-400 dark:text-zinc-500">
+                                    crédits (entre {priceRange.min} et {priceRange.max})
+                                </span>
+                            </div>
+                        )}
+                        {item.isPremium && canPricePremium && priceRange && (
+                            <p className="text-[11px] text-gray-400 dark:text-zinc-500 mt-1.5">
+                                Vous faites partie des contributeurs autorisés à fixer leur propre prix.
+                                Les visiteurs dépenseront ce montant en crédits ; vous touchez une part
+                                de chaque achat.
+                            </p>
+                        )}
+                        {item.isPremium && !(canPricePremium && priceRange) && (
                             <p className="text-[11px] text-gray-400 dark:text-zinc-500 mt-1.5">
                                 Les visiteurs devront dépenser des crédits pour la télécharger ; vous
                                 touchez une part de chaque achat.
@@ -661,7 +694,10 @@ export default function SubmitForm() {
         getCountries().then(setCountries);
         getSetting("moderation_mode").then((mode) => { if (mode) setModerationMode(mode); });
         getPremiumPricing().then((rows) => {
-            setPremiumPricing(Object.fromEntries(rows.map((r) => [r.media_type, r.credits_cost])));
+            setPremiumPricing(Object.fromEntries(rows.map((r) => [
+                r.media_type,
+                { cost: r.credits_cost, min: r.min_credits_cost, max: r.max_credits_cost },
+            ])));
         });
     }, []);
 
@@ -907,6 +943,11 @@ export default function SubmitForm() {
                 city: item.city.trim() || null,
                 country_code: item.countryCode || null,
                 is_premium: item.isPremium,
+                // `null` sauf pour un contributeur autorisé à fixer son
+                // propre prix (voir migration 0022) — un déclencheur en
+                // base revalide de toute façon la fourchette et le statut,
+                // ceci n'est qu'un confort d'interface.
+                custom_credits_cost: item.isPremium && item.customPrice != null ? Number(item.customPrice) : null,
                 width: item.processed.width,
                 height: item.processed.height,
                 // Lue sur la vidéo pendant l'extraction de l'aperçu ; nulle
@@ -1351,6 +1392,7 @@ export default function SubmitForm() {
                                     countries={countryGroups}
                                     dbTopics={dbTopics}
                                     premiumPricing={premiumPricing}
+                                    canPricePremium={!!profile?.can_price_premium}
                                     disabled={publishing}
                                     aiQuotaExhausted={aiQuotaExhausted}
                                     onPatch={(patch) => patchItem(item.id, patch)}

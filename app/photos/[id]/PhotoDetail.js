@@ -130,12 +130,17 @@ export default function PhotoDetail({ initialPhoto }) {
     }, [photo?.id, photo?.isPremium]);
 
     // Initialise les tags du panneau admin dès que la photo est disponible.
+    // Ajusté pendant le rendu plutôt que dans un effet (le seul déclencheur
+    // est le changement de photo, jamais une ressource externe) : React
+    // documente ce cas précis comme l'exception à « pas de setState pendant
+    // le rendu » — avec un state de comparaison, pas une ref (React ne permet
+    // pas de lire une ref pendant le rendu).
     // Doit être déclaré avec les autres hooks, AVANT tout `return` conditionnel.
-    useEffect(() => {
-        if (!photo || !isAdmin) return;
-        const topicNames = (photo.tags || []);
-        setAdminTags(topicNames);
-    }, [photo?.id, isAdmin]);
+    const [adminTagsPhotoId, setAdminTagsPhotoId] = useState(null);
+    if (photo && isAdmin && adminTagsPhotoId !== photo.id) {
+        setAdminTagsPhotoId(photo.id);
+        setAdminTags(photo.tags || []);
+    }
 
     const share = async () => {
         const shareData = {

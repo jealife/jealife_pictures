@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Search, ShieldCheck, BadgeCheck, Ban, Trash2, Loader2 } from "lucide-react";
+import { Search, ShieldCheck, BadgeCheck, Ban, Trash2, Loader2, Coins } from "lucide-react";
 import { getAdminUsers, setUserRole, setUserFlag } from "../../lib/database";
 import { avatarFallback } from "../../lib/media";
 import { useAuth } from "../../contexts/AuthContext";
@@ -130,6 +130,20 @@ export default function AdminUsersPage() {
                                 }`}
                             >
                                 <BadgeCheck className="w-4 h-4" />
+                            </button>
+                            <button
+                                disabled={busyId === u.id}
+                                onClick={() => toggleFlag(u, "can_price_premium")}
+                                title={
+                                    u.can_price_premium
+                                        ? "Retirer la tarification libre (Premium)"
+                                        : "Autoriser à fixer son propre prix Premium"
+                                }
+                                className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${
+                                    u.can_price_premium ? "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950" : "text-gray-300 dark:text-zinc-600 hover:text-gray-500 dark:hover:text-zinc-400"
+                                }`}
+                            >
+                                <Coins className="w-4 h-4" />
                             </button>
                             <button
                                 disabled={busyId === u.id || u.id === currentAdmin?.id}

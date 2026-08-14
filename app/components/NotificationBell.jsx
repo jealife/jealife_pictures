@@ -1,56 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Bell, Heart, FolderPlus, Sparkles, Banknote, CheckCheck } from "lucide-react";
+import { Bell, CheckCheck } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import {
     getNotifications, getUnreadNotificationCount,
     markNotificationRead, markAllNotificationsRead,
 } from "../lib/database";
-import { mediaUrl, timeAgo, truncateText } from "../lib/media";
-
-const TYPE_ICON = {
-    like: Heart,
-    collection_add: FolderPlus,
-    premium_purchase: Sparkles,
-    payout_paid: Banknote,
-};
-
-function notificationText(n) {
-    const actorName = truncateText(n.actor?.full_name || n.actor?.username || "Quelqu'un", 30);
-    switch (n.type) {
-        case "like":
-            return <>{actorName} a aimé {n.media?.title ? <>« {truncateText(n.media.title, 40)} »</> : "votre photo"}</>;
-        case "collection_add":
-            return <>{actorName} a ajouté votre photo à la collection « {truncateText(n.details?.collection_title || "Sans titre", 30)} »</>;
-        case "premium_purchase":
-            return (
-                <>
-                    {actorName} a acheté votre photo pour {n.details?.credits_spent || "?"} crédit{n.details?.credits_spent > 1 ? "s" : ""}{" "}
-                    <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                        (+{Number(n.details?.earning_fcfa || 0).toLocaleString("fr-FR")} FCFA)
-                    </span>
-                </>
-            );
-        case "payout_paid":
-            return <>Votre versement de {Number(n.details?.amount_fcfa || 0).toLocaleString("fr-FR")} FCFA a été confirmé</>;
-        default:
-            return "Nouvelle activité";
-    }
-}
-
-function notificationHref(n, username) {
-    if (n.type === "payout_paid") return username ? `/@${username}/stats` : null;
-    if (n.media) return mediaUrl({ id: n.media_id, title: n.media.title, alt: n.media.alt_text });
-    return null;
-}
+import NotificationRow from "./NotificationRow";
 
 /**
  * Cloche d'activité façon Unsplash — reçoit ses lignes déjà toutes faites
  * (déclencheurs Postgres, voir migration 0021) : ce composant ne fait que
- * les afficher, marquer lu, et rediriger.
+ * les afficher (via NotificationRow, partagé avec ActivityView.jsx) et
+ * marquer lu ; la navigation est portée par les liens de chaque rangée.
  *
  * `panelClassName` fixe entièrement le positionnement ET la taille du
  * panneau (rien n'est plus codé en dur ici) : sur le rail bureau, la cloche
@@ -64,7 +28,6 @@ function notificationHref(n, username) {
  */
 export default function NotificationBell({ iconSize = 24, panelClassName = "absolute right-0 top-12 w-80 max-w-[90vw]" }) {
     const { user, profile } = useAuth();
-    const router = useRouter();
     const [open, setOpen] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
     const [items, setItems] = useState(null);
@@ -83,7 +46,7 @@ export default function NotificationBell({ iconSize = 24, panelClassName = "abso
 
     useEffect(() => {
         if (!open || items !== null) return;
-        getNotifications({ limit: 8 }).then(setItems);
+        getNotifications({ limit: 15 }).then(setItems);
     }, [open, items]);
 
     useEffect(() => {
@@ -97,15 +60,12 @@ export default function NotificationBell({ iconSize = 24, panelClassName = "abso
 
     if (!user) return null;
 
-    const openNotification = (n) => {
+    const readNotification = (n) => {
         setOpen(false);
-        if (!n.read_at) {
-            setUnreadCount((c) => Math.max(0, c - 1));
-            setItems((prev) => (prev || []).map((item) => (item.id === n.id ? { ...item, read_at: new Date().toISOString() } : item)));
-            markNotificationRead(n.id);
-        }
-        const href = notificationHref(n, profile?.username);
-        if (href) router.push(href);
+        if (n.read_at) return;
+        setUnreadCount((c) => Math.max(0, c - 1));
+        setItems((prev) => (prev || []).map((item) => (item.id === n.id ? { ...item, read_at: new Date().toISOString() } : item)));
+        markNotificationRead(n.id);
     };
 
     const markAllRead = (event) => {
@@ -146,48 +106,15 @@ export default function NotificationBell({ iconSize = 24, panelClassName = "abso
                         )}
                     </div>
 
-                    <div className="max-h-96 overflow-y-auto">
+                    <div className="max-h-[28rem] overflow-y-auto">
                         {items === null ? (
                             <div className="py-10 text-center text-sm text-gray-400 dark:text-zinc-500">Chargement…</div>
                         ) : items.length === 0 ? (
                             <div className="py-10 text-center text-sm text-gray-400 dark:text-zinc-500 italic">Aucune activité pour l&apos;instant.</div>
                         ) : (
-                            items.map((n) => {
-                                const Icon = TYPE_ICON[n.type] || Bell;
-                                return (
-                                    <button
-                                        key={n.id}
-                                        onClick={() => openNotification(n)}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors border-b border-gray-50 dark:border-zinc-800 last:border-none ${
-                                            !n.read_at ? "bg-amber-50/40 dark:bg-amber-950/10" : ""
-                                        }`}
-                                    >
-                                        <span className="relative shrink-0">
-                                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                                            <img
-                                                src={n.actor?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${n.actor?.id || n.id}`}
-                                                alt=""
-                                                className="w-9 h-9 rounded-full object-cover border border-gray-100 dark:border-zinc-700"
-                                            />
-                                            <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-white dark:bg-zinc-900 rounded-full flex items-center justify-center border border-gray-100 dark:border-zinc-800">
-                                                <Icon className="w-3 h-3 text-gray-500 dark:text-zinc-400" />
-                                            </span>
-                                        </span>
-                                        <span className="min-w-0 flex-1">
-                                            <span className="block text-[13px] text-gray-700 dark:text-zinc-300 leading-snug line-clamp-2">
-                                                {notificationText(n)}
-                                            </span>
-                                            <span className="block text-[11px] text-gray-400 dark:text-zinc-500 mt-1">
-                                                {timeAgo(n.created_at)}
-                                            </span>
-                                        </span>
-                                        {n.media?.thumbnail_url && (
-                                            // eslint-disable-next-line @next/next/no-img-element
-                                            <img src={n.media.thumbnail_url} alt="" className="w-14 h-14 rounded-lg object-cover shrink-0" />
-                                        )}
-                                    </button>
-                                );
-                            })
+                            items.map((n) => (
+                                <NotificationRow key={n.id} n={n} username={profile?.username} onRead={readNotification} size="compact" />
+                            ))
                         )}
                     </div>
 

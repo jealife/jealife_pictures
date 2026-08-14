@@ -12,7 +12,7 @@ export default function EditPhotoPage() {
     const { id: rawId } = useParams();
     const id = parseMediaId(rawId);
     const router = useRouter();
-    const { user, loading: authLoading } = useAuth();
+    const { user, profile, loading: authLoading } = useAuth();
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -31,6 +31,7 @@ export default function EditPhotoPage() {
         camera: "",
         tags: [],
         is_premium: false,
+        custom_credits_cost: null,
     });
     const [countries, setCountries] = useState([]);
     const [newTag, setNewTag] = useState("");
@@ -43,7 +44,10 @@ export default function EditPhotoPage() {
     useEffect(() => {
         getCountries().then(setCountries);
         getPremiumPricing().then((rows) => {
-            setPremiumPricing(Object.fromEntries(rows.map((r) => [r.media_type, r.credits_cost])));
+            setPremiumPricing(Object.fromEntries(rows.map((r) => [
+                r.media_type,
+                { cost: r.credits_cost, min: r.min_credits_cost, max: r.max_credits_cost },
+            ])));
         });
     }, []);
 
@@ -77,6 +81,7 @@ export default function EditPhotoPage() {
                     camera: data.camera || "",
                     tags: data.tags || [],
                     is_premium: !!data.is_premium,
+                    custom_credits_cost: data.custom_credits_cost ?? null,
                 });
                 setMediaType(data.type || "photo");
                 setPhotoUrl(data.thumbnail_url || data.url);
@@ -114,6 +119,9 @@ export default function EditPhotoPage() {
         // la table des pays : on envoie NULL.
         const result = await updateMedia(id, {
             ...formData,
+            custom_credits_cost: formData.is_premium && formData.custom_credits_cost != null
+                ? Number(formData.custom_credits_cost)
+                : null,
             country_code: formData.country_code || null,
             city: formData.city.trim() || null,
         });
@@ -213,7 +221,7 @@ export default function EditPhotoPage() {
                                         {
                                             key: true,
                                             label: premiumPricing[mediaType]
-                                                ? `Premium · ${premiumPricing[mediaType]} crédit${premiumPricing[mediaType] > 1 ? "s" : ""}`
+                                                ? `Premium · ${premiumPricing[mediaType].cost} crédit${premiumPricing[mediaType].cost > 1 ? "s" : ""}`
                                                 : "Premium",
                                         },
                                     ].map(({ key, label }) => (
@@ -231,6 +239,26 @@ export default function EditPhotoPage() {
                                         </button>
                                     ))}
                                 </div>
+                                {formData.is_premium && profile?.can_price_premium && premiumPricing[mediaType] && (
+                                    <div className="flex items-center gap-2 pt-1">
+                                        <label htmlFor="custom-price" className="text-xs font-medium text-gray-500 dark:text-zinc-400">
+                                            Votre prix :
+                                        </label>
+                                        <input
+                                            id="custom-price"
+                                            type="number"
+                                            min={premiumPricing[mediaType].min}
+                                            max={premiumPricing[mediaType].max}
+                                            step="1"
+                                            value={formData.custom_credits_cost ?? premiumPricing[mediaType].cost}
+                                            onChange={(e) => setFormData({ ...formData, custom_credits_cost: e.target.value })}
+                                            className="w-20 px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 text-sm focus:border-black dark:focus:border-white focus:ring-1 focus:ring-black dark:focus:ring-white outline-hidden"
+                                        />
+                                        <span className="text-xs text-gray-400 dark:text-zinc-500">
+                                            crédits (entre {premiumPricing[mediaType].min} et {premiumPricing[mediaType].max})
+                                        </span>
+                                    </div>
+                                )}
                                 <p className="text-xs text-gray-400 dark:text-zinc-500">
                                     En Premium, les visiteurs dépensent des crédits pour la télécharger et vous
                                     touchez une part de chaque achat.
