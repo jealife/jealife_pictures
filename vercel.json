@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/sync-counters",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/backup-database",
+      "schedule": "20 3 * * *"
     }
   ]
 }
