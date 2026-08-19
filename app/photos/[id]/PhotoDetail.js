@@ -677,17 +677,39 @@ export default function PhotoDetail({ initialPhoto }) {
  * si quelqu'un l'enregistrait quand même.
  */
 function LockedPreview({ mediaId, thumbnailUrl, width, height }) {
+    // Le filigrane et la vignette sont tous les deux en `position: absolute`
+    // (voir plus bas) : ils ne comptent donc pour rien dans le calcul de
+    // taille de ce conteneur. Avec juste `w-full` (un pourcentage) posé sur
+    // un parent flex qui se dimensionne lui-même sur son contenu, aucun des
+    // deux n'a de taille de départ à donner à l'autre — la boîte s'effondre
+    // à 0×0 et la photo « disparaît ». Une largeur en pixels (pas en
+    // pourcentage) casse cette dépendance circulaire, exactement comme le
+    // ferait un <img width height> ; `maxWidth: 100%` garde la boîte
+    // responsive sur mobile.
+    const boxWidth = width && height ? Math.min(width, 768) : 640;
     return (
         <div
-            className="relative w-full max-w-3xl overflow-hidden bg-gray-100 dark:bg-zinc-800 flex items-center justify-center sm:rounded-sm"
-            style={width && height ? { aspectRatio: `${width} / ${height}` } : { minHeight: 320 }}
+            className="relative overflow-hidden bg-gray-100 dark:bg-zinc-800 flex items-center justify-center sm:rounded-sm"
+            style={{
+                width: boxWidth,
+                maxWidth: "100%",
+                ...(width && height ? { aspectRatio: `${width} / ${height}` } : { minHeight: 320 }),
+            }}
         >
             {thumbnailUrl && (
+                // Depuis peu, le filigrane est fusionné dans la vignette elle-même
+                // (voir lib/images.js) pour les photos publiées ou republiées après
+                // ce changement : un clic droit → « Enregistrer l'image » récupère
+                // alors une image déjà filigranée, pas le fichier nu. Les photos
+                // Premium publiées avant restent avec une vignette propre tant
+                // qu'elles ne sont pas rééditées — le calque ci-dessous (Watermark)
+                // reste donc affiché dans tous les cas, en secours.
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                     src={thumbnailUrl}
                     alt=""
                     aria-hidden="true"
+                    onContextMenu={(e) => e.preventDefault()}
                     className="absolute inset-0 w-full h-full object-cover"
                 />
             )}

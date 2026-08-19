@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { getCollection } from "../../lib/database";
-import { absoluteUrl, SITE_NAME } from "../../lib/site";
+import { absoluteUrl, jsonLdScript, SITE_NAME } from "../../lib/site";
 import CollectionDetail from "./CollectionDetail";
 
 export const revalidate = 300;
@@ -90,7 +90,7 @@ export default async function Page({ params }) {
                     <script
                         key={index}
                         type="application/ld+json"
-                        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+                        dangerouslySetInnerHTML={{ __html: jsonLdScript(schema) }}
                     />
                 ))}
             <CollectionDetail />

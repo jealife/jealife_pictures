@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { notFound } from "next/navigation";
 import { getUserProfile, getUserStats } from "../lib/database";
-import { absoluteUrl, SITE_NAME } from "../lib/site";
+import { absoluteUrl, jsonLdScript, SITE_NAME } from "../lib/site";
 import { avatarFallback } from "../lib/media";
 import UserPhotos from "./UserPhotos";
 
@@ -100,7 +100,7 @@ export default async function UserPhotosPage({ params }) {
             {jsonLd && (
                 <script
                     type="application/ld+json"
-                    dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+                    dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }}
                 />
             )}
             <UserPhotos />

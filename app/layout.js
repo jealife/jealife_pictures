@@ -1,7 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
-import { SITE_URL, SITE_NAME } from "./lib/site";
+import { SITE_URL, SITE_NAME, jsonLdScript } from "./lib/site";
 import ClientLayout from "./components/ClientLayout";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -122,7 +122,7 @@ export default function RootLayout({ children }) {
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+          dangerouslySetInnerHTML={{ __html: jsonLdScript(websiteSchema) }}
         />
         <ThemeProvider>
           <AuthProvider>

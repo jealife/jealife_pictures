@@ -53,8 +53,26 @@ export async function POST(request) {
             return NextResponse.json({ error: "Ce média n'existe pas ou n'est plus accessible." }, { status: 404 });
         }
 
-        const { error: deleteError } = await supabase.from("media").delete().eq("id", mediaId);
+        // La RLS (auth.uid() = user_id ou is_admin()) peut bloquer ce DELETE
+        // sans jamais renvoyer d'erreur — PostgREST considère « 0 ligne
+        // affectée » comme un succès. Sans le `.select().maybeSingle()`
+        // ci-dessous pour vérifier qu'une ligne a RÉELLEMENT été supprimée,
+        // n'importe quel compte connecté pouvait passer l'identifiant d'une
+        // photo publiée appartenant à quelqu'un d'autre (lisible par tous,
+        // donc l'étape précédente ne bloquait rien) : le DELETE échouait
+        // silencieusement mais le code continuait quand même à supprimer les
+        // fichiers R2 récupérés juste avant — détruisant la photo de
+        // quelqu'un d'autre sans jamais y être autorisé.
+        const { data: deleted, error: deleteError } = await supabase
+            .from("media")
+            .delete()
+            .eq("id", mediaId)
+            .select("id")
+            .maybeSingle();
         if (deleteError) throw deleteError;
+        if (!deleted) {
+            return NextResponse.json({ error: "Vous n'êtes pas autorisé à supprimer ce média." }, { status: 403 });
+        }
 
         if (r2Configured) {
             const keys = [media.url, media.thumbnail_url, media.original_url]

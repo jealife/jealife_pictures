@@ -78,12 +78,25 @@ export async function POST(request) {
             updates.original_url = null;
         }
 
-        const { error: updateError } = await supabase
+        // Même piège que /api/delete-media : la RLS (admin ou propriétaire en
+        // écriture) peut bloquer cet UPDATE sans renvoyer d'erreur — 0 ligne
+        // affectée n'est pas un échec pour PostgREST. Le SELECT au-dessus
+        // réussit pour n'importe quelle photo déjà publiée (lisible par
+        // tous), donc sans `.select().maybeSingle()` ici pour vérifier
+        // qu'une ligne a vraiment été modifiée, n'importe quel compte
+        // connecté pouvait faire « rejeter » — et donc supprimer les
+        // fichiers R2 de — la photo publiée de quelqu'un d'autre.
+        const { data: updated, error: updateError } = await supabase
             .from("media")
             .update(updates)
-            .eq("id", mediaId);
+            .eq("id", mediaId)
+            .select("id")
+            .maybeSingle();
 
         if (updateError) throw updateError;
+        if (!updated) {
+            return NextResponse.json({ error: "Vous n'êtes pas autorisé à rejeter ce média." }, { status: 403 });
+        }
 
         if (r2Configured && before.thumbnail_url) {
             const keys = [before.url, before.original_url].map(r2KeyFromUrl).filter(Boolean);

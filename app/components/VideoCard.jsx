@@ -35,6 +35,7 @@ export default function VideoCard({ video, liked = false }) {
                             }`}
                             onLoad={() => setLoaded(true)}
                             onError={() => setLoaded(true)}
+                            onContextMenu={video.isPremium ? (e) => e.preventDefault() : undefined}
                             {...(video.blurDataURL
                                 ? { placeholder: "blur", blurDataURL: video.blurDataURL }
                                 : {})}

@@ -70,6 +70,44 @@ function drawResized(bitmap, width, height) {
     return canvas;
 }
 
+const WATERMARK_TEXT = "JEALIFE STOCK";
+
+/**
+ * Fusionne le filigrane directement dans les pixels du canevas — même motif
+ * (rotation -28°, texte répété) que le calque CSS de Watermark.jsx, mais
+ * cette fois dans le fichier lui-même. Un clic droit → « Enregistrer
+ * l'image » sur une vignette Premium récupère donc une image déjà
+ * filigranée, pas le fichier nu ; un calque posé dans le navigateur ne
+ * protège jamais que l'écran, pas le fichier réel.
+ */
+function drawWatermarkTile(canvas) {
+    const context = canvas.getContext("2d");
+    const { width, height } = canvas;
+    const stepX = 190;
+    const stepY = 100;
+
+    context.save();
+    context.translate(width / 2, height / 2);
+    context.rotate((-28 * Math.PI) / 180);
+    context.font = "800 19px sans-serif";
+    context.textBaseline = "alphabetic";
+    context.fillStyle = "rgba(255,255,255,0.55)";
+    context.strokeStyle = "rgba(0,0,0,0.35)";
+    context.lineWidth = 0.6;
+
+    // Le canevas pivote autour de son centre : il faut carreler une zone au
+    // moins aussi large que sa diagonale pour ne laisser aucun coin nu une
+    // fois la rotation appliquée.
+    const diag = Math.ceil(Math.sqrt(width * width + height * height));
+    for (let y = -diag; y < diag; y += stepY) {
+        for (let x = -diag; x < diag; x += stepX) {
+            context.strokeText(WATERMARK_TEXT, x, y);
+            context.fillText(WATERMARK_TEXT, x, y);
+        }
+    }
+    context.restore();
+}
+
 /**
  * Charge un fichier sous une forme dessinable sur un canvas.
  *
@@ -201,6 +239,46 @@ export async function processImage(file) {
         thumbnail,
         blurDataURL,
     };
+}
+
+/**
+ * Reproduit un blob déjà à la taille vignette, filigrane fusionné dans les
+ * pixels. Utilisé à la publication (voir SubmitForm.jsx) : le statut
+ * Premium peut changer entre la sélection du fichier (où `processImage`
+ * produit la vignette de départ) et l'envoi, donc le filigrane ne peut pas
+ * être décidé plus tôt.
+ */
+export async function watermarkThumbnail(blob, mimeType, quality = 0.85) {
+    const { source: bitmap } = await loadBitmap(blob);
+    const canvas = drawResized(bitmap, bitmap.width || bitmap.naturalWidth, bitmap.height || bitmap.naturalHeight);
+    bitmap.close?.();
+    drawWatermarkTile(canvas);
+    return canvasToBlob(canvas, mimeType, quality);
+}
+
+/**
+ * Régénère une vignette (filigranée ou non) à partir d'une image source
+ * quelconque — utilisé quand un contributeur bascule une photo déjà publiée
+ * entre Gratuit et Premium (voir la page de modification) : la vignette
+ * envoyée à la publication ne peut pas être « défiligranée » après coup, il
+ * faut repartir d'une source propre (`media.url`, jamais la vignette).
+ */
+export async function makeThumbnail(blob, { watermark = false, mimeType } = {}) {
+    const { source: bitmap } = await loadBitmap(blob);
+    const width = bitmap.width || bitmap.naturalWidth;
+    const height = bitmap.height || bitmap.naturalHeight;
+    const size = targetSize(width, height, THUMBNAIL_MAX_EDGE);
+    const canvas = drawResized(bitmap, size.width, size.height);
+    bitmap.close?.();
+    if (watermark) drawWatermarkTile(canvas);
+
+    // Un `mimeType` explicite permet de reproduire exactement le format déjà
+    // publié (voir edit/page.js, qui réécrit la vignette en place à la même
+    // adresse) : recalculer le support WebP du navigateur donnerait parfois
+    // un format différent de celui de l'extension du fichier existant.
+    const resolvedMimeType = mimeType || (supportsWebp() ? "image/webp" : "image/jpeg");
+    const extension = resolvedMimeType === "image/webp" ? "webp" : "jpg";
+    return { blob: await canvasToBlob(canvas, resolvedMimeType, 0.85), mimeType: resolvedMimeType, extension };
 }
 
 /**

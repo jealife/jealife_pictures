@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { getMediaById } from "../../lib/database";
 import { parseMediaId, mediaUrl, isoDuration, mediaAlt } from "../../lib/media";
-import { absoluteUrl } from "../../lib/site";
+import { absoluteUrl, jsonLdScript } from "../../lib/site";
 import PhotoDetail from "./PhotoDetail";
 
 // Les métadonnées sont mises en cache 5 minutes au lieu d'être recalculées à
@@ -175,7 +175,7 @@ export default async function Page({ params }) {
                     <script
                         key={index}
                         type="application/ld+json"
-                        dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+                        dangerouslySetInnerHTML={{ __html: jsonLdScript(schema) }}
                     />
                 ))}
             {/* La fiche est déjà chargée ici (métadonnées, JSON-LD) : la

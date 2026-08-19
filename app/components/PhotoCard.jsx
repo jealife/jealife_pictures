@@ -46,6 +46,7 @@ export default function PhotoCard({ photo, liked = false, hideActions = false, p
                                     unoptimized
                                     onLoad={() => setLoaded(true)}
                                     onError={() => setLoaded(true)}
+                                    onContextMenu={photo.isPremium ? (e) => e.preventDefault() : undefined}
                                     {...(photo.blurDataURL
                                         ? { placeholder: "blur", blurDataURL: photo.blurDataURL }
                                         : {})}
@@ -67,6 +68,7 @@ export default function PhotoCard({ photo, liked = false, hideActions = false, p
                                     unoptimized
                                     onLoad={() => setLoaded(true)}
                                     onError={() => setLoaded(true)}
+                                    onContextMenu={photo.isPremium ? (e) => e.preventDefault() : undefined}
                                 />
                             </div>
                         )}

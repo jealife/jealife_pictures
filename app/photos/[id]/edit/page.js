@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "../../../contexts/AuthContext";
+import { supabase } from "../../../lib/supabase";
 import { deleteMedia, getMediaById, updateMedia, syncTopics, getCountries, getPremiumPricing } from "../../../lib/database";
+import { makeThumbnail } from "../../../lib/images";
 import { slugifyClient, parseMediaId } from "../../../lib/media";
 import { ArrowLeft, Save, MapPin, Camera, Tag, Loader2, CheckCircle2, AlertCircle, Plus, Trash2, Globe2, Accessibility, Sparkles } from "lucide-react";
 import Link from "next/link";
@@ -36,6 +38,15 @@ export default function EditPhotoPage() {
     const [countries, setCountries] = useState([]);
     const [newTag, setNewTag] = useState("");
     const [photoUrl, setPhotoUrl] = useState("");
+    // Adresse propre (jamais filigranée), utilisée uniquement comme source
+    // si la vignette doit être régénérée — voir `handleSubmit`.
+    const [sourceUrl, setSourceUrl] = useState("");
+    // Adresse exacte de la vignette publiée : la régénération réécrit le
+    // fichier à cette même adresse plutôt que d'en créer une nouvelle.
+    const [thumbnailUrl, setThumbnailUrl] = useState("");
+    // Statut au chargement : comparé à `formData.is_premium` à l'enregistrement
+    // pour savoir si la vignette doit être régénérée (voir `handleSubmit`).
+    const [originalIsPremium, setOriginalIsPremium] = useState(false);
     // Non modifiable ici, seulement affiché : le type détermine le tarif en
     // crédits, décidé une fois pour toutes à l'envoi (voir SubmitForm).
     const [mediaType, setMediaType] = useState("photo");
@@ -85,6 +96,9 @@ export default function EditPhotoPage() {
                 });
                 setMediaType(data.type || "photo");
                 setPhotoUrl(data.thumbnail_url || data.url);
+                setSourceUrl(data.url);
+                setThumbnailUrl(data.thumbnail_url);
+                setOriginalIsPremium(!!data.is_premium);
             } else {
                 router.push('/');
             }
@@ -110,10 +124,53 @@ export default function EditPhotoPage() {
         setFormData({ ...formData, tags: formData.tags.filter(t => t !== tagToRemove) });
     };
 
+    /**
+     * Réécrit le fichier vignette en place (même adresse) avec ou sans
+     * filigrane fusionné dans les pixels. Repart de `sourceUrl` (la version
+     * web propre, jamais filigranée) plutôt que de la vignette actuelle :
+     * une fois un filigrane fusionné dans une image, il ne peut plus en être
+     * retiré, donc "dé-filigraner" en repartant de la vignette est
+     * impossible.
+     */
+    const regenerateThumbnail = async (nextIsPremium) => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) throw new Error("Session expirée, reconnectez-vous.");
+
+        const response = await fetch(sourceUrl);
+        if (!response.ok) throw new Error("Téléchargement de l'image source impossible.");
+        const sourceBlob = await response.blob();
+
+        const path = new URL(thumbnailUrl).pathname.replace(/^\//, "");
+        const existingMimeType = path.endsWith(".webp") ? "image/webp" : "image/jpeg";
+        const { blob, mimeType } = await makeThumbnail(sourceBlob, { watermark: nextIsPremium, mimeType: existingMimeType });
+
+        const signRes = await fetch("/api/r2-upload-url", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
+            body: JSON.stringify({ path, contentType: mimeType, contentLength: blob.size }),
+        });
+        const { uploadUrl, error } = await signRes.json();
+        if (!signRes.ok) throw new Error(error || "Impossible de préparer l'envoi de la vignette.");
+
+        const putRes = await fetch(uploadUrl, { method: "PUT", headers: { "Content-Type": mimeType }, body: blob });
+        if (!putRes.ok) throw new Error("L'envoi de la vignette a échoué.");
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
         setStatus({ type: "", message: "" });
+
+        if (formData.is_premium !== originalIsPremium) {
+            try {
+                await regenerateThumbnail(formData.is_premium);
+                setOriginalIsPremium(formData.is_premium);
+            } catch {
+                setStatus({ type: "error", message: "La vignette n'a pas pu être régénérée. Réessayez." });
+                setSaving(false);
+                return;
+            }
+        }
 
         // Une chaîne vide sur `country_code` violerait la clé étrangère vers
         // la table des pays : on envoie NULL.

@@ -12,7 +12,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
 import { upsertProfile } from "../lib/auth";
 import { syncTopics, getTopics, getCountries, getPlatformStats, getSetting, getPremiumPricing } from "../lib/database";
-import { processImage, formatFileSize } from "../lib/images";
+import { processImage, watermarkThumbnail, formatFileSize } from "../lib/images";
 import { slugifyClient } from "../lib/media";
 import { friendlyErrorMessage } from "../lib/errors";
 import Confetti from "../components/Confetti";
@@ -900,7 +900,14 @@ export default function SubmitForm() {
         };
 
         goToStage("thumbnail");
-        const thumbnailUrl = await upload(`${folder}/thumb.${extension}`, item.processed.thumbnail, mimeType);
+        // Le statut Premium peut avoir changé depuis la sélection du fichier
+        // (où `processImage` a produit cette vignette) : le filigrane se
+        // fusionne ici, au moment où `item.isPremium` est définitif, pas
+        // avant.
+        const thumbnailBlob = item.isPremium
+            ? await watermarkThumbnail(item.processed.thumbnail, mimeType)
+            : item.processed.thumbnail;
+        const thumbnailUrl = await upload(`${folder}/thumb.${extension}`, thumbnailBlob, mimeType);
 
         goToStage("display");
         const displayUrl = await upload(`${folder}/display.${extension}`, item.processed.display, mimeType);

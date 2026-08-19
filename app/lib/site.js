@@ -22,3 +22,19 @@ export function absoluteUrl(path = '/') {
     if (!path || path === '/') return SITE_URL;
     return `${SITE_URL}/${String(path).replace(/^\/+/, '')}`;
 }
+
+/**
+ * Sérialise des données structurées (JSON-LD) pour un
+ * `<script type="application/ld+json" dangerouslySetInnerHTML>`.
+ *
+ * `JSON.stringify` seul n'échappe jamais `<` : un titre, une bio ou une
+ * description contenant `</script><script>...` refermait la vraie balise
+ * `<script>` et en ouvrait une nouvelle, exécutable — ces champs viennent
+ * tous d'un formulaire (envoi, profil, collection), donc entièrement
+ * contrôlés par n'importe quel compte. `<` reste un `<` valide en JSON
+ * (les moteurs de recherche le décodent normalement) mais ne peut plus
+ * refermer de balise HTML.
+ */
+export function jsonLdScript(data) {
+    return JSON.stringify(data).replace(/</g, '\\u003c');
+}
