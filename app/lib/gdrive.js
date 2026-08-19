@@ -2,65 +2,36 @@ import crypto from "node:crypto";
 
 /**
  * Accès Google Drive pour la sauvegarde nocturne de la base de données
- * (voir app/api/cron/backup-database/route.js). Un compte de service
- * n'a pas d'espace de stockage à lui : il ne peut écrire que dans un
- * dossier qu'un vrai compte Google lui a explicitement partagé — voir
- * docs/SAUVEGARDE.md pour la mise en place complète.
+ * (voir app/api/cron/backup-database/route.js).
+ *
+ * S'authentifie comme un vrai compte Google (jeton de renouvellement
+ * obtenu une fois via OAuth Playground, voir docs/SAUVEGARDE.md), pas
+ * comme un compte de service : un compte de service n'a aucun espace de
+ * stockage propre, y compris dans un dossier partagé avec lui — Google
+ * refuse alors tout envoi avec l'erreur "Service Accounts do not have
+ * storage quota". S'authentifier comme le compte réel évite ce mur, et
+ * dispense au passage de partager quoi que ce soit : le dossier de
+ * sauvegarde est simplement un dossier normal dans le Drive du compte.
  *
  * Pas de dépendance `googleapis` (lourde, pensée pour un usage bien plus
  * large que "envoyer un fichier et lister/supprimer dans un dossier") :
- * un jeton signé à la main avec `node:crypto` plus quelques appels REST
- * suffisent, et restent lisibles d'un bout à l'autre.
+ * un échange de jeton avec `fetch` plus quelques appels REST suffisent.
  */
 
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const DRIVE_API = "https://www.googleapis.com/drive/v3";
 const DRIVE_UPLOAD_API = "https://www.googleapis.com/upload/drive/v3/files";
 
-function base64url(input) {
-    return Buffer.from(input)
-        .toString("base64")
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=+$/, "");
-}
-
-/**
- * Échange la clé privée du compte de service contre un jeton d'accès de
- * courte durée (1h), selon le flux JWT-bearer standard de Google — voir
- * https://developers.google.com/identity/protocols/oauth2/service-account.
- */
-async function getAccessToken(serviceAccountJson) {
-    const { client_email, private_key } = JSON.parse(serviceAccountJson);
-
-    const now = Math.floor(Date.now() / 1000);
-    const header = base64url(JSON.stringify({ alg: "RS256", typ: "JWT" }));
-    const claims = base64url(
-        JSON.stringify({
-            iss: client_email,
-            scope: "https://www.googleapis.com/auth/drive",
-            aud: TOKEN_URL,
-            iat: now,
-            exp: now + 3600,
-        })
-    );
-
-    const signature = crypto
-        .createSign("RSA-SHA256")
-        .update(`${header}.${claims}`)
-        .sign(private_key, "base64")
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=+$/, "");
-
-    const assertion = `${header}.${claims}.${signature}`;
-
+/** Échange le jeton de renouvellement longue durée contre un jeton d'accès valable ~1h. */
+async function getAccessToken({ clientId, clientSecret, refreshToken }) {
     const response = await fetch(TOKEN_URL, {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: new URLSearchParams({
-            grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-            assertion,
+            client_id: clientId,
+            client_secret: clientSecret,
+            refresh_token: refreshToken,
+            grant_type: "refresh_token",
         }),
     });
 
@@ -72,9 +43,9 @@ async function getAccessToken(serviceAccountJson) {
     return access_token;
 }
 
-/** Envoie un fichier dans le dossier partagé, sans dépendance de mise en forme multipart tierce. */
-export async function uploadToFolder({ serviceAccountJson, folderId, filename, mimeType, content }) {
-    const accessToken = await getAccessToken(serviceAccountJson);
+/** Envoie un fichier dans le dossier de sauvegarde, sans dépendance de mise en forme multipart tierce. */
+export async function uploadToFolder({ auth, folderId, filename, mimeType, content }) {
+    const accessToken = await getAccessToken(auth);
     const boundary = `jealife-backup-${crypto.randomBytes(8).toString("hex")}`;
 
     const metadata = JSON.stringify({ name: filename, parents: [folderId] });
@@ -104,8 +75,8 @@ export async function uploadToFolder({ serviceAccountJson, folderId, filename, m
 }
 
 /** Liste les fichiers d'un dossier, avec leur date de création (pour la purge). */
-export async function listFolder({ serviceAccountJson, folderId }) {
-    const accessToken = await getAccessToken(serviceAccountJson);
+export async function listFolder({ auth, folderId }) {
+    const accessToken = await getAccessToken(auth);
     const query = encodeURIComponent(`'${folderId}' in parents and trashed = false`);
 
     const response = await fetch(
@@ -122,8 +93,8 @@ export async function listFolder({ serviceAccountJson, folderId }) {
 }
 
 /** Supprime définitivement un fichier (pas juste la corbeille, qui compte encore dans le quota). */
-export async function deleteFile({ serviceAccountJson, fileId }) {
-    const accessToken = await getAccessToken(serviceAccountJson);
+export async function deleteFile({ auth, fileId }) {
+    const accessToken = await getAccessToken(auth);
     const response = await fetch(`${DRIVE_API}/files/${fileId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${accessToken}` },

@@ -37,9 +37,13 @@ export async function GET(request) {
     }
 
     const databaseUrl = process.env.BACKUP_DATABASE_URL;
-    const serviceAccountJson = process.env.GDRIVE_SERVICE_ACCOUNT_JSON;
+    const auth = {
+        clientId: process.env.GDRIVE_CLIENT_ID,
+        clientSecret: process.env.GDRIVE_CLIENT_SECRET,
+        refreshToken: process.env.GDRIVE_REFRESH_TOKEN,
+    };
     const folderId = process.env.GDRIVE_BACKUP_FOLDER_ID;
-    if (!databaseUrl || !serviceAccountJson || !folderId) {
+    if (!databaseUrl || !auth.clientId || !auth.clientSecret || !auth.refreshToken || !folderId) {
         return NextResponse.json({ error: "Configuration de sauvegarde incomplète." }, { status: 500 });
     }
 
@@ -69,18 +73,18 @@ export async function GET(request) {
 
         const stamp = new Date().toISOString().slice(0, 10);
         await uploadToFolder({
-            serviceAccountJson,
+            auth,
             folderId,
             filename: `backup-${stamp}.json.gz`,
             mimeType: "application/gzip",
             content: dump,
         });
 
-        const files = await listFolder({ serviceAccountJson, folderId });
+        const files = await listFolder({ auth, folderId });
         const cutoff = Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000;
         const expired = files.filter((file) => new Date(file.createdTime).getTime() < cutoff);
         for (const file of expired) {
-            await deleteFile({ serviceAccountJson, fileId: file.id });
+            await deleteFile({ auth, fileId: file.id });
         }
 
         return NextResponse.json({

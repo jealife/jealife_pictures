@@ -61,56 +61,73 @@ postgresql://postgres.xxxxxxxx:[VOTRE-MOT-DE-PASSE]@aws-0-xxxxx.pooler.supabase.
 Remplacez `[VOTRE-MOT-DE-PASSE]` par le mot de passe de la base (affiché sur
 la même page, ou à réinitialiser si vous ne l'avez plus).
 
-### b. Créer un « compte robot » Google et lui partager un dossier Drive
+### b. Autoriser l'accès à votre Google Drive
 
-Google Drive n'a pas de système de jeton simple : un programme automatisé
-doit s'identifier avec un **compte de service**, une sorte de compte Google
-réservé aux robots. Ça se fait une seule fois, dans la **Google Cloud
-Console** (gratuite, pas besoin de carte bancaire pour cette partie) :
+*Une première version de cette étape utilisait un « compte robot »
+(compte de service). Google refuse en réalité qu'un tel compte écrive
+quoi que ce soit, même dans un dossier partagé avec lui, sur un compte
+Gmail gratuit (erreur "Service Accounts do not have storage quota") —
+cette limite n'est levée que sur un compte Google Workspace payant. La
+marche à suivre ci-dessous s'authentifie comme votre compte réel à la
+place, ce qui l'évite complètement.*
 
 1. Allez sur [console.cloud.google.com](https://console.cloud.google.com),
-   créez un nouveau projet, par exemple `jealife-stock-backups`.
+   créez un nouveau projet, par exemple `jealife-stock-backups` (ou
+   réutilisez celui d'une tentative précédente).
 2. Menu **APIs & Services** → **Library** → cherchez **Google Drive API** →
    **Enable**.
-3. Menu **APIs & Services** → **Credentials** → **Create Credentials** →
-   **Service Account**. Donnez-lui un nom, par exemple `stock-backup`.
-   Aucun rôle particulier n'est nécessaire aux étapes suivantes.
-4. Une fois le compte de service créé, ouvrez-le → onglet **Keys** →
-   **Add Key** → **Create new key** → format **JSON**. Un fichier `.json`
-   se télécharge : c'est le secret qui permettra au robot de s'identifier.
-   Gardez-le, ne le partagez à personne d'autre que Vercel (étape c).
-5. Ouvrez ce fichier JSON dans un éditeur de texte et repérez le champ
-   `client_email` — une adresse qui ressemble à
-   `stock-backup@jealife-stock-backups.iam.gserviceaccount.com`.
-6. Dans **votre** Google Drive (le compte que vous utilisez normalement),
-   créez un dossier, par exemple « JEaLiFe Stock — Sauvegardes ». Faites un
-   clic droit → **Partager** → collez l'adresse `client_email` repérée à
-   l'étape précédente, avec le rôle **Éditeur**.
-
-   *Un compte de service n'a pas d'espace de stockage à lui : il ne peut
-   écrire que dans un dossier qu'un vrai compte lui a explicitement
-   partagé — sans cette étape, l'envoi échouera.*
-7. Ouvrez ce dossier dans votre navigateur et copiez son identifiant dans
-   l'adresse : `https://drive.google.com/drive/folders/CETTE-PARTIE-ICI`.
+3. Menu **APIs & Services** → **OAuth consent screen** — si rien n'est
+   encore configuré, choisissez **External**, renseignez un nom d'app (ex.
+   « Stock Backup ») et votre e-mail comme contact, puis enregistrez. Pas
+   besoin de le publier ni de le faire vérifier par Google : ce sera
+   utilisé uniquement par vous.
+4. Menu **APIs & Services** → **Credentials** → **Create Credentials** →
+   **OAuth client ID**.
+   - Type d'application : **Web application**.
+   - Nom : ce que vous voulez, ex. `stock-backup`.
+   - **Authorized redirect URIs** → **Add URI** → collez exactement :
+     `https://developers.google.com/oauthplayground`
+   - **Create**. Notez le **Client ID** et le **Client secret** affichés.
+5. Ouvrez [developers.google.com/oauthplayground](https://developers.google.com/oauthplayground)
+   dans un nouvel onglet.
+   - Cliquez sur l'icône ⚙️ (réglages, en haut à droite) → cochez
+     **Use your own OAuth credentials** → collez le Client ID et le
+     Client secret de l'étape précédente → fermez ce panneau.
+   - Dans la liste à gauche (« Select & authorize APIs »), collez dans le
+     champ de saisie manuelle : `https://www.googleapis.com/auth/drive` →
+     **Authorize APIs**.
+   - Connectez-vous avec **votre propre compte Google** et acceptez.
+   - De retour sur Playground, cliquez **Exchange authorization code for
+     tokens**.
+   - Copiez la valeur affichée en face de **Refresh token** — c'est la clé
+     qui permettra à la sauvegarde de continuer à fonctionner indéfiniment,
+     sans jamais avoir à repasser par cette page.
+6. Dans **votre** Google Drive, créez un dossier normal, par exemple
+   « JEaLiFe Stock — Sauvegardes » (rien à partager cette fois, c'est votre
+   propre dossier). Ouvrez-le et copiez son identifiant dans l'adresse :
+   `https://drive.google.com/drive/folders/CETTE-PARTIE-ICI`.
 
 ### c. Enregistrer ces réglages dans Vercel
 
 Dans le tableau de bord **Vercel** → votre projet → **Settings** →
-**Environment Variables**, ajoutez ces 3 variables (sur tous les
-environnements) :
+**Environment Variables**, ajoutez ces 5 variables (sur tous les
+environnements) — si `GDRIVE_SERVICE_ACCOUNT_JSON` existe d'une tentative
+précédente, supprimez-la, elle n'est plus utilisée :
 
 | Nom | Valeur |
 |---|---|
 | `BACKUP_DATABASE_URL` | l'adresse de connexion de l'étape (a) |
-| `GDRIVE_SERVICE_ACCOUNT_JSON` | tout le contenu du fichier `.json` téléchargé à l'étape (b.4) |
-| `GDRIVE_BACKUP_FOLDER_ID` | l'identifiant du dossier Drive copié à l'étape (b.7) |
+| `GDRIVE_CLIENT_ID` | Client ID de l'étape (b.4) |
+| `GDRIVE_CLIENT_SECRET` | Client secret de l'étape (b.4) |
+| `GDRIVE_REFRESH_TOKEN` | Refresh token copié à l'étape (b.5) |
+| `GDRIVE_BACKUP_FOLDER_ID` | l'identifiant du dossier Drive copié à l'étape (b.6) |
 
 `CRON_SECRET` existe déjà (utilisé par la sauvegarde des compteurs) : rien
 à faire pour celui-là, la nouvelle tâche le réutilise.
 
 ### d. Activer le robot
 
-Une fois ces 3 variables enregistrées, un redéploiement du site (automatique
+Une fois ces 5 variables enregistrées, un redéploiement du site (automatique
 au prochain `git push`, ou bouton **Redeploy** dans Vercel) suffit à
 activer la tâche programmée — aucune autre action n'est nécessaire.
 
