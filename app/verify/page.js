@@ -14,6 +14,7 @@ function VerifyGate() {
     const searchParams = useSearchParams();
     const [error, setError] = useState("");
     const [verifying, setVerifying] = useState(false);
+    const [widgetUnavailable, setWidgetUnavailable] = useState(false);
     const turnstileRef = useRef(null);
 
     const rawNext = searchParams.get("next") || "/";
@@ -49,6 +50,19 @@ function VerifyGate() {
         }
     };
 
+    // Appelé par Turnstile.jsx après 8 s sans réponse de Cloudflare :
+    // le réseau de l'utilisateur bloque probablement challenges.cloudflare.com
+    // (comportement observé chez certains opérateurs au Maroc).
+    const handleWidgetError = (reason) => {
+        if (reason === "widget_unavailable") {
+            setWidgetUnavailable(true);
+        } else {
+            setError("Le widget n'a pas pu se charger, rechargez la page.");
+        }
+    };
+
+    const handleFallbackAccess = () => handleVerify("__widget_unavailable__");
+
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-zinc-950 text-center px-6">
             <ShieldCheck className="w-10 h-10 text-gray-300 dark:text-zinc-600 mb-6" />
@@ -57,14 +71,31 @@ function VerifyGate() {
                 Un instant avant d&apos;accéder à JEaLiFe Stock, le temps de confirmer que vous n&apos;êtes pas un robot.
             </p>
 
-            <Turnstile
-                ref={turnstileRef}
-                onVerify={handleVerify}
-                onExpire={() => setError("")}
-                onError={() => setError("Le widget n'a pas pu se charger, rechargez la page.")}
-            />
+            {widgetUnavailable ? (
+                <div className="flex flex-col items-center gap-4">
+                    <p className="text-sm text-gray-500 dark:text-zinc-400 max-w-sm">
+                        Le service de vérification n&apos;est pas accessible depuis votre réseau.
+                        Vous pouvez tout de même accéder au site.
+                    </p>
+                    <button
+                        onClick={handleFallbackAccess}
+                        disabled={verifying}
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gray-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-sm font-medium disabled:opacity-50 transition-opacity"
+                    >
+                        {verifying ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                        Continuer quand même
+                    </button>
+                </div>
+            ) : (
+                <Turnstile
+                    ref={turnstileRef}
+                    onVerify={handleVerify}
+                    onExpire={() => setError("")}
+                    onError={handleWidgetError}
+                />
+            )}
 
-            {verifying && (
+            {verifying && !widgetUnavailable && (
                 <div className="mt-6 flex items-center gap-2 text-gray-500 dark:text-zinc-400 text-sm">
                     <Loader2 className="w-4 h-4 animate-spin" /> Vérification en cours…
                 </div>

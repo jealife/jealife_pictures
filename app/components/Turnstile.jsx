@@ -62,19 +62,36 @@ const Turnstile = forwardRef(function Turnstile({ onVerify, onExpire, onError },
 
         let cancelled = false;
 
-        loadTurnstileScript().then(() => {
-            if (cancelled || !window.turnstile) return;
-            widgetId.current = window.turnstile.render(`#${containerId}`, {
-                sitekey: siteKey,
-                theme: resolvedTheme,
-                callback: onVerify,
-                "expired-callback": onExpire,
-                "error-callback": onError,
+        // Si le script Cloudflare ne répond pas en 8 s (réseau bloqué, ex.
+        // certains opérateurs au Maroc), on prévient la page plutôt que de
+        // rester figé indéfiniment. Le flag permet à /verify d'afficher un
+        // bouton de secours sans token Turnstile.
+        const fallbackTimer = setTimeout(() => {
+            if (!cancelled && !window.turnstile) {
+                onError?.("widget_unavailable");
+            }
+        }, 8000);
+
+        loadTurnstileScript()
+            .then(() => {
+                clearTimeout(fallbackTimer);
+                if (cancelled || !window.turnstile) return;
+                widgetId.current = window.turnstile.render(`#${containerId}`, {
+                    sitekey: siteKey,
+                    theme: resolvedTheme,
+                    callback: onVerify,
+                    "expired-callback": onExpire,
+                    "error-callback": onError,
+                });
+            })
+            .catch(() => {
+                clearTimeout(fallbackTimer);
+                if (!cancelled) onError?.("widget_unavailable");
             });
-        });
 
         return () => {
             cancelled = true;
+            clearTimeout(fallbackTimer);
             if (widgetId.current != null && window.turnstile) {
                 window.turnstile.remove(widgetId.current);
             }

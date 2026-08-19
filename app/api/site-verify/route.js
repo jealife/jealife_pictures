@@ -22,6 +22,23 @@ export async function POST(request) {
             return NextResponse.json({ success: false, error: "Vérification anti-bot manquante." }, { status: 400 });
         }
 
+        // Cas de secours : Cloudflare Turnstile est inaccessible depuis le
+        // réseau de l'utilisateur (ex. certains opérateurs au Maroc bloquent
+        // challenges.cloudflare.com). Le widget côté client n'a pas pu charger
+        // après 8 s de délai → on pose le cookie directement. Appeler
+        // siteverify avec ce token serait de toute façon voué à l'échec.
+        if (token === "__widget_unavailable__") {
+            const response = NextResponse.json({ success: true });
+            response.cookies.set(GATE_COOKIE, "1", {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                path: "/",
+                maxAge: GATE_TTL_SECONDS,
+            });
+            return response;
+        }
+
         const remoteip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
 
         const verifyResponse = await fetch(SITEVERIFY_URL, {
