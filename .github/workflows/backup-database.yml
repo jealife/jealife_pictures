@@ -1,0 +1,49 @@
+name: Sauvegarde de la base de données
+
+# Tourne sur GitHub, pas sur Vercel : un pg_dump complet demande le vrai
+# outil Postgres et peut prendre plus de temps qu'une fonction serverless
+# n'en autorise. GitHub Actions n'a aucune de ces limites et reste gratuit
+# à ce volume d'usage.
+on:
+  schedule:
+    # 03:15 UTC = 04:15 heure du Gabon (WAT, UTC+1), en dehors des heures
+    # de visite du site.
+    - cron: "15 3 * * *"
+  # Permet de déclencher une sauvegarde à la demande depuis l'onglet
+  # "Actions" du dépôt GitHub, sans attendre la prochaine nuit.
+  workflow_dispatch: {}
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    env:
+      RCLONE_CONFIG_GDRIVE_TYPE: drive
+      RCLONE_CONFIG_GDRIVE_SCOPE: drive
+      RCLONE_CONFIG_GDRIVE_SERVICE_ACCOUNT_CREDENTIALS: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_JSON }}
+      # Un compte de service Google n'a pas d'espace de stockage à lui : il
+      # écrit dans un dossier de VOTRE Drive qui lui a été partagé. Sans ce
+      # dossier précis, l'envoi échoue avec une erreur de quota.
+      RCLONE_CONFIG_GDRIVE_ROOT_FOLDER_ID: ${{ secrets.GDRIVE_BACKUP_FOLDER_ID }}
+    steps:
+      - name: Sauvegarder la base Postgres (Supabase)
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+          STAMP=$(date -u +%Y-%m-%d)
+          echo "STAMP=$STAMP" >> "$GITHUB_ENV"
+          # Format "custom" : compressé nativement, et restaurable
+          # sélectivement table par table avec pg_restore si besoin.
+          pg_dump "$DATABASE_URL" --no-owner --no-privileges --format=custom \
+            --file="backup-$STAMP.dump"
+
+      - name: Installer rclone
+        run: curl https://rclone.org/install.sh | sudo bash
+
+      - name: Envoyer la sauvegarde vers Google Drive
+        run: |
+          rclone copy "backup-$STAMP.dump" gdrive:database/ --drive-use-trash=false
+
+      - name: Supprimer les sauvegardes de plus de 30 jours
+        run: |
+          rclone delete gdrive:database/ --min-age 30d --drive-use-trash=false
