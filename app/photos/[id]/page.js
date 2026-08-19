@@ -104,6 +104,8 @@ function buildJsonLd(photo) {
         [photo.city, photo.countries?.name_fr].filter(Boolean).join(", ") || photo.location;
     const label = photo.title || mediaAlt(photo);
 
+    const canonical = absoluteUrl(mediaUrl({ id: photo.id, title: photo.title, alt: mediaAlt(photo) }));
+
     // Un média Premium n'a rien à annoncer comme `contentUrl` réel : c'est
     // précisément l'adresse qu'on protège (voir /api/photo-access). Seule la
     // vignette, publique par construction, sert d'aperçu aux moteurs de
@@ -113,8 +115,8 @@ function buildJsonLd(photo) {
         description: photo.description || mediaAlt(photo),
         datePublished: photo.created_at,
         thumbnailUrl: photo.thumbnail_url || (photo.is_premium ? null : photo.url),
-        license: absoluteUrl("/licence"),
-        acquireLicensePage: absoluteUrl("/licence"),
+        license: photo.is_premium ? absoluteUrl("/licence#premium") : absoluteUrl("/licence#gratuit"),
+        acquireLicensePage: canonical,
         creditText: author,
         copyrightNotice: author,
         creator: {
@@ -143,8 +145,6 @@ function buildJsonLd(photo) {
             ...common,
             contentUrl: previewImageFor(photo),
         };
-
-    const canonical = absoluteUrl(mediaUrl({ id: photo.id, title: photo.title, alt: mediaAlt(photo) }));
 
     const breadcrumb = {
         "@context": "https://schema.org/",

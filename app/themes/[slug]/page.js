@@ -14,12 +14,24 @@ export async function generateMetadata({ params }) {
 
     if (!topic) return { title: "Thème introuvable" };
 
+    const description =
+        topic.description ||
+        `Découvrez notre sélection de photos et d'illustrations de haute qualité libres de droits sur le thème « ${topic.name} » du continent africain.`;
+
     return {
         title: `Images ${topic.name}`,
-        description:
-            topic.description ||
-            `Photos libres de droits sur le thème « ${topic.name} », par les photographes de JEaLiFe Stock.`,
+        description,
         alternates: { canonical: `/themes/${topic.slug}` },
+        openGraph: {
+            title: `Images ${topic.name} | JEaLiFe Stock`,
+            description,
+            type: "website",
+        },
+        twitter: {
+            card: "summary_large_image",
+            title: `Images ${topic.name} | JEaLiFe Stock`,
+            description,
+        },
     };
 }
 

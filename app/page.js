@@ -58,7 +58,7 @@ export default async function Home({ searchParams }) {
           </h1>
           <p className="text-gray-500 dark:text-zinc-400 text-sm mt-1">
             {resultsCount} image{resultsCount > 1 ? "s" : ""} libre{resultsCount > 1 ? "s" : ""} de
-            droits, téléchargeable{resultsCount > 1 ? "s" : ""} gratuitement.
+            droits de haute qualité.
           </p>
         </div>
       ) : (

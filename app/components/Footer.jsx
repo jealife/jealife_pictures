@@ -60,7 +60,7 @@ export default function Footer() {
                             />
                         </Link>
                         <p className="text-gray-500 dark:text-zinc-400 text-sm leading-relaxed max-w-xs">
-                            Banque d&apos;images libres de droits et gratuites. Une sélection
+                            Banque d&apos;images et vidéos libres de droits de haute qualité. Une sélection
                             soignée, où l&apos;on trouve de belles images du continent.
                         </p>
                     </div>

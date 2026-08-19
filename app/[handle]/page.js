@@ -44,7 +44,7 @@ export async function generateMetadata({ params }) {
     const description =
         profile.bio ||
         `Découvrez les ${stats.total_photos || ""} images de ${name} sur ${SITE_NAME}. ` +
-        `Photos libres de droits, à télécharger gratuitement.`;
+        `Images, photos et créations libres de droits.`;
 
     // `(@identifiant)` reprend le motif qu'utilise Unsplash pour ses pages de
     // profil — utile pour qui cherche directement un pseudo. Google tronque

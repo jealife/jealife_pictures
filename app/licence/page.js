@@ -2,9 +2,9 @@ import Link from "next/link";
 import { Check, X, AlertTriangle } from "lucide-react";
 
 export const metadata = {
-    title: "Licence JEaLiFe",
+    title: "Licences JEaLiFe",
     description:
-        "Ce que vous pouvez faire, et ne pas faire, avec les images téléchargées sur JEaLiFe Stock. Usage gratuit, y compris commercial.",
+        "Ce que vous pouvez faire, et ne pas faire, avec les images téléchargées sur JEaLiFe Stock. Usage gratuit et premium.",
     alternates: { canonical: "/licence" },
 };
 
@@ -35,17 +35,19 @@ export default function LicensePage() {
         <main className="min-h-screen bg-white dark:bg-zinc-950">
             <div className="max-w-3xl mx-auto px-4 py-16 md:py-24">
                 <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-zinc-100 mb-4">
-                    Licence JEaLiFe
+                    Licences JEaLiFe
                 </h1>
                 <p className="text-lg text-gray-500 dark:text-zinc-400 mb-12">
-                    Toutes les images publiées sur JEaLiFe Stock sont téléchargeables
-                    gratuitement, y compris pour un usage commercial. Voici précisément ce
-                    que cela recouvre.
+                    JEaLiFe Stock propose des images gratuites ainsi que des images Premium.
+                    Voici précisément les conditions d&apos;utilisation pour chaque type de contenu.
                 </p>
 
-                <section className="mb-12">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-zinc-100 mb-5">Vous pouvez</h2>
-                    <ul className="space-y-3">
+                <section className="mb-12" id="gratuit">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-5">Licence Gratuite</h2>
+                    <p className="text-gray-600 dark:text-zinc-400 mb-4 leading-relaxed">
+                        Pour toutes les images marquées comme gratuites, vous pouvez :
+                    </p>
+                    <ul className="space-y-3 mb-6">
                         {ALLOWED.map((item) => (
                             <li key={item} className="flex gap-3 text-gray-700 dark:text-zinc-300 leading-relaxed">
                                 <Check className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
@@ -53,10 +55,9 @@ export default function LicensePage() {
                             </li>
                         ))}
                     </ul>
-                </section>
-
-                <section className="mb-12">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-zinc-100 mb-5">Vous ne pouvez pas</h2>
+                    <p className="text-gray-600 dark:text-zinc-400 mb-4 leading-relaxed">
+                        Toutefois, les restrictions suivantes s&apos;appliquent :
+                    </p>
                     <ul className="space-y-3">
                         {FORBIDDEN.map((item) => (
                             <li key={item} className="flex gap-3 text-gray-700 dark:text-zinc-300 leading-relaxed">
@@ -64,6 +65,40 @@ export default function LicensePage() {
                                 <span>{item}</span>
                             </li>
                         ))}
+                    </ul>
+                </section>
+
+                <section className="mb-12" id="premium">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-zinc-100 mb-5">Licence Premium</h2>
+                    <p className="text-gray-600 dark:text-zinc-400 mb-4 leading-relaxed">
+                        Les images Premium nécessitent l&apos;achat de crédits pour être téléchargées. Une fois acquises, vous pouvez :
+                    </p>
+                    <ul className="space-y-3 mb-6">
+                        <li className="flex gap-3 text-gray-700 dark:text-zinc-300 leading-relaxed">
+                            <Check className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
+                            <span>Utiliser l&apos;image pour des projets personnels ou commerciaux à vie, sans limite de temps ni de zone géographique.</span>
+                        </li>
+                        <li className="flex gap-3 text-gray-700 dark:text-zinc-300 leading-relaxed">
+                            <Check className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
+                            <span>Bénéficier de l&apos;image en haute résolution originale, sans aucun filigrane.</span>
+                        </li>
+                        <li className="flex gap-3 text-gray-700 dark:text-zinc-300 leading-relaxed">
+                            <Check className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
+                            <span>Les modifier, recadrer, retoucher ou intégrer à vos créations.</span>
+                        </li>
+                    </ul>
+                    <p className="text-gray-600 dark:text-zinc-400 mb-4 leading-relaxed">
+                        Toutefois, les restrictions suivantes s&apos;appliquent :
+                    </p>
+                    <ul className="space-y-3">
+                        <li className="flex gap-3 text-gray-700 dark:text-zinc-300 leading-relaxed">
+                            <X className="w-5 h-5 text-red-500 shrink-0 mt-0.5" aria-hidden="true" />
+                            <span>Revendre, sous-licencier ou redistribuer le fichier image d&apos;origine tel quel.</span>
+                        </li>
+                        <li className="flex gap-3 text-gray-700 dark:text-zinc-300 leading-relaxed">
+                            <X className="w-5 h-5 text-red-500 shrink-0 mt-0.5" aria-hidden="true" />
+                            <span>Revendiquer la propriété intellectuelle ou les droits d&apos;auteur de l&apos;image.</span>
+                        </li>
                     </ul>
                 </section>
 

@@ -62,7 +62,7 @@ export default function Hero({ background }) {
             <div className="relative z-10 w-full max-w-4xl px-6 text-center space-y-8 animate-in slide-in-from-bottom-5 fade-in duration-700">
                 <div className="flex flex-col items-center gap-4 mb-2">
                     <h1 className="text-4xl md:text-5xl font-bold tracking-tight drop-shadow-2xl text-balance">
-                        Images libres de droits, gratuites à télécharger
+                        Images libres de droits de haute qualité
                     </h1>
                     <p className="text-lg text-white/90 max-w-2xl mx-auto font-medium drop-shadow-md">
                         {/* Les compteurs viennent de la base : on n'annonce un

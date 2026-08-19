@@ -7,8 +7,20 @@ import { getMedia, countMedia, PAGE_SIZE } from "../lib/database";
 export const metadata = {
     title: "Illustrations libres de droits",
     description:
-        "Illustrations et créations graphiques libres de droits et gratuites, partagées par la communauté JEaLiFe Stock.",
+        "Illustrations et créations graphiques de haute qualité libres de droits du continent africain, partagées par la communauté.",
     alternates: { canonical: "/illustrations" },
+    openGraph: {
+        title: "Illustrations libres de droits | JEaLiFe Stock",
+        description:
+            "Illustrations et créations graphiques de haute qualité libres de droits du continent africain, partagées par la communauté.",
+        type: "website",
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "Illustrations libres de droits | JEaLiFe Stock",
+        description:
+            "Illustrations et créations graphiques de haute qualité libres de droits du continent africain, partagées par la communauté.",
+    },
 };
 
 /**
@@ -48,7 +60,7 @@ export default async function IllustrationsPage({ searchParams }) {
                 <p className="text-gray-500 dark:text-zinc-400 mt-2">
                     {query
                         ? `${resultsCount} illustration${resultsCount > 1 ? "s" : ""} trouvée${resultsCount > 1 ? "s" : ""}.`
-                        : "Créations graphiques libres de droits, à télécharger gratuitement."}
+                        : "Créations graphiques et illustrations de haute qualité libres de droits."}
                 </p>
             </header>
 

@@ -21,7 +21,7 @@ export async function generateMetadata({ params }) {
 
     return {
         title: `Images du ${country.name_fr}`,
-        description: `Photos libres de droits prises au ${country.name_fr}. Téléchargement gratuit sur JEaLiFe Stock.`,
+        description: `Photos libres de droits de haute qualité prises au ${country.name_fr} sur JEaLiFe Stock.`,
         alternates: { canonical: `/pays/${country.slug}` },
         ...(hasMedia ? {} : { robots: { index: false, follow: true } }),
     };

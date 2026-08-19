@@ -6,8 +6,20 @@ import { getMedia, countMedia, PAGE_SIZE } from "../lib/database";
 export const metadata = {
     title: "Vidéos libres de droits",
     description:
-        "Séquences vidéo libres de droits et gratuites, partagées par la communauté JEaLiFe Stock.",
+        "Séquences vidéo libres de droits de haute qualité du continent africain, partagées par la communauté.",
     alternates: { canonical: "/videos" },
+    openGraph: {
+        title: "Vidéos libres de droits | JEaLiFe Stock",
+        description:
+            "Séquences vidéo libres de droits de haute qualité du continent africain, partagées par la communauté.",
+        type: "website",
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "Vidéos libres de droits | JEaLiFe Stock",
+        description:
+            "Séquences vidéo libres de droits de haute qualité du continent africain, partagées par la communauté.",
+    },
 };
 
 /**
@@ -46,7 +58,7 @@ export default async function VideosPage({ searchParams }) {
                 <p className="text-gray-500 dark:text-zinc-400 mt-2">
                     {query
                         ? `${resultsCount} vidéo${resultsCount > 1 ? "s" : ""} trouvée${resultsCount > 1 ? "s" : ""}.`
-                        : "Séquences libres de droits, à télécharger gratuitement."}
+                        : "Séquences vidéo libres de droits de haute qualité."}
                 </p>
             </header>
 

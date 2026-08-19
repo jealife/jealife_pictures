@@ -19,11 +19,11 @@ const geistMono = Geist_Mono({
 export const metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "JEaLiFe Stock | Images libres de droits et gratuites",
+    default: "JEaLiFe Stock | Images libres de droits",
     template: "%s | JEaLiFe Stock",
   },
   description:
-    "Banque d'images libres de droits et gratuites. Une sélection soignée, où l'on trouve de belles images du continent.",
+    "Banque d'images et vidéos libres de droits de haute qualité. Une sélection soignée, où l'on trouve de belles images du continent africain.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -31,8 +31,12 @@ export const metadata = {
     title: "JEaLiFe Stock",
   },
   keywords: [
-    "banque d'images", "images libres de droits", "photos gratuites",
-    "photo haute résolution", "images du continent africain", "JEaLiFe Stock",
+    "banque d'images", "images libres de droits", "photos gratuites", "photos premium",
+    "photo haute résolution", "images du continent africain", "JEaLiFe Stock","Afrique","Gabon",
+    "Photo libre de droits", "Photo Gabon", "Photo Libre de droit Gabon", "Photo Libre de droit Afrique",
+    "Photo Libre de droit Afrique de l'Ouest", "Photo Libre de droit Afrique Centrale",
+    "Photo Libre de droit Afrique de l'Est", "Photo Libre de droit Afrique Australe",
+    "Photo Libre de droit Afrique du Nord"
   ],
   authors: [{ name: "JEaLiFe Stock" }],
   creator: "JEaLiFe Stock",
@@ -41,15 +45,15 @@ export const metadata = {
     locale: "fr_FR",
     url: "/",
     siteName: SITE_NAME,
-    title: "JEaLiFe Stock | Images libres de droits et gratuites",
+    title: "JEaLiFe Stock | Images libres de droits",
     description:
-      "Une sélection soignée d'images libres de droits, à télécharger gratuitement.",
+      "Une sélection soignée de photos, vidéos et illustrations libres de droits de haute qualité du continent africain.",
   },
   twitter: {
     card: "summary_large_image",
     title: "JEaLiFe Stock",
     description:
-      "Images libres de droits, à télécharger gratuitement.",
+      "Photos, vidéos et illustrations libres de droits de haute qualité du continent africain.",
   },
   robots: { index: true, follow: true },
   icons: { 
@@ -80,10 +84,9 @@ export default function RootLayout({ children }) {
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: SITE_NAME,
-    alternateName: "JEaLiFe Stock",
     url: SITE_URL,
     description:
-      "Banque d'images libres de droits et gratuites. Une sélection soignée, où l'on trouve de belles images du continent.",
+      "Banque d'images et vidéos libres de droits de haute qualité. Une sélection soignée, où l'on trouve de belles images du continent africain.",
     inLanguage: "fr",
     potentialAction: {
       "@type": "SearchAction",
