@@ -35,6 +35,24 @@ const ERROR_MESSAGES = [
     [/the resource already exists/i, 'Un fichier avec ce nom existe déjà.'],
     [/payload too large|exceeded the maximum allowed size|maximum allowed size/i, 'Le fichier est trop volumineux.'],
     [/invalid mime type|mime type not supported/i, "Ce type de fichier n'est pas accepté."],
+
+    // Génération IA (Gemini / Google GenAI)
+    // Quota journalier Google épuisé (RESOURCE_EXHAUSTED avec mention PerDay).
+    [/PerDay|per.*day.*quota|quota.*per.*day/i, "Quota de génération IA atteint pour aujourd'hui. Décrivez l'image vous-même, ou réessayez plus tard."],
+    // Quota par minute / rafale (RESOURCE_EXHAUSTED sans mention PerDay).
+    [/RESOURCE_EXHAUSTED|resource.?exhausted|rateLimitExceeded|quota.*exceeded|exceeded.*quota/i, 'Trop de demandes de génération IA en ce moment. Réessayez dans quelques minutes.'],
+    // Entrée invalide (image corrompue, format non supporté, taille dépassée côté Gemini).
+    [/INVALID_ARGUMENT|invalid.?argument|image.*corrupt|unsupported.*image|image.*too large/i, "L'image n'a pas pu être analysée par l'IA (format non supporté ou fichier corrompu)."],
+    // Filtre de sécurité ou récitation déclenché par le contenu du média.
+    [/SAFETY|RECITATION|finish.?reason.*safety|blocked.*safety|content.*blocked/i, "La génération a été bloquée : le média ne respecte pas les politiques de contenu de l'IA."],
+    // Modèle ou service Gemini temporairement indisponible.
+    [/UNAVAILABLE|SERVICE_UNAVAILABLE|model.*unavailable|server.*unavailable/i, "Le service de génération IA est temporairement indisponible. Réessayez dans quelques instants."],
+    // Réponse JSON malformée (Gemini a répondu mais pas au format attendu).
+    [/JSON|parse.*error|unexpected token|invalid.*json/i, "L'IA a renvoyé une réponse inattendue. Réessayez ou décrivez l'image manuellement."],
+    // Clé API absente ou invalide (erreur de configuration).
+    [/API_KEY_INVALID|api.?key.*invalid|invalid.?api.?key|PERMISSION_DENIED/i, "La génération IA n'est pas disponible pour le moment (configuration du service)."],
+    // Catch-all Gemini : toute erreur mentionnant l'API Google GenAI.
+    [/genai|gemini|google.*ai|GoogleGenerativeAI/i, "La génération automatique a échoué. Décrivez l'image vous-même ou réessayez."],
 ];
 
 const DEFAULT_FALLBACK = 'Une erreur est survenue. Réessayez dans un instant.';
